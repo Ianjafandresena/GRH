@@ -1,0 +1,124 @@
+2025-10-20 08:51:43,136 INFO  [org.jboss.modules] (main) JBoss Modules version 2.0.3.Final
+2025-10-20 08:51:48,105 INFO  [org.jboss.msc] (main) JBoss MSC version 1.4.13.Final
+2025-10-20 08:51:48,105 INFO  [org.jboss.threads] (main) JBoss Threads version 2.4.0.Final
+2025-10-20 08:51:48,293 INFO  [org.jboss.as] (MSC service thread 1-1) WFLYSRV0049: WildFly Full 27.0.1.Final (WildFly Core 19.0.1.Final) starting
+2025-10-20 08:51:48,293 DEBUG [org.jboss.as.config] (MSC service thread 1-1) Configured system properties:
+	file.encoding = UTF-8
+	file.separator = \
+	java.awt.headless = true
+	java.class.path = D:\bank\wildfly-serveur4\jboss-modules.jar
+	java.class.version = 65.0
+	java.home = C:\Program Files\Java\jdk-21
+	java.io.tmpdir = C:\Users\HP820G~1\AppData\Local\Temp\
+	java.library.path = C:\Program Files\Java\jdk-21\bin;C:\Windows\Sun\Java\bin;C:\Windows\system32;C:\Windows;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Common Files\Oracle\Java\javapath;D:\php-8.4.13-Win32-vs17-x64;C:\Windows\system32;C:\Windows;C:\Program Files\Java\jdk-17\bin;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\ProgramData\ComposerSetup\bin;C:\xampp\mysql\bin;C:\Users\HP 820 G3\Downloads\apache-maven-3.9.9-bin\apache-maven-3.9.9\bin;C:\winlibs-x86_64-posix-seh-gcc-14.2.0-llvm-19.1.7-mingw-w64ucrt-12.0.0-r3\mingw64\bin;C:\Users\HP 820 G3\Downloads\SFML-3.0.0-windows-vc17-64-bit\SFML-3.0.0\bin;C:\Program Files\PostgreSQL\16\bin;C:\Program Files\dotnet\;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files (x86)\Gpg4win\..\GnuPG\bin;C:\Users\HP 820 G3\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\HP 820 G3\AppData\Local\Programs\Python\Python313\;C:\Users\HP 820 G3\AppData\Local\Microsoft\WindowsApps;C:\Users\HP 820 G3\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\HP 820 G3\AppData\Roaming\Composer\vendor\bin;C:\Users\HP 820 G3\AppData\Local\GitHubDesktop\bin;C:\Users\HP 820 G3\AppData\Roaming\npm;D:\Windsurf\bin;C:\Users\HP 820 G3\.dotnet\tools;.
+	java.net.preferIPv4Stack = true
+	java.runtime.name = Java(TM) SE Runtime Environment
+	java.runtime.version = 21.0.6+8-LTS-188
+	java.security.manager = allow
+	java.specification.name = Java Platform API Specification
+	java.specification.vendor = Oracle Corporation
+	java.specification.version = 21
+	java.util.logging.manager = org.jboss.logmanager.LogManager
+	java.vendor = Oracle Corporation
+	java.vendor.url = https://java.oracle.com/
+	java.vendor.url.bug = https://bugreport.java.com/bugreport/
+	java.version = 21.0.6
+	java.version.date = 2025-01-21
+	java.vm.compressedOopsMode = 32-bit
+	java.vm.info = mixed mode, sharing
+	java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+	java.vm.specification.name = Java Virtual Machine Specification
+	java.vm.specification.vendor = Oracle Corporation
+	java.vm.specification.version = 21
+	java.vm.vendor = Oracle Corporation
+	java.vm.version = 21.0.6+8-LTS-188
+	javax.management.builder.initial = org.jboss.as.jmx.PluggableMBeanServerBuilder
+	jboss.home.dir = D:\bank\wildfly-serveur4
+	jboss.host.name = desktop-7au448o
+	jboss.modules.dir = D:\bank\wildfly-serveur4\modules
+	jboss.modules.system.pkgs = org.jboss.byteman
+	jboss.node.name = desktop-7au448o
+	jboss.qualified.host.name = desktop-7au448o
+	jboss.server.base.dir = D:\bank\wildfly-serveur4\standalone
+	jboss.server.config.dir = D:\bank\wildfly-serveur4\standalone\configuration
+	jboss.server.data.dir = D:\bank\wildfly-serveur4\standalone\data
+	jboss.server.deploy.dir = D:\bank\wildfly-serveur4\standalone\data\content
+	jboss.server.log.dir = D:\bank\wildfly-serveur4\standalone\log
+	jboss.server.name = desktop-7au448o
+	jboss.server.persist.config = true
+	jboss.server.temp.dir = D:\bank\wildfly-serveur4\standalone\tmp
+	jdk.debug = release
+	line.separator = 
+
+	logging.configuration = file:D:\bank\wildfly-serveur4\standalone\configuration/logging.properties
+	module.path = D:\bank\wildfly-serveur4\modules
+	native.encoding = Cp1252
+	org.jboss.boot.log.file = D:\bank\wildfly-serveur4\standalone\log\server.log
+	org.jboss.resolver.warning = true
+	os.arch = amd64
+	os.name = Windows 10
+	os.version = 10.0
+	path.separator = ;
+	program.name = standalone.bat
+	stderr.encoding = cp850
+	stdout.encoding = cp850
+	sun.arch.data.model = 64
+	sun.boot.library.path = C:\Program Files\Java\jdk-21\bin
+	sun.cpu.endian = little
+	sun.cpu.isalist = amd64
+	sun.io.unicode.encoding = UnicodeLittle
+	sun.java.command = D:\bank\wildfly-serveur4\jboss-modules.jar -mp D:\bank\wildfly-serveur4\modules org.jboss.as.standalone -Djboss.home.dir=D:\bank\wildfly-serveur4
+	sun.java.launcher = SUN_STANDARD
+	sun.jnu.encoding = Cp1252
+	sun.management.compiler = HotSpot 64-Bit Tiered Compilers
+	sun.os.patch.level = 
+	user.country = FR
+	user.dir = D:\bank\wildfly-serveur4\bin
+	user.home = C:\Users\HP 820 G3
+	user.language = fr
+	user.name = HP 820 G3
+	user.script = 
+	user.timezone = Indian/Antananarivo
+	user.variant = 
+2025-10-20 08:51:48,308 DEBUG [org.jboss.as.config] (MSC service thread 1-1) VM Arguments: -Dprogram.name=standalone.bat -Xms64M -Xmx512M -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true --add-exports=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-exports=java.naming/com.sun.jndi.url.ldap=ALL-UNNAMED --add-exports=java.naming/com.sun.jndi.url.ldaps=ALL-UNNAMED --add-exports=jdk.naming.dns/com.sun.jndi.dns=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.management/javax.management=ALL-UNNAMED --add-opens=java.naming/javax.naming=ALL-UNNAMED -Djava.security.manager=allow -Dorg.jboss.boot.log.file=D:\bank\wildfly-serveur4\standalone\log\server.log -Dlogging.configuration=file:D:\bank\wildfly-serveur4\standalone\configuration/logging.properties 
+2025-10-20 08:51:53,605 INFO  [org.wildfly.security] (ServerService Thread Pool -- 28) ELY00001: WildFly Elytron version 2.0.0.Final
+2025-10-20 08:52:10,257 WARN  [org.jboss.as.controller] (ServerService Thread Pool -- 41) WFLYCTL0481: The runtime dependency package 'io.smallrye.opentracing-contrib' is already registered at location '/subsystem=microprofile-opentracing-smallrye'
+2025-10-20 08:52:10,257 WARN  [org.jboss.as.controller] (ServerService Thread Pool -- 41) WFLYCTL0481: The runtime dependency package 'io.smallrye.opentracing-contrib' is already registered at location '/subsystem=microprofile-opentracing-smallrye'
+2025-10-20 08:52:12,078 INFO  [org.jboss.as.controller.management-deprecated] (ServerService Thread Pool -- 41) WFLYCTL0028: Attribute 'cluster' in the resource at address '/subsystem=ejb3/service=remote' is deprecated, and may be removed in a future version. See the attribute description in the output of the read-resource-description operation to learn more about the deprecation.
+2025-10-20 08:52:21,768 INFO  [org.jboss.as.server] (Controller Boot Thread) WFLYSRV0039: Creating http management service using socket-binding (management-http)
+2025-10-20 08:52:21,784 INFO  [org.xnio] (MSC service thread 1-3) XNIO version 3.8.8.Final
+2025-10-20 08:52:21,799 INFO  [org.xnio.nio] (MSC service thread 1-3) XNIO NIO Implementation Version 3.8.8.Final
+2025-10-20 08:52:21,878 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-5) WFLYSRV0027: Starting deployment of "serveur4.war" (runtime-name: "serveur4.war")
+2025-10-20 08:52:21,886 INFO  [org.wildfly.extension.health] (ServerService Thread Pool -- 61) WFLYHEALTH0001: Activating Base Health Subsystem
+2025-10-20 08:52:21,902 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 62) WFLYCLINF0001: Activating Infinispan subsystem.
+2025-10-20 08:52:21,933 WARN  [org.jboss.as.txn] (ServerService Thread Pool -- 82) WFLYTX0013: The node-identifier attribute on the /subsystem=transactions is set to the default value. This is a danger for environments running multiple servers. Please make sure the attribute value is unique.
+2025-10-20 08:52:21,951 INFO  [org.wildfly.extension.microprofile.jwt.smallrye] (ServerService Thread Pool -- 73) WFLYJWT0001: Activating MicroProfile JWT Subsystem
+2025-10-20 08:52:21,951 INFO  [org.wildfly.extension.io] (ServerService Thread Pool -- 63) WFLYIO001: Worker 'default' has auto-configured to 8 IO threads with 64 max task threads based on your 4 available processors
+2025-10-20 08:52:21,958 INFO  [org.jboss.as.jaxrs] (ServerService Thread Pool -- 64) WFLYRS0016: RESTEasy version 6.2.1.Final
+2025-10-20 08:52:21,959 INFO  [org.wildfly.extension.microprofile.config.smallrye] (ServerService Thread Pool -- 72) WFLYCONF0001: Activating MicroProfile Config Subsystem
+2025-10-20 08:52:21,976 INFO  [org.jboss.as.jsf] (ServerService Thread Pool -- 69) WFLYJSF0007: Activated the following Jakarta Server Faces Implementations: [main]
+2025-10-20 08:52:21,976 INFO  [org.wildfly.extension.metrics] (ServerService Thread Pool -- 71) WFLYMETRICS0001: Activating Base Metrics Subsystem
+2025-10-20 08:52:21,998 INFO  [org.jboss.as.webservices] (ServerService Thread Pool -- 84) WFLYWS0002: Activating WebServices Extension
+2025-10-20 08:52:22,014 INFO  [org.jboss.as.connector.subsystems.datasources] (ServerService Thread Pool -- 51) WFLYJCA0004: Deploying JDBC-compliant driver class org.h2.Driver (version 2.1)
+2025-10-20 08:52:22,046 INFO  [org.jboss.remoting] (MSC service thread 1-8) JBoss Remoting version 5.0.26.Final
+2025-10-20 08:52:22,045 INFO  [org.wildfly.extension.elytron.oidc._private] (ServerService Thread Pool -- 60) WFLYOIDC0001: Activating WildFly Elytron OIDC Subsystem
+2025-10-20 08:52:22,060 INFO  [org.wildfly.extension.microprofile.opentracing] (ServerService Thread Pool -- 74) WFLYTRACEXT0001: Activating MicroProfile OpenTracing Subsystem
+2025-10-20 08:52:22,123 INFO  [org.jboss.as.naming] (ServerService Thread Pool -- 75) WFLYNAM0001: Activating Naming Subsystem
+2025-10-20 08:52:22,226 INFO  [org.jboss.as.connector] (MSC service thread 1-6) WFLYJCA0009: Starting Jakarta Connectors Subsystem (WildFly/IronJacamar 1.5.9.Final)
+2025-10-20 08:52:22,270 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-5) WFLYELY00023: KeyStore file 'D:\bank\wildfly-serveur4\standalone\configuration\application.keystore' does not exist. Used blank.
+2025-10-20 08:52:22,304 INFO  [org.jboss.as.connector.deployers.jdbc] (MSC service thread 1-1) WFLYJCA0018: Started Driver service with driver-name = h2
+2025-10-20 08:52:22,499 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-7) WFLYUT0003: Undertow 2.3.0.Final starting
+2025-10-20 08:52:22,623 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 83) WFLYUT0014: Creating file handler for path 'D:\bank\wildfly-serveur4/welcome-content' with options [directory-listing: 'false', follow-symlink: 'false', case-sensitive: 'true', safe-symlink-paths: '[]']
+2025-10-20 08:52:22,701 INFO  [org.jboss.as.ejb3] (MSC service thread 1-2) WFLYEJB0481: Strict pool slsb-strict-max-pool is using a max instance size of 64 (per class), which is derived from thread worker pool sizing.
+2025-10-20 08:52:22,701 INFO  [org.jboss.as.ejb3] (MSC service thread 1-3) WFLYEJB0482: Strict pool mdb-strict-max-pool is using a max instance size of 16 (per class), which is derived from the number of CPUs on this host.
+2025-10-20 08:52:22,930 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-5) WFLYELY01084: KeyStore D:\bank\wildfly-serveur4\standalone\configuration\application.keystore not found, it will be auto generated on first use with a self-signed certificate for host localhost
+2025-10-20 08:52:22,966 INFO  [org.jboss.as.mail.extension] (MSC service thread 1-8) WFLYMAIL0001: Bound mail session [java:jboss/mail/Default]
+2025-10-20 08:52:22,971 INFO  [org.jboss.as.naming] (MSC service thread 1-3) WFLYNAM0003: Starting Naming Service
+2025-10-20 08:52:23,011 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-7) WFLYUT0012: Started server default-server.
+2025-10-20 08:52:23,088 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) Queuing requests.
+2025-10-20 08:52:23,119 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) WFLYUT0018: Host default-host starting
+2025-10-20 08:52:23,176 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0006: Undertow HTTP listener default listening on 127.0.0.1:8081
+2025-10-20 08:52:23,333 INFO  [org.jboss.as.ejb3] (MSC service thread 1-8) WFLYEJB0493: Jakarta Enterprise Beans subsystem suspension complete
+2025-10-20 08:52:23,414 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-2) WFLYJCA0001: Bound data source [java:jboss/datasources/ExampleDS]
+2025-10-20 08:52:23,502 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0006: Undertow HTTPS listener https listening on 127.0.0.1:8444
+2025-10-20 08:52:28,769 INFO  [org.jboss.as.patching] (MSC service thread 1-8) WFLYPAT0050: WildFly Full cumulative patch ID is: base, one-off patches include: none
