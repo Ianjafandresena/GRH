@@ -1,0 +1,55 @@
+<div class="login-container">
+  <div class="login-card">
+    <h2>Connexion</h2>
+    
+    <!-- Message d'erreur -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Formulaire de connexion -->
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <!-- username -->
+      <div class="form-group">
+        <label for="username">username</label>
+        <input 
+          type="username" 
+          id="username" 
+          name="username"
+          [(ngModel)]="credentials.username"
+          required
+          username
+          placeholder="username"
+          [disabled]="isLoading"
+        >
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password"
+          [(ngModel)]="credentials.password"
+          required
+          minlength="6"
+          placeholder="password"
+          [disabled]="isLoading"
+        >
+      </div>
+
+      <!-- Bouton de connexion -->
+      <button 
+        type="submit" 
+        [disabled]="isLoading"
+        class="btn-login"
+        >
+        <span *ngIf="!isLoading">Se connecter</span>
+        <span *ngIf="isLoading">Connexion en cours...</span>
+      </button>
+    </form>
+
+ 
+  </div>
+</div>

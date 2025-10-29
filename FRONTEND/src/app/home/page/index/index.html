@@ -1,0 +1,33 @@
+<div class="dashboard-container">
+  <nav class="navbar">
+    <h1>Dashboard GPRH</h1>
+    <div class="user-info" *ngIf="admin">
+      <span>👤 {{ admin.prenom }} {{ admin.nom }}</span>
+      <span class="role-badge">{{ admin.role }}</span>
+      <button (click)="logout()" class="btn-logout">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="dashboard-content">
+    <div class="welcome-card">
+      <h2>Bienvenue, {{ admin?.prenom }} ! 🎉</h2>
+      <p>Vous êtes connecté avec succès au système de gestion.</p>
+      
+      <div class="admin-details" *ngIf="admin">
+        <h3>Vos informations :</h3>
+        <ul>
+          <li><strong>ID :</strong> {{ admin.id }}</li>
+          <li><strong>Username :</strong> {{ admin.username }}</li>
+          <li><strong>Nom complet :</strong> {{ admin.prenom }} {{ admin.nom }}</li>
+          <li><strong>Rôle :</strong> {{ admin.role }}</li>
+        </ul>
+      </div>
+
+      <div class="success-message">
+        ✅ Le système JWT fonctionne parfaitement !
+        <br>
+        Ton token est stocké et utilisé automatiquement pour toutes les requêtes.
+      </div>
+    </div>
+  </div>
+</div>
