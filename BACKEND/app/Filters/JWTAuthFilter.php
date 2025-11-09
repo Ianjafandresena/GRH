@@ -15,7 +15,7 @@ class JWTAuthFilter implements FilterInterface
          /** @var \CodeIgniter\HTTP\IncomingRequest $request */
         
         // Lire le token depuis le cookie
-        $token = $request->getCookie('auth_token');
+        $token = $request->getCookie('sid');
         
         // Si pas de cookie, essayer l'en-tête Authorization (fallback)
         if (!$token) {

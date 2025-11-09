@@ -1,29 +1,25 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './auth/page/login/login';
-import { HomeComponent } from './home/page/index';
-import { authGuard } from './auth/helpers/guards/auth-guard';
+import { HomeComponent } from './module/home/page/index';
+import { authGuard } from './cors/guards/auth-guard';
 
 export const routes: Routes = [
   
   {
     path: '',
-    redirectTo: '/home',
+    redirectTo: '/auth/login',
     pathMatch: 'full'
   },
   
-  // Route de connexion (publique)
-  {
-    path: 'login',
-    component: LoginComponent
-  },
-  
-  // Route du home (protégée par le Guard)
   {
     path: 'home',
     component: HomeComponent,
     canActivate: [authGuard]  // Protection par le Guard
   },
-  
+
+  {
+    path: 'auth',
+    loadChildren: () => import('./module/auth/auth.route').then(m => m.authRoutes)
+  },
   // Route 404
   {
     path: '**',

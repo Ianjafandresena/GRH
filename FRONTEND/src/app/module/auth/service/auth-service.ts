@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 import { Admin, AuthResponse, LoginCredentials } from '../model/auth-model';
 
 @Injectable({
@@ -60,14 +60,14 @@ export class AuthService {
         console.log('✅ Déconnexion réussie, cookie supprimé');
         
         // Rediriger vers la page de connexion
-        this.router.navigate(['/login']);
+        this.router.navigate(['']);
       },
       error: (error) => {
         console.error('Erreur lors de la déconnexion', error);
         // Même en cas d'erreur, on déconnecte côté client
         localStorage.removeItem(this.ADMIN_KEY);
         this.currentAdminSubject.next(null);
-        this.router.navigate(['/login']);
+        this.router.navigate(['']);
       }
     });
   }
