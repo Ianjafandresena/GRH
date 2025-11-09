@@ -14,56 +14,56 @@ class AuthController extends ResourceController
     public function login()
     {
         /** @var \CodeIgniter\HTTP\IncomingRequest $request */
-    $request = $this->request;
+         $request = $this->request;
     
-    $adminModel = new AdminModel();
+        $adminModel = new AdminModel();
     
-    // Récupérer les données JSON
-    $json = $request->getJSON();
-        
-        if (!$json) {
-            return $this->fail('Données manquantes', 400);
-        }
-        
-        $username = $json->username ?? null;
-        $password = $json->password ?? null;
+    
+        $json = $request->getJSON();
+            
+            if (!$json) {
+                return $this->fail('Données manquantes', 400);
+            }
+            
+            $username = $json->username ?? null;
+            $password = $json->password ?? null;
 
-        if (!$username || !$password) {
-            return $this->fail('username et mot de passe requis', 400);
-        }
+            if (!$username || !$password) {
+                return $this->fail('username et mot de passe requis', 400);
+            }
 
-        $admin = $adminModel->where('username', $username)->first();
+            $admin = $adminModel->where('username', $username)->first();
 
-        if (!$admin || !password_verify($password, $admin['password'])) {
-            return $this->failUnauthorized('username ou mot de passe incorrect');
-        }
+            if (!$admin || !password_verify($password, $admin['password'])) {
+                return $this->failUnauthorized('username ou mot de passe incorrect');
+            }
 
-        // Générer le token JWT
-        $key = getenv('JWT_SECRET');
-        if (!$key) {
-            $key = 'MaCleSecreteUnique123456789ComplexeEtLongue';
-        }
-        
-        $iat = time();
-        $ttl = getenv('JWT_TIME_TO_LIVE');
-        $ttl = $ttl ? (int)$ttl : 3600;  // ⭐ Garder TTL en variable
-        $exp = $iat + $ttl;  // Timestamp absolu pour le JWT
+            // Générer le token JWT
+            $key = getenv('JWT_SECRET');
+            if (!$key) {
+                $key = 'MaCleSecreteUnique123456789ComplexeEtLongue';
+            }
+            
+            $iat = time();
+            $ttl = getenv('JWT_TIME_TO_LIVE');
+            $ttl = $ttl ? (int)$ttl : 3600;  // ⭐ Garder TTL en variable
+            $exp = $iat + $ttl;  // Timestamp absolu pour le JWT
 
-        $payload = [
-            'iss' => base_url(),
-            'aud' => base_url(),
-            'iat' => $iat,
-            'exp' => $exp,
-            'data' => [
-                'id' => $admin['id'],
-                'username' => $admin['username'],
-                'nom' => $admin['nom'],
-                'prenom' => $admin['prenom'],
-                'role' => $admin['role']
-            ]
-        ];
+            $payload = [
+                'iss' => base_url(),
+                'aud' => base_url(),
+                'iat' => $iat,
+                'exp' => $exp,
+                'data' => [
+                    'id' => $admin['id'],
+                    'username' => $admin['username'],
+                    'nom' => $admin['nom'],
+                    'prenom' => $admin['prenom'],
+                    'role' => $admin['role']
+                ]
+            ];
 
-        $token = JWT::encode($payload, $key, 'HS256');
+            $token = JWT::encode($payload, $key, 'HS256');
 
        
         $this->response->setCookie([
@@ -91,12 +91,9 @@ class AuthController extends ResourceController
         ], 200);
     }
 
-    /**
-     * Déconnexion : Supprimer le cookie
-     */
     public function logout()
     {
-        // ⭐ Supprimer le cookie
+        // Supprimer le cookie
         $this->response->deleteCookie('auth_token');
         
         return $this->respond([
