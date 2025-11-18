@@ -1,1 +1,27 @@
-<p>index works!</p>
+<h2>Historique des congés</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Employé</th>
+      <th>Date début</th>
+      <th>Date fin</th>
+      <th>Nb jours</th>
+      <th>Type</th>
+      <th>Région</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let c of conges">
+      <td>{{ c.nom_emp }}</td>
+      <td>{{ c.cng_debut }}</td>
+      <td>{{ c.cng_fin }}</td>
+      <td>{{ c.cng_nb_jour }}</td>
+      <td>{{ c.typ_code }}</td>
+      <td>{{ c.nom_region }}</td>
+      <td>
+        <!-- Ajoute boutons voir/supprimer/modifier si besoin -->
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models\conge;
 
 use CodeIgniter\Model;
@@ -14,6 +13,7 @@ class CongeModel extends Model
         'cng_debut',
         'cng_fin',
         'cng_demande',
+        'reg_code',
         'emp_code',
         'val_code',
         'typ_code'

@@ -21,20 +21,16 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         
         //  Route de test Hello World
         $routes->get('test/hello', 'TestController::hello');
-        
-        // Ajoute ici toutes tes autres routes protégées...
+      
     });
     
+    
         $routes->group('employee', ['namespace' => 'App\Controllers\employee', 'filter' => 'jwtauth'], function($routes) {
-        // Liste tous les employés
         $routes->get('/', 'EmployeeController::getAllEmployees');
-        // Détail par ID
         $routes->get('(:num)', 'EmployeeController::getEmployee/$1');
-        // Création nouvel employé
         $routes->post('/', 'EmployeeController::createEmployee');
         
     });
-
 
     $routes->group('conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
         $routes->post('/', 'CongeController::createConge');
@@ -42,8 +38,43 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('(:num)', 'CongeController::getConge/$1');
     });
 
+    $routes->group('interim_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
+        $routes->post('/', 'InterimCongeController::createInterimConge');
+        $routes->get('/', 'InterimCongeController::getAllInterimConges');
+    });
 
+    $routes->group('type_conge', ['namespace' => 'App\Controllers\conge','filter' => 'jwtauth'],function($routes) {
+        $routes->get('/', 'TypeCongeController::index');
+    });
 
+    $routes->group('region', ['namespace' => 'App\Controllers\conge','filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'RegionController::index');
+    });
+
+    $routes->group('solde_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'SoldeCongeController::index');
+        $routes->get('(:num)', 'SoldeCongeController::show/$1');
+        $routes->post('/', 'SoldeCongeController::create');
+        $routes->put('(:num)', 'SoldeCongeController::update/$1');
+        $routes->delete('(:num)', 'SoldeCongeController::delete/$1');
+        $routes->get('last_dispo/(:any)', 'SoldeCongeController::lastDispo/$1');
+    });
+
+    $routes->group('debit_solde_cng', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'DebitSoldeCngController::index');
+        $routes->get('(:num)', 'DebitSoldeCngController::show/$1');
+        $routes->post('/', 'DebitSoldeCngController::create');
+        $routes->put('(:num)', 'DebitSoldeCngController::update/$1');
+        $routes->delete('(:num)', 'DebitSoldeCngController::delete/$1');
+    });
+
+    $routes->group('decision', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'DecisionController::index');
+        $routes->get('(:num)', 'DecisionController::show/$1');
+        $routes->post('/', 'DecisionController::create');
+        $routes->put('(:num)', 'DecisionController::update/$1');
+        $routes->delete('(:num)', 'DecisionController::delete/$1');
+    });
 
       
 });

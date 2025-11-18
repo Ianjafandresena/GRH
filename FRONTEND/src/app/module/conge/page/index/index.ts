@@ -1,11 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CongeService } from '../../service/conge.service';
+import { Conge } from '../../model/conge.model';
 
 @Component({
-  selector: 'app-index',
-  imports: [],
+  selector: 'app-conge-index',
   templateUrl: './index.html',
-  styleUrl: './index.css',
+  styleUrls: ['./index.css']
 })
-export class Index {
+export class CongeIndexComponent implements OnInit {
+  conges: Conge[] = [];
+  loading = false;
 
+  constructor(private congeService: CongeService) {}
+
+  ngOnInit() {
+    this.loading = true;
+    this.congeService.getConges().subscribe({
+      next: (res) => { this.conges = res; this.loading = false; },
+      error: () => this.loading = false
+    });
+  }
 }
