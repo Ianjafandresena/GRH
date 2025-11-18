@@ -13,14 +13,21 @@ export const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
-    canActivate: [authGuard]  // Protection par le Guard
+    canActivate: [authGuard]  
   },
 
   {
     path: 'auth',
     loadChildren: () => import('./module/auth/auth.route').then(m => m.authRoutes)
   },
-  // Route 404
+
+   {
+    path: 'conge',
+    loadChildren: () => import('./module/conge/conge.route').then(m => m.congeRoutes),
+    canActivate: [authGuard]
+  },
+ 
+ 
   {
     path: '**',
     redirectTo: '/home'
