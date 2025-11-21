@@ -36,6 +36,9 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('/', 'CongeController::createConge');
         $routes->get('/', 'CongeController::getAllConges');
         $routes->get('(:num)', 'CongeController::getConge/$1');
+        $routes->get('export', 'CongeController::exportCsv');
+        $routes->post('import', 'CongeController::importCsv');
+        $routes->get('export-excel', 'CongeController::exportExcel');
     });
 
     $routes->group('interim_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {

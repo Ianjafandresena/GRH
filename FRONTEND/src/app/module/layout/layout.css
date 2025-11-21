@@ -1,0 +1,8 @@
+.layout { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 1fr auto; min-height: 100vh; }
+.sidebar { grid-row: 1 / span 2; background: #1f2937; color: #fff; padding: 16px; }
+.sidebar h3 { margin: 0 0 12px 0; }
+.sidebar nav { display: flex; flex-direction: column; gap: 8px; }
+.sidebar a { color: #e5e7eb; text-decoration: none; padding: 6px 0; }
+.sidebar a:hover { color: #fff; }
+.content { padding: 16px; background: #f9fafb; }
+.footer { grid-column: 2; background: #f3f4f6; padding: 10px 16px; color: #374151; }

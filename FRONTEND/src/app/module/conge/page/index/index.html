@@ -1,5 +1,17 @@
-<h2>Historique des congés</h2>
-<table>
+<div class="container">
+  <div class="card">
+    <h2>Historique des congés</h2>
+    <div class="table-toolbar">
+      <label>Début <input type="date" [(ngModel)]="start"></label>
+      <label>Fin <input type="date" [(ngModel)]="end"></label>
+      <label>Lieu <input type="text" [(ngModel)]="lieu" placeholder="ex. Antananarivo"></label>
+      <button class="btn btn-primary" (click)="applyFilter()">Filtrer</button>
+      <button class="btn" (click)="exportCsv()">Exporter CSV</button>
+      <button class="btn" (click)="exportExcel()">Exporter Excel</button>
+      <input type="file" accept=".csv" (change)="importCsv($any($event.target).files[0])" />
+      <button class="btn" (click)="reload()">Recharger</button>
+    </div>
+    <table>
   <thead>
     <tr>
       <th>Employé</th>
@@ -7,21 +19,26 @@
       <th>Date fin</th>
       <th>Nb jours</th>
       <th>Type</th>
+      <th>Réf</th>
       <th>Région</th>
       <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let c of conges">
-      <td>{{ c.nom_emp }}</td>
+      <td>{{ c.nom_emp }} {{ c.prenom_emp }}</td>
       <td>{{ c.cng_debut }}</td>
       <td>{{ c.cng_fin }}</td>
       <td>{{ c.cng_nb_jour }}</td>
-      <td>{{ c.typ_code }}</td>
+      <td>{{ c.typ_appelation }}</td>
+      <td>{{ c.typ_ref }}</td>
       <td>{{ c.nom_region }}</td>
       <td>
-        <!-- Ajoute boutons voir/supprimer/modifier si besoin -->
       </td>
     </tr>
   </tbody>
-</table>
+    </table>
+    <div *ngIf="!loading && conges.length === 0" class="errorMsg">Aucune donnée à afficher.</div>
+    <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
+  </div>
+</div>

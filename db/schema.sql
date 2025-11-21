@@ -6,7 +6,7 @@ CREATE TABLE employee(
    emp_code SMALLINT,
    nom VARCHAR(50) ,
    prenom VARCHAR(50) ,
-   matricule SMALLINT NOT NULL,
+   matricule INTEGER NOT NULL,
    sexe BOOLEAN,
    date_embauche DATE NOT NULL,
    email VARCHAR(50)  NOT NULL,
@@ -308,16 +308,18 @@ CREATE TABLE debit_solde_cng(
    FOREIGN KEY(cng_code) REFERENCES conge(cng_code)
 );
 
--- ========== Auth (users) ==========
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(50) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  nom VARCHAR(50),
-  prenom VARCHAR(50),
-  role INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+CREATE TABLE debit_solde_prm(
+   emp_code SMALLINT,
+   prm_code INTEGER,
+   sld_prm_code INTEGER,
+   deb_prm_code SERIAL NOT NULL,
+   deb_jr NUMERIC(15,2)  ,
+   deb_date TIMESTAMP,
+   PRIMARY KEY(emp_code, prm_code, sld_prm_code),
+   UNIQUE(deb_prm_code),
+   FOREIGN KEY(emp_code) REFERENCES employee(emp_code),
+   FOREIGN KEY(prm_code) REFERENCES permission(prm_code),
+   FOREIGN KEY(sld_prm_code) REFERENCES solde_permission(sld_prm_code)
 );
 
 -- -- Simple trigger to keep updated_at fresh

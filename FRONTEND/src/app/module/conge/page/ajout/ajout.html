@@ -1,11 +1,12 @@
 <!-- FORMULAIRE COMPLET -->
  
+<div class="container"><div class="card">
 <form *ngIf="!showRecap" [formGroup]="congeForm" (ngSubmit)="submit()" novalidate>
   <div>
     <label for="emp_search">Nom de l'employé</label>
     <input id="emp_search" type="text" formControlName="emp_search" autocomplete="off"
       placeholder="Tapez le nom ou le prénom...">
-    <ul *ngIf="filteredEmployees.length && congeForm.get('emp_search')?.value && !selectedEmployee">
+    <ul class="suggestions" *ngIf="filteredEmployees.length && congeForm.get('emp_search')?.value && !selectedEmployee">
       <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
         {{ emp.nom }} {{ emp.prenom }}
       </li>
@@ -27,7 +28,7 @@
     <label for="region_search">Région</label>
     <input id="region_search" type="text" formControlName="region_search" autocomplete="off"
       placeholder="Tapez la région..." />
-    <ul *ngIf="filteredRegions.length && congeForm.get('region_search')?.value && !selectedRegion">
+    <ul class="suggestions" *ngIf="filteredRegions.length && congeForm.get('region_search')?.value && !selectedRegion">
       <li *ngFor="let region of filteredRegions" (click)="selectRegion(region)">
         {{ region.reg_nom }}
       </li>
@@ -63,7 +64,7 @@
       <div style="display:flex;gap:8px;">
         <input type="text" formControlName="interim_search" placeholder="Rechercher suppléant..." autocomplete="off"
           style="width:70%;">
-        <button type="button" *ngIf="interims.length>1" (click)="removeInterimField(i)">Retirer</button>
+        <button class="btn btn-danger" type="button" *ngIf="interims.length>1" (click)="removeInterimField(i)">Retirer</button>
       </div>
       <ul
         *ngIf="filteredInterims[i]?.length && group.get('interim_search')?.value && !group.get('selectedInterim')?.value">
@@ -75,26 +76,20 @@
         <b>Choisi :</b> {{ group.get('selectedInterim')?.value.nom }} {{ group.get('selectedInterim')?.value.prenom }}
       </span>
     </div>
-    <button type="button" (click)="addInterimField()" style="margin-top:8px;">+ Ajouter un suppléant</button>
+    <button class="btn btn-success" type="button" (click)="addInterimField()" style="margin-top:8px;">+ Ajouter un suppléant</button>
   </div>
   <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
-  <button type="submit" [disabled]="loading || !selectedEmployee ||
+  <button class="btn btn-primary" type="submit" [disabled]="loading || !selectedEmployee ||
       !selectedRegion || calculatedNbJours == null || calculatedNbJours < 1">
     <span *ngIf="!loading">Enregistrer la demande</span>
     <span *ngIf="loading">Enregistrement...</span>
   </button>
-
 </form>
 <!-- Dans conge.component.html OU dans index.html et ajout.html -->
-<nav>
-  <a routerLink="/conge/index">Voir l’historique</a>
-  <a routerLink="/conge/create">Ajouter un congé</a>
-</nav>
-
 
 
 <!-- FICHE RECAPITULATIVE-->
-<div *ngIf="showRecap" class="fiche-recap">
+<div *ngIf="showRecap" class="card fiche-recap">
   <h3>Récapitulatif de la demande de congé</h3>
   <ul>
     <li><b>Nom employé:</b> {{ lastCongeDraft.nom_emp }}</li>
@@ -117,7 +112,10 @@
 
     </li>
   </ul>
-  <button type="button" (click)="confirmEnvoi()" [disabled]="loading">Confirmer</button>
-  <button type="button" (click)="annulerRecap()">Annuler</button>
+  <div class="form-actions">
+    <button class="btn btn-success" type="button" (click)="confirmEnvoi()" [disabled]="loading">Confirmer</button>
+    <button class="btn btn-danger" type="button" (click)="annulerRecap()">Modifier</button>
+  </div>
   <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
 </div>
+</div></div>
