@@ -1,4 +1,63 @@
 /* You can add global styles to this file, and also import other style files */
 
+:root { 
+  --erp-bg: #0f172a;
+  --erp-surface: #111827;
+  --erp-panel: #1f2937;
+  --erp-card: #0b1220;
+  --erp-text: #e5e7eb;
+  --erp-muted: #9ca3af;
+  --erp-primary: #4361ee;
+  --erp-primary-contrast: #ffffff;
+  --erp-accent: #22c55e;
+  --erp-warning: #f59e0b;
+  --erp-danger: #ef4444;
+  --erp-border: #2b3546;
+  --erp-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  --erp-radius: 12px;
+}
+
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: Inter, Roboto, "Helvetica Neue", Arial, sans-serif; background: linear-gradient(180deg, var(--erp-bg), var(--erp-surface)); color: var(--erp-text); }
+
+a { color: var(--erp-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+.card { background: var(--erp-card); border: 1px solid var(--erp-border); border-radius: var(--erp-radius); box-shadow: var(--erp-shadow); padding: 18px; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--erp-border); background: var(--erp-panel); color: var(--erp-text); cursor: pointer; transition: transform .08s ease, filter .15s ease; }
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--erp-primary); color: var(--erp-primary-contrast); border-color: transparent; }
+.btn-success { background: var(--erp-accent); color: #0b2f16; border-color: transparent; }
+.btn-warning { background: var(--erp-warning); color: #1f2937; border-color: transparent; }
+.btn-danger { background: var(--erp-danger); color: #fff; border-color: transparent; }
+
+label { display: inline-block; margin-bottom: 6px; color: var(--erp-muted); font-weight: 500; }
+input, select, textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--erp-border); background: #0a1220; color: var(--erp-text); outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
+input:focus, select:focus, textarea:focus { border-color: var(--erp-primary); box-shadow: 0 0 0 3px rgba(67,97,238,.2); }
+input[disabled], select[disabled], textarea[disabled] { opacity: .65; cursor: not-allowed; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-actions { display: flex; gap: 12px; margin-top: 18px; }
+
+table { width: 100%; border-collapse: collapse; border-spacing: 0; background: var(--erp-card); border: 1px solid var(--erp-border); border-radius: var(--erp-radius); overflow: hidden; }
+th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--erp-border); }
+thead th { background: #0d1526; color: var(--erp-muted); font-weight: 600; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.table-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+
+.sidebar { background: var(--erp-panel); border-right: 1px solid var(--erp-border); }
+.sidebar nav a { display: block; padding: 10px 12px; border-radius: 8px; color: var(--erp-text); }
+.sidebar nav a:hover { background: #172133; }
+.content { background: transparent; }
+.footer { background: #0d1526; border-top: 1px solid var(--erp-border); color: var(--erp-muted); }
+
+.errorMsg { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: #1b0f12; border: 1px solid #6b1b1d; color: #fca5a5; }
+
+ul.suggestions { list-style: none; padding: 8px; margin: 6px 0 0 0; border: 1px solid var(--erp-border); border-radius: 8px; background: #0a1220; }
+ul.suggestions li { padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+ul.suggestions li:hover { background: #13203a; }

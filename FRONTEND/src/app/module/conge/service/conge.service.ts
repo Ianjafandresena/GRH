@@ -15,6 +15,9 @@ export class CongeService {
   private typeCongeUrl = environment.apiUrl + '/type_conge/';
   private regionUrl = environment.apiUrl + '/region/';
   private soldeCongeUrl = environment.apiUrl + '/solde_conge/';
+  private exportUrl = environment.apiUrl + '/conge/export';
+  private importUrl = environment.apiUrl + '/conge/import';
+  private exportExcelUrl = environment.apiUrl + '/conge/export-excel';
   
   constructor(private http: HttpClient) {}
 
@@ -22,8 +25,8 @@ export class CongeService {
     return this.http.post<any>(this.congeUrl, data);
   }
 
-  getConges(): Observable<Conge[]> {
-    return this.http.get<Conge[]>(this.congeUrl);
+  getConges(params?: Record<string, any>): Observable<Conge[]> {
+    return this.http.get<Conge[]>(this.congeUrl, { params });
   }
 
   getConge(id: number): Observable<Conge> {
@@ -56,5 +59,17 @@ export class CongeService {
   getLastSoldeDispo(emp_code: number): Observable<any> {
   return this.http.get<any>(this.soldeCongeUrl + 'last_dispo/' + emp_code); 
 }
+
+  exportCongesCsv(): Observable<Blob> {
+    return this.http.get(this.exportUrl, { responseType: 'blob' });
+  }
+
+  importCongesCsv(formData: FormData): Observable<any> {
+    return this.http.post(this.importUrl, formData);
+  }
+
+  exportCongesExcel(): Observable<Blob> {
+    return this.http.get(this.exportExcelUrl, { responseType: 'blob' });
+  }
 
 }

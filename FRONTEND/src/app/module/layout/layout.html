@@ -1,0 +1,21 @@
+<div class="layout">
+  <aside class="sidebar">
+    <h3>GPRH</h3>
+    <nav>
+      <a routerLink="/home">Accueil</a>
+      <div>
+        <a (click)="toggleConge()" style="cursor:pointer; display:block;">Congés ▾</a>
+        <div *ngIf="showConge" style="padding-left:10px;">
+          <a routerLink="/conge/index">Historique</a>
+          <a routerLink="/conge/create">Création</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+  <section class="content">
+    <router-outlet></router-outlet>
+  </section>
+  <footer class="footer">
+    <span>© GPRH</span>
+  </footer>
+</div>
