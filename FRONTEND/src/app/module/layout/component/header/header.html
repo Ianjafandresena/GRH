@@ -1,0 +1,26 @@
+<header class="dashboard-header">
+    <div class="header-left">
+        <h1>{{ pageTitle }}</h1>
+        <p class="subtitle">Bienvenue dans le système de gestion RH de l'ARMP</p>
+    </div>
+    <div class="header-right">
+        <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input type="text" placeholder="Rechercher..." />
+        </div>
+        <div class="notification-bell">
+            <mat-icon>notifications</mat-icon>
+            <span class="badge">3</span>
+        </div>
+        <!-- User Menu -->
+        <div class="user-menu" *ngIf="admin">
+            <div class="avatar">
+                <span>{{ admin.prenom?.charAt(0) }}{{ admin.nom?.charAt(0) }}</span>
+            </div>
+            <div class="user-info">
+                <span class="user-name">{{ admin.prenom }} {{ admin.nom }}</span>
+                <span class="user-role">Administrateur</span>
+            </div>
+        </div>
+    </div>
+</header>

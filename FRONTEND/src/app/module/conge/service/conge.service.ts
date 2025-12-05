@@ -33,6 +33,14 @@ export class CongeService {
     return this.http.get<Conge>(this.congeUrl + id);
   }
 
+  getCongeDetail(id: number): Observable<any> {
+    return this.http.get<any>(this.congeUrl + 'detail/' + id);
+  }
+
+  downloadAttestationPdf(id: number): Observable<Blob> {
+    return this.http.get(this.congeUrl + 'attestation/' + id, { responseType: 'blob' });
+  }
+
   createInterimConge(data: InterimConge): Observable<any> {
     return this.http.post<any>(this.interimUrl, data);
   }

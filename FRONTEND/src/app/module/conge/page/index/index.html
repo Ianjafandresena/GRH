@@ -12,31 +12,31 @@
       <button class="btn" (click)="reload()">Recharger</button>
     </div>
     <table>
-  <thead>
-    <tr>
-      <th>Employé</th>
-      <th>Date début</th>
-      <th>Date fin</th>
-      <th>Nb jours</th>
-      <th>Type</th>
-      <th>Réf</th>
-      <th>Région</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let c of conges">
-      <td>{{ c.nom_emp }} {{ c.prenom_emp }}</td>
-      <td>{{ c.cng_debut }}</td>
-      <td>{{ c.cng_fin }}</td>
-      <td>{{ c.cng_nb_jour }}</td>
-      <td>{{ c.typ_appelation }}</td>
-      <td>{{ c.typ_ref }}</td>
-      <td>{{ c.nom_region }}</td>
-      <td>
-      </td>
-    </tr>
-  </tbody>
+      <thead>
+        <tr>
+          <th>Employé</th>
+          <th>Date début</th>
+          <th>Date fin</th>
+          <th>Nb jours</th>
+          <th>Type</th>
+          <th>Réf</th>
+          <th>Région</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of conges" (click)="openDetail(c.cng_code)" style="cursor:pointer">
+          <td>{{ c.nom_emp }} {{ c.prenom_emp }}</td>
+          <td>{{ c.cng_debut }}</td>
+          <td>{{ c.cng_fin }}</td>
+          <td>{{ c.cng_nb_jour }}</td>
+          <td>{{ c.typ_appelation }}</td>
+          <td>{{ c.typ_ref }}</td>
+          <td>{{ c.nom_region }}</td>
+          <td>
+          </td>
+        </tr>
+      </tbody>
     </table>
     <div *ngIf="!loading && conges.length === 0" class="errorMsg">Aucune donnée à afficher.</div>
     <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>

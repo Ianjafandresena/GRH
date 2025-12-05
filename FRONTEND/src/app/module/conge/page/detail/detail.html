@@ -1,0 +1,92 @@
+<div class="container">
+  <div class="card">
+    <!-- Header inside card -->
+    <div class="card-header">
+      <h2 style="margin: 0;">Détail du Congé</h2>
+      <button class="btn btn-primary" (click)="openPdfViewer()">
+        <mat-icon>picture_as_pdf</mat-icon>
+        <span>Exporter PDF</span>
+      </button>
+    </div>
+
+    <div class="info-section">
+      <h3>Informations de l'employé</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Nom et prénoms</span>
+          <span class="value">{{ data.conge.nom_emp }} {{ data.conge.prenom_emp }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Matricule</span>
+          <span class="value">{{ data.conge.matricule || '-' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>Détails du congé</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Type</span>
+          <span class="value">{{ data.conge.typ_appelation }} ({{ data.conge.typ_ref }})</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Nombre de jours</span>
+          <span class="value">{{ data.conge.cng_nb_jour | number:'1.0-2' }} jour(s)</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Date de début</span>
+          <span class="value">{{ data.conge.cng_debut | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Date de fin</span>
+          <span class="value">{{ data.conge.cng_fin | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Région</span>
+          <span class="value">{{ data.conge.nom_region }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section" *ngIf="data.interims && data.interims.length > 0">
+      <h3>Suppléants</h3>
+      <div class="interim-list">
+        <div class="interim-item" *ngFor="let interim of data.interims">
+          <mat-icon>person</mat-icon>
+          <span>{{ interim.nom }} {{ interim.prenom }}</span>
+          <span class="dates">({{ interim.int_debut | date:'dd/MM/yyyy' }} → {{ interim.int_fin | date:'dd/MM/yyyy'
+            }})</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section" *ngIf="data.decision">
+      <h3>Décision à défalquer</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Numéro de décision</span>
+          <span class="value">{{ data.decision.dec_num || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Année</span>
+          <span class="value">{{ data.decision.sld_anne || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Jours restants</span>
+          <span class="value">{{ data.decision.sld_restant ?? '-' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="loading">
+  <mat-icon class="spinner">hourglass_empty</mat-icon>
+  <span>Chargement...</span>
+</div>
+
+<div *ngIf="errorMsg" class="error-msg">
+  <mat-icon>error_outline</mat-icon>
+  <span>{{ errorMsg }}</span>
+</div>

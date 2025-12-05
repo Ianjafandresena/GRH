@@ -1,32 +1,117 @@
-<div class="dashboard-container">
-  <nav class="navbar">
-    <h1>Dashboard GPRH</h1>
-    <div class="user-info" *ngIf="admin">
-      <span>👤 {{ admin.prenom }} {{ admin.nom }}</span>
-      <span class="role-badge">{{ admin.role }}</span>
-      <button (click)="logout()" class="btn-logout">Déconnexion</button>
-    </div>
-  </nav>
+<div class="dashboard">
 
-  <div class="dashboard-content">
-    <div class="welcome-card">
-      <h2>Bienvenue, {{ admin?.prenom }} ! 🎉</h2>
-      <p>Vous êtes connecté avec succès au système de gestion.</p>
-      
-      <div class="admin-details" *ngIf="admin">
-        <h3>Vos informations :</h3>
-        <ul>
-          <li><strong>ID :</strong> {{ admin.id }}</li>
-          <li><strong>Username :</strong> {{ admin.username }}</li>
-          <li><strong>Nom complet :</strong> {{ admin.prenom }} {{ admin.nom }}</li>
-          <li><strong>Rôle :</strong> {{ admin.role }}</li>
-        </ul>
+  <!-- Stats Cards -->
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-header">
+        <div class="stat-icon"><mat-icon>groups</mat-icon></div>
+        <div class="stat-value">{{ stats.totalEmployees }}</div>
       </div>
+      <div class="stat-info">
+        <div class="stat-label">Total Employés</div>
+      </div>
+      <div class="stat-footer">
+        <div class="stat-subtitle">{{ stats.employeesActive }} actifs</div>
+        <div class="stat-change"
+          [ngClass]="{'positive': stats.employeesChange.includes('↑'), 'negative': stats.employeesChange.includes('↓')}">
+          {{ stats.employeesChange }}
+        </div>
+      </div>
+    </div>
 
-      <div class="success-message">
-        ✅ Le système JWT fonctionne parfaitement !
-        <br>
-        Ton token est stocké et utilisé automatiquement pour toutes les requêtes.
+    <div class="stat-card cyan">
+      <div class="stat-header">
+        <div class="stat-icon"><mat-icon>calendar_today</mat-icon></div>
+        <div class="stat-value">{{ stats.congesEnCours }}</div>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Congés en cours</div>
+      </div>
+      <div class="stat-footer">
+        <div class="stat-subtitle">{{ stats.congesPrevision }}</div>
+        <div class="stat-change"
+          [ngClass]="{'positive': stats.congesChange.includes('↑'), 'negative': stats.congesChange.includes('↓')}">
+          {{ stats.congesChange }}
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card yellow">
+      <div class="stat-header">
+        <div class="stat-icon"><mat-icon>schedule</mat-icon></div>
+        <div class="stat-value">{{ stats.permissions }}</div>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Permissions</div>
+      </div>
+      <div class="stat-footer">
+        <div class="stat-subtitle">{{ stats.permissionsStatus }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-grid">
+    <div class="chart-card full-width">
+      <h3>Évolution des Congés et Permissions</h3>
+      <div class="chart-placeholder" (mouseleave)="hoveredIndex = -1">
+
+        <!-- Tooltip Element -->
+        <div class="chart-tooltip" *ngIf="hoveredIndex !== -1" [style.left.px]="getTooltipX(hoveredIndex)"
+          [style.top.px]="getTooltipY(hoveredIndex)">
+          <div><strong>{{ chartLabels[hoveredIndex] }}</strong></div>
+          <div style="color: #60A5FA">Congés: {{ chartData.conges[hoveredIndex] }}</div>
+          <div style="color: #22ee3d">Perms: {{ chartData.permissions[hoveredIndex] }}</div>
+        </div>
+
+        <svg viewBox="0 0 400 230" class="line-chart">
+          <defs>
+            <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:rgba(59, 130, 246, 0.3);stop-opacity:1" />
+              <stop offset="100%" style="stop-color:rgba(59, 130, 246, 0);stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:rgba(40, 112, 7, 0.192);stop-opacity:1" />
+              <stop offset="100%" style="stop-color:rgba(6, 182, 212, 0);stop-opacity:1" />
+            </linearGradient>
+          </defs>
+
+          <!-- Grid lines -->
+          <line x1="0" y1="50" x2="400" y2="50" stroke="#E5E7EB" stroke-dasharray="4" />
+          <line x1="0" y1="100" x2="400" y2="100" stroke="#E5E7EB" stroke-dasharray="4" />
+          <line x1="0" y1="150" x2="400" y2="150" stroke="#E5E7EB" stroke-dasharray="4" />
+          <line x1="0" y1="200" x2="400" y2="200" stroke="#E5E7EB" stroke-dasharray="4" />
+
+          <!-- Conges (Blue) -->
+          <path [attr.d]="congeAreaPath" fill="url(#gradient1)" opacity="0.5" />
+          <path [attr.d]="congePath" fill="none" stroke="#3B82F6" stroke-width="3" />
+
+          <!-- Permissions (Cyan) -->
+          <path [attr.d]="permissionAreaPath" fill="url(#gradient2)" opacity="0.5" />
+          <path [attr.d]="permissionPath" fill="none" stroke="#22ee3d" stroke-width="3" />
+
+          <!-- Hover Line -->
+          <line *ngIf="hoveredIndex !== -1" [attr.x1]="getX(hoveredIndex)" y1="0" [attr.x2]="getX(hoveredIndex)"
+            y2="200" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4" />
+
+          <!-- Hover Points -->
+          <circle *ngIf="hoveredIndex !== -1" [attr.cx]="getX(hoveredIndex)"
+            [attr.cy]="getY(chartData.conges[hoveredIndex])" r="4" fill="#3B82F6" stroke="white" stroke-width="2" />
+          <circle *ngIf="hoveredIndex !== -1" [attr.cx]="getX(hoveredIndex)"
+            [attr.cy]="getY(chartData.permissions[hoveredIndex])" r="4" fill="#06B6D4" stroke="white"
+            stroke-width="2" />
+
+          <!-- Interaction Layer (Transparent Rects) -->
+          <rect *ngFor="let label of chartLabels; let i = index" [attr.x]="getX(i) - (400/22)" y="0"
+            [attr.width]="400/11" height="230" fill="transparent" (mouseenter)="hoveredIndex = i" />
+
+          <!-- X-axis labels -->
+          <g *ngFor="let label of chartLabels; let i = index">
+            <text [attr.x]="getX(i)" y="220" font-size="10" fill="#6B7280" text-anchor="middle">{{ label }}</text>
+          </g>
+        </svg>
       </div>
     </div>
   </div>

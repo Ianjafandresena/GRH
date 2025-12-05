@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { EmployeeService } from '../../../employee/service/employee.service';
@@ -7,6 +7,7 @@ import { CongeService } from '../../service/conge.service';
 import { Conge, TypeConge } from '../../model/conge.model';
 import { InterimConge } from '../../model/interimconge.model';
 import { Region } from '../../model/region.model';
+import { LayoutService } from '../../../layout/service/layout.service';
 
 @Component({
   selector: 'app-ajout-conge',
@@ -16,6 +17,8 @@ import { Region } from '../../model/region.model';
   styleUrls: ['./ajout.css']
 })
 export class AjoutCongeComponent implements OnInit {
+  private readonly layoutService = inject(LayoutService);
+
   congeForm: FormGroup;
   employees: Employee[] = [];
   filteredEmployees: Employee[] = [];
@@ -61,6 +64,7 @@ export class AjoutCongeComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.layoutService.setTitle('Gestion des Congés');
     this.employeeService.getEmployees().subscribe((employees: Employee[]) => {
       this.employees = employees ?? [];
       this.filteredEmployees = employees ?? [];
@@ -101,30 +105,30 @@ export class AjoutCongeComponent implements OnInit {
     );
   }
 
- selectEmployee(emp: Employee) {
-  this.selectedEmployee = emp;
-  this.congeForm.patchValue({ emp_search: `${emp.nom} ${emp.prenom}` });
-  this.filteredEmployees = [];
-  // Appel direct à l'API métier unique !
-  this.congeService.getLastSoldeDispo(emp.emp_code).subscribe((solde) => {
-    if (solde) {
-      this.dernierSolde = solde;
-      this.joursRestants = solde.sld_restant;
-      this.anneeSolde = solde.sld_anne;
-      this.numeroDecision = solde.dec_num;
-    } else {
+  selectEmployee(emp: Employee) {
+    this.selectedEmployee = emp;
+    this.congeForm.patchValue({ emp_search: `${emp.nom} ${emp.prenom}` });
+    this.filteredEmployees = [];
+    // Appel direct à l'API métier unique !
+    this.congeService.getLastSoldeDispo(emp.emp_code).subscribe((solde) => {
+      if (solde) {
+        this.dernierSolde = solde;
+        this.joursRestants = solde.sld_restant;
+        this.anneeSolde = solde.sld_anne;
+        this.numeroDecision = solde.dec_num;
+      } else {
+        this.dernierSolde = null;
+        this.joursRestants = null;
+        this.anneeSolde = '';
+        this.numeroDecision = '';
+      }
+    }, () => {
       this.dernierSolde = null;
       this.joursRestants = null;
       this.anneeSolde = '';
       this.numeroDecision = '';
-    }
-  }, () => {
-    this.dernierSolde = null;
-    this.joursRestants = null;
-    this.anneeSolde = '';
-    this.numeroDecision = '';
-  });
-}
+    });
+  }
 
   selectRegion(region: Region) {
     this.selectedRegion = region;
@@ -211,45 +215,45 @@ export class AjoutCongeComponent implements OnInit {
     this.showRecap = true;
   }
 
- confirmEnvoi() {
-  this.loading = true;
-  const congePayload = {
-    typ_code: this.lastCongeDraft.typ_code,
-    emp_code: this.lastCongeDraft.emp_code,
-    reg_code: this.lastCongeDraft.id_region,
-    cng_debut: this.lastCongeDraft.cng_debut,
-    cng_fin: this.lastCongeDraft.cng_fin,
-    cng_nb_jour: this.lastCongeDraft.cng_nb_jour
-  };
-  console.log("Payload envoyé à l'API:", congePayload); // Pour traquer les champs manquants
+  confirmEnvoi() {
+    this.loading = true;
+    const congePayload = {
+      typ_code: this.lastCongeDraft.typ_code,
+      emp_code: this.lastCongeDraft.emp_code,
+      reg_code: this.lastCongeDraft.id_region,
+      cng_debut: this.lastCongeDraft.cng_debut,
+      cng_fin: this.lastCongeDraft.cng_fin,
+      cng_nb_jour: this.lastCongeDraft.cng_nb_jour
+    };
+    console.log("Payload envoyé à l'API:", congePayload); // Pour traquer les champs manquants
 
-  this.congeService.createConge(congePayload).subscribe({
-    next: (congeRes: any) => {
-      const cng_code = congeRes.cng_code;
-      (this.lastCongeDraft.interims || []).forEach((interim: any) => {
-        if (interim && interim.emp_code) {
-          const interimPayload: InterimConge = {
-            emp_code: interim.emp_code,
-            cng_code: cng_code,
-            int_debut: this.lastCongeDraft.cng_debut,
-            int_fin: this.lastCongeDraft.cng_fin
-          };
-          this.congeService.createInterimConge(interimPayload).subscribe();
-        }
-      });
-      this.loading = false;
-      alert('Congé et interims enregistrés !');
-      this.resetAll();
-    },
-    error: (errRes) => {
-      this.loading = false;
-      console.error('Erreur backend:', errRes);
-      this.errorMsg = errRes?.error?.messages?.error || "Erreur lors de l'enregistrement du congé.";
-      // Affiche l'erreur complète en debug
-      alert("Erreur API : " + JSON.stringify(errRes));
-    }
-  });
-}
+    this.congeService.createConge(congePayload).subscribe({
+      next: (congeRes: any) => {
+        const cng_code = congeRes.cng_code;
+        (this.lastCongeDraft.interims || []).forEach((interim: any) => {
+          if (interim && interim.emp_code) {
+            const interimPayload: InterimConge = {
+              emp_code: interim.emp_code,
+              cng_code: cng_code,
+              int_debut: this.lastCongeDraft.cng_debut,
+              int_fin: this.lastCongeDraft.cng_fin
+            };
+            this.congeService.createInterimConge(interimPayload).subscribe();
+          }
+        });
+        this.loading = false;
+        alert('Congé et interims enregistrés !');
+        this.resetAll();
+      },
+      error: (errRes) => {
+        this.loading = false;
+        console.error('Erreur backend:', errRes);
+        this.errorMsg = errRes?.error?.messages?.error || "Erreur lors de l'enregistrement du congé.";
+        // Affiche l'erreur complète en debug
+        alert("Erreur API : " + JSON.stringify(errRes));
+      }
+    });
+  }
 
   annulerRecap() {
     this.showRecap = false;

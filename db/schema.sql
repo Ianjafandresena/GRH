@@ -1,7 +1,3 @@
--- RH Database Schema (PostgreSQL)
--- Source: user-provided MCD + users/auth additions
-
--- Schema options
 CREATE TABLE employee(
    emp_code SMALLINT,
    nom VARCHAR(50) ,
@@ -132,7 +128,8 @@ CREATE TABLE validation_conge(
 CREATE TABLE permission(
    prm_code SERIAL,
    prm_duree NUMERIC(15,2)  ,
-   prm_date DATE,
+   prm_debut TIMESTAMP,
+   prm_fin TIMESTAMP,
    val_code SMALLINT,
    emp_code SMALLINT NOT NULL,
    PRIMARY KEY(prm_code),
@@ -140,7 +137,6 @@ CREATE TABLE permission(
    FOREIGN KEY(val_code) REFERENCES validation_conge(val_code),
    FOREIGN KEY(emp_code) REFERENCES employee(emp_code)
 );
-
 CREATE TABLE centre_sante(
    cen_code SERIAL,
    cen_nom VARCHAR(50) ,
@@ -321,151 +317,14 @@ CREATE TABLE debit_solde_prm(
    FOREIGN KEY(prm_code) REFERENCES permission(prm_code),
    FOREIGN KEY(sld_prm_code) REFERENCES solde_permission(sld_prm_code)
 );
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(150) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    nom VARCHAR(150),
+    prenom VARCHAR(150),
+    role VARCHAR(100),
 
--- -- Simple trigger to keep updated_at fresh
--- DO $$
--- BEGIN
---   IF NOT EXISTS (
---       SELECT 1 FROM pg_proc WHERE proname = 'users_set_updated_at'
---   ) THEN
---     CREATE OR REPLACE FUNCTION users_set_updated_at() RETURNS TRIGGER AS $$
---     BEGIN
---       NEW.updated_at = NOW();
---       RETURN NEW;
---     END; $$ LANGUAGE plpgsql;
---   END IF;
--- END $$;
-
--- DO $$
--- BEGIN
---   IF NOT EXISTS (
---     SELECT 1 FROM pg_trigger WHERE tgname = 'trg_users_set_updated_at'
---   ) THEN
---     CREATE TRIGGER trg_users_set_updated_at
---     BEFORE UPDATE ON users
---     FOR EACH ROW
---     EXECUTE PROCEDURE users_set_updated_at();
---   END IF;
--- END $$;
-
--- -- ========== Helpful Indexes ==========
--- CREATE INDEX IF NOT EXISTS idx_employee_matricule ON employee(matricule);
--- CREATE INDEX IF NOT EXISTS idx_solde_conge_emp ON solde_conge(emp_code);
--- CREATE INDEX IF NOT EXISTS idx_solde_permission_emp ON solde_permission(emp_code);
--- CREATE INDEX IF NOT EXISTS idx_conge_emp ON conge(emp_code);
--- CREATE INDEX IF NOT EXISTS idx_conge_typ ON conge(typ_code);
--- CREATE INDEX IF NOT EXISTS idx_permission_emp ON permission(emp_code);
--- CREATE INDEX IF NOT EXISTS idx_validation_conge_stat ON validation_conge(stat_code);
--- CREATE INDEX IF NOT EXISTS idx_demande_remb_emp ON demande_remb(emp_code);
--- CREATE INDEX IF NOT EXISTS idx_demande_remb_eta ON demande_remb(eta_code);
--- CREATE INDEX IF NOT EXISTS idx_centre_sante_cnv ON centre_sante(cnv_code);
-
--- -- Seed minimal statuses (optional)
--- INSERT INTO status (stat_appelation, stat_ref)
--- SELECT * FROM (VALUES ('Soumis','SUB'),('Approuvé','APR'),('Rejeté','REJ'),('Payé','PAY')) AS s(app,ref)
--- WHERE NOT EXISTS (SELECT 1 FROM status);
-
--- -- ========== Functions & Views: Congés / Permissions ==========
-
--- -- Calculate days for a leave, fallback to stored cng_nb_jour if present
--- DO $$
--- BEGIN
---   IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'fn_conge_days') THEN
---     CREATE OR REPLACE FUNCTION fn_conge_days(p_cng_code INTEGER)
---     RETURNS NUMERIC AS $$
---     DECLARE v NUMERIC;
---     BEGIN
---       SELECT COALESCE(c.cng_nb_jour, GREATEST(0, (c.cng_fin - c.cng_debut + 1))) INTO v
---       FROM conge c WHERE c.cng_code = p_cng_code;
---       RETURN COALESCE(v, 0);
---     END; $$ LANGUAGE plpgsql STABLE;
---   END IF;
--- END $$;
-
--- -- Leave balance: from solde_conge entries of the year minus validated leaves
--- DO $$
--- BEGIN
---   IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'fn_solde_conge') THEN
---     CREATE OR REPLACE FUNCTION fn_solde_conge(p_emp INTEGER, p_year INTEGER)
---     RETURNS NUMERIC AS $$
---     DECLARE rights NUMERIC := 0; taken NUMERIC := 0; yr_start DATE; yr_end DATE;
---     BEGIN
---       yr_start := make_date(p_year,1,1);
---       yr_end   := make_date(p_year,12,31);
-
---       SELECT COALESCE(SUM(s.sld_dispo),0) INTO rights
---       FROM solde_conge s
---       WHERE s.emp_code = p_emp AND EXTRACT(YEAR FROM s.sld_anne) = p_year;
-
---       SELECT COALESCE(SUM(fn_conge_days(c.cng_code)),0) INTO taken
---       FROM conge c
---       JOIN validation_conge v ON v.val_code = c.val_code
---       JOIN status st ON st.stat_code = v.stat_code
---       WHERE c.emp_code = p_emp
---         AND c.cng_debut >= yr_start AND c.cng_fin <= yr_end
---         AND st.stat_ref = 'APR';
-
---       RETURN rights - taken;
---     END; $$ LANGUAGE plpgsql STABLE;
---   END IF;
--- END $$;
-
--- -- Permission hours or units (using prm_duree)
--- DO $$
--- BEGIN
---   IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'fn_permission_units') THEN
---     CREATE OR REPLACE FUNCTION fn_permission_units(p_prm_code INTEGER)
---     RETURNS NUMERIC AS $$
---     DECLARE v NUMERIC;
---     BEGIN
---       SELECT COALESCE(p.prm_duree,0) INTO v FROM permission p WHERE p.prm_code = p_prm_code;
---       RETURN COALESCE(v,0);
---     END; $$ LANGUAGE plpgsql STABLE;
---   END IF;
--- END $$;
-
--- -- Permission balance per year
--- DO $$
--- BEGIN
---   IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'fn_solde_permission') THEN
---     CREATE OR REPLACE FUNCTION fn_solde_permission(p_emp INTEGER, p_year INTEGER)
---     RETURNS NUMERIC AS $$
---     DECLARE rights NUMERIC := 0; used NUMERIC := 0; yr_start DATE; yr_end DATE;
---     BEGIN
---       yr_start := make_date(p_year,1,1);
---       yr_end   := make_date(p_year,12,31);
-
---       SELECT COALESCE(SUM(s.sld_prm_dispo),0) INTO rights
---       FROM solde_permission s
---       WHERE s.emp_code = p_emp AND s.sld_prm_anne = p_year;
-
---       SELECT COALESCE(SUM(fn_permission_units(p.prm_code)),0) INTO used
---       FROM permission p
---       JOIN validation_conge v ON v.val_code = p.val_code
---       JOIN status st ON st.stat_code = v.stat_code
---       WHERE p.emp_code = p_emp
---         AND p.prm_date >= yr_start AND p.prm_date <= yr_end
---         AND st.stat_ref = 'APR';
-
---       RETURN rights - used;
---     END; $$ LANGUAGE plpgsql STABLE;
---   END IF;
--- END $$;
-
--- -- Synthesis view of leaves per employee and period
--- DO $$
--- BEGIN
---   IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'v_conge_synthese') THEN
---     CREATE OR REPLACE VIEW v_conge_synthese AS
---     SELECT c.emp_code,
---            date_trunc('month', c.cng_debut)::date AS period_start,
---            SUM(fn_conge_days(c.cng_code)) AS days_taken,
---            COUNT(*) FILTER (WHERE st.stat_ref = 'SUB') AS nb_submitted,
---            COUNT(*) FILTER (WHERE st.stat_ref = 'APR') AS nb_approved,
---            COUNT(*) FILTER (WHERE st.stat_ref = 'REJ') AS nb_rejected
---     FROM conge c
---     LEFT JOIN validation_conge v ON v.val_code = c.val_code
---     LEFT JOIN status st ON st.stat_code = v.stat_code
---     GROUP BY c.emp_code, date_trunc('month', c.cng_debut);
---   END IF;
--- END $$;
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
