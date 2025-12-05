@@ -5,7 +5,7 @@ use CodeIgniter\RESTful\ResourceController;
 use App\Models\conge\TypeCongeModel;
 
 class TypeCongeController extends ResourceController
-{
+{   
     protected $modelName = TypeCongeModel::class;
     protected $format    = 'json';
 
@@ -14,8 +14,9 @@ class TypeCongeController extends ResourceController
     {
         $model = new TypeCongeModel();
         $result = $model->findAll();
-        // On ne sélectionne que typ_code et typ_appelation si tu veux alléger
-        // $result = $model->select(['typ_code', 'typ_appelation'])->findAll();
-        return $this->respond($result);
+        
+       return $this->response
+                ->setContentType('application/json; charset=UTF-8')
+                ->setJSON($result);
     }
 }

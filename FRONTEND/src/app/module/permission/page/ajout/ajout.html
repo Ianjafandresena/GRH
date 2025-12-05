@@ -1,0 +1,43 @@
+<div class="container">
+  <div class="card">
+    <h2>Nouvelle permission</h2>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-row">
+        <label>Employé
+          <input type="text" formControlName="emp_search" placeholder="Nom Prénom" />
+        </label>
+        <ul class="suggestions" *ngIf="filteredEmployees.length && form.get('emp_search')?.value && !selectedEmployee">
+          <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">{{ emp.nom }} {{ emp.prenom }}</li>
+        </ul>
+      </div>
+
+
+
+      <div class="form-row">
+        <label>Début
+          <input type="datetime-local" formControlName="prm_debut" (change)="updateDurations()" />
+        </label>
+        <label>Fin
+          <input type="datetime-local" formControlName="prm_fin" (change)="updateDurations()" />
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>Durée
+          <div>
+            <span *ngIf="calculatedDays">{{ calculatedDays }} jour(s)</span>
+            <span *ngIf="!calculatedDays && calculatedHours">{{ calculatedHours }} heure(s)</span>
+          </div>
+        </label>
+        <label>Motif
+          <input type="text" placeholder="Motif de la permission" />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="loading">Enregistrer</button>
+      </div>
+      <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
+    </form>
+  </div>
+</div>

@@ -1,55 +1,58 @@
 <div class="login-container">
   <div class="login-card">
-    <h2>Connexion</h2>
-    
+    <div class="login-header">
+      <div class="logo-circle">
+        <mat-icon>lock</mat-icon>
+      </div>
+      <h2>Connexion</h2>
+      <p class="subtitle">Système de Gestion RH - ARMP</p>
+    </div>
+
     <!-- Message d'erreur -->
     <div *ngIf="errorMessage" class="error-message">
-      {{ errorMessage }}
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMessage }}</span>
     </div>
 
     <!-- Formulaire de connexion -->
     <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
       <!-- username -->
       <div class="form-group">
-        <label for="username">username</label>
-        <input 
-          type="username" 
-          id="username" 
-          name="username"
-          [(ngModel)]="credentials.username"
-          required
-          username
-          placeholder="username"
-          [disabled]="isLoading"
-        >
+        <label for="username">Nom d'utilisateur</label>
+        <div class="input-wrapper">
+          <mat-icon class="input-icon">person_outline</mat-icon>
+          <input type="text" id="username" name="username" [(ngModel)]="credentials.username" required
+            placeholder="Entrez votre identifiant" [disabled]="isLoading" autocomplete="username">
+        </div>
       </div>
 
       <!-- Mot de passe -->
       <div class="form-group">
         <label for="password">Mot de passe</label>
-        <input 
-          type="password" 
-          id="password" 
-          name="password"
-          [(ngModel)]="credentials.password"
-          required
-          minlength="6"
-          placeholder="password"
-          [disabled]="isLoading"
-        >
+        <div class="input-wrapper">
+          <mat-icon class="input-icon">lock_outline</mat-icon>
+          <input type="password" id="password" name="password" [(ngModel)]="credentials.password" required minlength="6"
+            placeholder="Entrez votre mot de passe" [disabled]="isLoading" autocomplete="current-password">
+        </div>
+      </div>
+
+      <div class="form-options">
+        <label class="remember-me">
+          <input type="checkbox" name="remember">
+          <span>Se souvenir de moi</span>
+        </label>
+        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
       </div>
 
       <!-- Bouton de connexion -->
-      <button 
-        type="submit" 
-        [disabled]="isLoading"
-        class="btn-login"
-        >
+      <button type="submit" [disabled]="isLoading || loginForm.invalid" class="btn-login">
         <span *ngIf="!isLoading">Se connecter</span>
-        <span *ngIf="isLoading">Connexion en cours...</span>
+        <div *ngIf="isLoading" class="spinner"></div>
       </button>
     </form>
 
- 
+    <div class="login-footer">
+      <p>© 2025 ARMP. Tous droits réservés.</p>
+    </div>
   </div>
 </div>

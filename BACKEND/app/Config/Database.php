@@ -62,7 +62,7 @@ class Database extends Config
         'pConnect' => false,
         'DBDebug'  => true,
         'charset'  => 'utf8',
-        'DBCollat' => '',
+        'DBCollat' => '', 
         'swapPre'  => '',
         'encrypt'  => false,
         'compress' => false,
@@ -219,5 +219,10 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+         $this->default['afterConnect'] = function ($connection) {
+            $connection->query("SET client_encoding = 'UTF8'");
+        };
+        putenv('PGCLIENTENCODING=UTF8');
     }
 }

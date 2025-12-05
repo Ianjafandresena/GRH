@@ -36,9 +36,17 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('/', 'CongeController::createConge');
         $routes->get('/', 'CongeController::getAllConges');
         $routes->get('(:num)', 'CongeController::getConge/$1');
+        $routes->get('detail/(:num)', 'CongeController::getCongeDetail/$1');
+        $routes->get('attestation/(:num)', 'CongeController::exportAttestationPdf/$1');
         $routes->get('export', 'CongeController::exportCsv');
         $routes->post('import', 'CongeController::importCsv');
         $routes->get('export-excel', 'CongeController::exportExcel');
+    });
+
+    $routes->group('permission', ['namespace' => 'App\Controllers\permission', 'filter' => 'jwtauth'], function($routes) {
+        $routes->post('/', 'PermissionController::createPermission');
+        $routes->get('/', 'PermissionController::getAllPermissions');
+        $routes->get('(:num)', 'PermissionController::getPermission/$1');
     });
 
     $routes->group('interim_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
@@ -78,6 +86,25 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->put('(:num)', 'DecisionController::update/$1');
         $routes->delete('(:num)', 'DecisionController::delete/$1');
     });
+
+    $routes->group('solde_permission', ['namespace' => 'App\Controllers\permission', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'SoldePermissionController::index');
+        $routes->get('(:num)', 'SoldePermissionController::show/$1');
+        $routes->post('/', 'SoldePermissionController::create');
+        $routes->put('(:num)', 'SoldePermissionController::update/$1');
+        $routes->delete('(:num)', 'SoldePermissionController::delete/$1');
+        $routes->get('last_dispo/(:any)', 'SoldePermissionController::lastDispo/$1');
+    });
+
+    $routes->group('debit_solde_prm', ['namespace' => 'App\Controllers\permission', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'DebitSoldePrmController::index');
+        $routes->get('(:num)', 'DebitSoldePrmController::show/$1');
+        $routes->post('/', 'DebitSoldePrmController::create');
+        $routes->put('(:num)', 'DebitSoldePrmController::update/$1');
+        $routes->delete('(:num)', 'DebitSoldePrmController::delete/$1');
+    });
+
+
 
       
 });

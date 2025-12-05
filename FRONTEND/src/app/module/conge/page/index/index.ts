@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CongeService } from '../../service/conge.service';
+import { LayoutService } from '../../../layout/service/layout.service';
 
 @Component({
   selector: 'app-conge-index',
@@ -13,7 +14,10 @@ import { CongeService } from '../../service/conge.service';
 })
 export class CongeIndexComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly congeService = inject(CongeService);
+  private readonly layoutService = inject(LayoutService);
+
   conges: any[] = [];
   start: string | null = null;
   end: string | null = null;
@@ -23,6 +27,7 @@ export class CongeIndexComponent implements OnInit {
   errorMsg = '';
 
   ngOnInit() {
+    this.layoutService.setTitle('Gestion des Congés');
     this.route.data.subscribe(data => {
       this.conges = data['conges'] || [];
       if (!this.conges.length) {
@@ -79,6 +84,10 @@ export class CongeIndexComponent implements OnInit {
       a.click();
       window.URL.revokeObjectURL(url);
     });
+  }
+
+  openDetail(id: number) {
+    this.router.navigate(['/conge/detail', id]);
   }
 
 }
