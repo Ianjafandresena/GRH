@@ -1,13 +1,14 @@
 /* Component specific styles only */
 
-/* Suggestions List */
+/* Suggestions List - Themed */
 .suggestions {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
   z-index: 10;
-  background: white;
+  background: var(--bg-card);
+  /* Adapted to theme */
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
@@ -23,6 +24,8 @@
   cursor: pointer;
   transition: background 0.2s ease;
   border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  /* Ensure text is visible */
 }
 
 .suggestions li:last-child {
@@ -31,13 +34,15 @@
 
 .suggestions li:hover {
   background: var(--bg-main);
+  /* Darker on hover in dark mode */
   color: var(--stat-blue);
 }
 
 /* Input validation state */
 input.is-invalid {
   border-color: var(--stat-red);
-  background-color: #FEF2F2;
+  background-color: rgba(239, 68, 68, 0.1); /* Transparent red, works on both modes */
+  color: var(--text-primary);
 }
 
 /* Responsive adjustments */
