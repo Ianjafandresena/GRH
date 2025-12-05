@@ -56,60 +56,79 @@
   <div class="charts-grid">
     <div class="chart-card full-width">
       <h3>Évolution des Congés et Permissions</h3>
-      <div class="chart-placeholder" (mouseleave)="hoveredIndex = -1">
+      <div class="chart-placeholder" (mousemove)="onChartMouseMove($event)" (mouseleave)="onChartMouseLeave()">
 
         <!-- Tooltip Element -->
-        <div class="chart-tooltip" *ngIf="hoveredIndex !== -1" [style.left.px]="getTooltipX(hoveredIndex)"
-          [style.top.px]="getTooltipY(hoveredIndex)">
-          <div><strong>{{ chartLabels[hoveredIndex] }}</strong></div>
-          <div style="color: #60A5FA">Congés: {{ chartData.conges[hoveredIndex] }}</div>
-          <div style="color: #22ee3d">Perms: {{ chartData.permissions[hoveredIndex] }}</div>
+        <div class="chart-tooltip" *ngIf="hoveredIndex !== -1" [style.left.px]="tooltipX" [style.top.px]="tooltipY">
+          <div class="tooltip-header">{{ tooltipData.label }}</div>
+          <div class="tooltip-row">
+            <span class="dot blue"></span>
+            <span>Congés: <strong>{{ tooltipData.conges }}</strong></span>
+          </div>
+          <div class="tooltip-row">
+            <span class="dot green"></span>
+            <span>Perms: <strong>{{ tooltipData.permissions }}</strong></span>
+          </div>
         </div>
 
-        <svg viewBox="0 0 400 230" class="line-chart">
+        <svg viewBox="0 0 440 220" class="line-chart">
           <defs>
             <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:rgba(59, 130, 246, 0.3);stop-opacity:1" />
-              <stop offset="100%" style="stop-color:rgba(59, 130, 246, 0);stop-opacity:1" />
+              <stop offset="0%" style="stop-color:rgba(59, 130, 246, 0.4);stop-opacity:1" />
+              <stop offset="100%" style="stop-color:rgba(59, 130, 246, 0.1);stop-opacity:1" />
             </linearGradient>
             <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:rgba(40, 112, 7, 0.192);stop-opacity:1" />
-              <stop offset="100%" style="stop-color:rgba(6, 182, 212, 0);stop-opacity:1" />
+              <stop offset="0%" style="stop-color:rgba(16, 185, 129, 0.4);stop-opacity:1" />
+              <stop offset="100%" style="stop-color:rgba(16, 185, 129, 0.1);stop-opacity:1" />
             </linearGradient>
           </defs>
 
-          <!-- Grid lines -->
-          <line x1="0" y1="50" x2="400" y2="50" stroke="#E5E7EB" stroke-dasharray="4" />
-          <line x1="0" y1="100" x2="400" y2="100" stroke="#E5E7EB" stroke-dasharray="4" />
-          <line x1="0" y1="150" x2="400" y2="150" stroke="#E5E7EB" stroke-dasharray="4" />
-          <line x1="0" y1="200" x2="400" y2="200" stroke="#E5E7EB" stroke-dasharray="4" />
+          <!-- Y-axis Labels & Horizontal Grid Lines -->
+          <g *ngFor="let tick of yAxisTicks">
+            <!-- Label (Left side) -->
+            <text x="25" [attr.y]="tick.y + 4" font-size="10" fill="var(--text-muted)" text-anchor="end">{{ tick.value |
+              number:'1.0-0' }}</text>
 
-          <!-- Conges (Blue) -->
-          <path [attr.d]="congeAreaPath" fill="url(#gradient1)" opacity="0.5" />
-          <path [attr.d]="congePath" fill="none" stroke="#3B82F6" stroke-width="3" />
+            <!-- Grid Line (aligned with label) -->
+            <!-- Don't draw line for the x-axis (value 0, which is at y=200, or maybe we do want it?) -->
+            <!-- User had a line at 200. Let's keep it. -->
+            <line x1="30" [attr.y1]="tick.y" x2="440" [attr.y2]="tick.y" stroke="var(--border-light)"
+              stroke-dasharray="3" opacity="0.5" />
+          </g>
 
-          <!-- Permissions (Cyan) -->
-          <path [attr.d]="permissionAreaPath" fill="url(#gradient2)" opacity="0.5" />
-          <path [attr.d]="permissionPath" fill="none" stroke="#22ee3d" stroke-width="3" />
-
-          <!-- Hover Line -->
-          <line *ngIf="hoveredIndex !== -1" [attr.x1]="getX(hoveredIndex)" y1="0" [attr.x2]="getX(hoveredIndex)"
-            y2="200" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="4" />
-
-          <!-- Hover Points -->
-          <circle *ngIf="hoveredIndex !== -1" [attr.cx]="getX(hoveredIndex)"
-            [attr.cy]="getY(chartData.conges[hoveredIndex])" r="4" fill="#3B82F6" stroke="white" stroke-width="2" />
-          <circle *ngIf="hoveredIndex !== -1" [attr.cx]="getX(hoveredIndex)"
-            [attr.cy]="getY(chartData.permissions[hoveredIndex])" r="4" fill="#06B6D4" stroke="white"
-            stroke-width="2" />
-
-          <!-- Interaction Layer (Transparent Rects) -->
-          <rect *ngFor="let label of chartLabels; let i = index" [attr.x]="getX(i) - (400/22)" y="0"
-            [attr.width]="400/11" height="230" fill="transparent" (mouseenter)="hoveredIndex = i" />
-
-          <!-- X-axis labels -->
+          <!-- Vertical Grid Lines (for each month) -->
           <g *ngFor="let label of chartLabels; let i = index">
-            <text [attr.x]="getX(i)" y="220" font-size="10" fill="#6B7280" text-anchor="middle">{{ label }}</text>
+            <line [attr.x1]="getX(i) + 30" y1="10" [attr.x2]="getX(i) + 30" y2="200" stroke="var(--border-light)"
+              stroke-dasharray="3" opacity="0.3" />
+          </g>
+
+          <!-- Chart Content Group (Shifted right for Y-axis) -->
+          <g transform="translate(30, 0)">
+            <!-- Conges (Blue) -->
+            <path [attr.d]="congeAreaPath" fill="url(#gradient1)" />
+            <path [attr.d]="congePath" fill="none" stroke="#3B82F6" stroke-width="2" />
+
+            <!-- Permissions (Green) -->
+            <path [attr.d]="permissionAreaPath" fill="url(#gradient2)" />
+            <path [attr.d]="permissionPath" fill="none" stroke="#10B981" stroke-width="2" />
+
+            <!-- Active Vertical Line (Solid, like image) -->
+            <line *ngIf="hoveredIndex !== -1" [attr.x1]="getX(hoveredIndex)" y1="10" [attr.x2]="getX(hoveredIndex)"
+              y2="200" stroke="var(--text-secondary)" stroke-width="1" />
+
+            <!-- Hover Points (Filled with color, background stroke) -->
+            <circle *ngIf="hoveredIndex !== -1" [attr.cx]="getX(hoveredIndex)"
+              [attr.cy]="getY(chartData.conges[hoveredIndex])" r="5" fill="#3B82F6" stroke="var(--bg-card)"
+              stroke-width="2" />
+            <circle *ngIf="hoveredIndex !== -1" [attr.cx]="getX(hoveredIndex)"
+              [attr.cy]="getY(chartData.permissions[hoveredIndex])" r="5" fill="#10B981" stroke="var(--bg-card)"
+              stroke-width="2" />
+
+            <!-- X-axis Labels (Shifted) -->
+            <g *ngFor="let label of chartLabels; let i = index">
+              <text [attr.x]="getX(i)" y="215" font-size="10" fill="var(--text-secondary)" text-anchor="middle">{{ label
+                }}</text>
+            </g>
           </g>
         </svg>
       </div>

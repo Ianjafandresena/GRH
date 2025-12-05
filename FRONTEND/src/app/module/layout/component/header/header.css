@@ -9,7 +9,7 @@
 
 /* Header Styles extracted from index.css */
 .dashboard-header {
-    background: white;
+    background: var(--bg-white);
     padding: 0.6rem 2rem;
     border-bottom: 1px solid var(--border-light);
     display: flex;
@@ -60,7 +60,8 @@
 .search-box:focus-within {
     border-color: var(--stat-blue);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background: white;
+    background: var(--bg-card);
+    /* Changed from white */
 }
 
 .search-box input {
@@ -87,9 +88,12 @@
     cursor: pointer;
     padding: 0;
     border-radius: 50%;
-    transition: background 0.2s ease;
-    background: white;
+    transition: background 0.2s ease, transform 0.2s ease;
+    background: var(--bg-card);
+    /* Changed from white */
     border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    /* Ensure icon color matches theme */
     flex-shrink: 0;
 }
 
@@ -97,11 +101,15 @@
     font-size: 1.25rem;
     width: 1.25rem;
     height: 1.25rem;
+    color: var(--text-secondary);
+    /* Softer color for icon */
 }
 
 .notification-bell:hover {
     background: var(--bg-main);
     transform: translateY(-2px);
+    color: var(--text-primary);
+    /* Brighter on hover */
 }
 
 .notification-bell .badge {
@@ -116,7 +124,8 @@
     border-radius: 1rem;
     min-width: 1.2rem;
     text-align: center;
-    border: 2px solid white;
+    border: 2px solid var(--bg-card);
+    /* Changed from white to match button bg */
 }
 
 .user-menu {

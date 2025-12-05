@@ -82,7 +82,7 @@
     </nav>
 
     <div class="logout-section">
-      <a href="#" title="Déconnexion">
+      <a (click)="logout()" style="cursor: pointer;" title="Déconnexion">
         <mat-icon>logout</mat-icon>
         <span *ngIf="!isCollapsed">Déconnexion</span>
       </a>
