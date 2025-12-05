@@ -2,7 +2,7 @@
 .layout {
     display: flex;
     min-height: 100vh;
-    background-color: #F3F4F6;
+    background-color: var(--bg-main);
     font-family: 'Inter', sans-serif;
 }
 
@@ -233,8 +233,8 @@ nav mat-icon {
     margin-top: auto;
     padding: 1.5rem;
     text-align: center;
-    color: #6B7280;
+    color: var(--text-secondary);
     font-size: 0.875rem;
-    border-top: 1px solid #E5E7EB;
-    background: white;
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-white);
 }
