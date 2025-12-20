@@ -8,5 +8,7 @@ export const congeRoutes: Routes = [
   { path: 'index', component: CongeIndexComponent, resolve: { conges: congeListResolver } },
   { path: 'detail/:id', loadComponent: () => import('./page/detail/detail').then(m => m.DetailCongeComponent) },
   { path: 'viewer/:id', loadComponent: () => import('./page/viewer/viewer').then(m => m.ViewerCongeComponent) },
+  { path: 'interruption/:id', loadComponent: () => import('./page/interruption/interruption').then(m => m.InterruptionComponent) },
+  { path: 'validation', loadComponent: () => import('./page/validation/validation').then(m => m.ValidationComponent) },
   { path: '', redirectTo: 'index', pathMatch: 'full' }
 ];

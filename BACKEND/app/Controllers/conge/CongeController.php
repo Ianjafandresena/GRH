@@ -12,7 +12,7 @@ class CongeController extends ResourceController
 {
     use ResponseTrait;
 
-    // Création du congé
+    // Création du congé (sans débit immédiat - attente validation)
     public function createConge()
     {
         $data = $this->request->getJSON(true);
@@ -29,11 +29,10 @@ class CongeController extends ResourceController
         }
 
         $emp_code = $data['emp_code'];
-        $jours_a_debiter = $data['cng_nb_jour'];
+        $jours_demandes = $data['cng_nb_jour'];
 
+        // Vérifier que le solde est suffisant (sans débiter)
         $soldeModel = new SoldeCongeModel();
-        $debitModel = new DebitSoldeCngModel();
-
 
         $reliquats = $soldeModel
             ->where('emp_code', $emp_code)
@@ -41,31 +40,25 @@ class CongeController extends ResourceController
             ->orderBy('sld_anne', 'ASC')
             ->findAll();
 
-        if(empty($reliquats)) {
+        if (empty($reliquats)) {
             return $this->fail('Aucun solde restant pour cet employé');
         }
 
-        // Calcul du débit multi-reliquat
-        $reste = $jours_a_debiter;
-        $mouvements = [];
+        // Calculer le total disponible
+        $totalDisponible = 0;
         foreach ($reliquats as $reliq) {
-            if ($reste <= 0) break;
-            $debit = min($reste, $reliq['sld_restant']);
-            $soldeModel->update($reliq['sld_code'], ['sld_restant' => $reliq['sld_restant'] - $debit]);
-            $mouvements[] = [
-                'emp_code' => $emp_code,
-                'sld_code' => $reliq['sld_code'],
-                'deb_jr'   => $debit,
-                'deb_date' => date('Y-m-d')
-            ];
-            $reste -= $debit;
+            $totalDisponible += (float)$reliq['sld_restant'];
         }
 
-        if ($reste > 0) {
-            return $this->fail('Solde insuffisant sur tous les reliquats');
+        if ($totalDisponible < $jours_demandes) {
+            return $this->fail('Solde insuffisant. Disponible: ' . $totalDisponible . ' jours, Demandé: ' . $jours_demandes . ' jours');
         }
 
-        $data['cng_demande'] = date('Y-m-d H:i:s');
+        // Créer le congé avec status = false (en attente de validation)
+        // La date de demande peut être fournie par le formulaire ou auto-générée
+        $data['cng_demande'] = $data['cng_demande'] ?? date('Y-m-d H:i:s');
+        $data['cng_status'] = false; // En attente de validation
+
         $congeModel = new CongeModel();
         $id = $congeModel->insert($data);
 
@@ -73,20 +66,21 @@ class CongeController extends ResourceController
             return $this->fail('Impossible de créer le congé');
         }
 
-        
-        foreach ($mouvements as $mouvement) {
-            $mouvement['cng_code'] = $id;
-            $debitModel->insert($mouvement);
-        }
+        // Note: Le débit du solde se fera uniquement après validation complète
+        // (CHEF → RRH → DAAF → DG) via ValidationCongeController::finalizeValidation()
 
         $createdConge = $congeModel->find($id);
-        return $this->respondCreated($createdConge);
+        return $this->respondCreated([
+            'conge' => $createdConge,
+            'message' => 'Demande de congé créée. En attente de validation par le chef hiérarchique.',
+            'next_step' => 'CHEF'
+        ]);
     }
 
     public function getAllConges()
     {
         $congeModel = new CongeModel();
-        $builder = $congeModel->select('conge.*, employee.nom AS nom_emp, employee.prenom AS prenom_emp, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+        $builder = $congeModel->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
             ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
             ->join('region', 'region.reg_code = conge.reg_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left');
@@ -131,7 +125,7 @@ class CongeController extends ResourceController
     public function getCongeDetail($id)
     {
         $congeModel = new CongeModel();
-        $detail = $congeModel->select('conge.*, employee.nom AS nom_emp, employee.prenom AS prenom_emp, employee.matricule AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+        $detail = $congeModel->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
             ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
             ->join('region', 'region.reg_code = conge.reg_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
@@ -140,7 +134,7 @@ class CongeController extends ResourceController
         if (!$detail) return $this->failNotFound('Congé non trouvé');
 
         $interimModel = new \App\Models\conge\InterimCongeModel();
-        $interims = $interimModel->select('interim_conge.*, e.nom AS nom, e.prenom AS prenom')
+        $interims = $interimModel->select('interim_conge.*, e.emp_nom AS nom, e.emp_prenom AS prenom')
             ->join('employee e', 'e.emp_code = interim_conge.emp_code', 'left')
             ->where('interim_conge.cng_code', $id)
             ->findAll();
@@ -152,7 +146,7 @@ class CongeController extends ResourceController
         $mouvs = $debitModel->where('cng_code', $id)->findAll();
         $decNum = null; $sldAnne = null; $sldRestant = null;
         if (!empty($mouvs)) {
-            // Prioriser le reliquat avec restant > 0 parmi ceux débités; sinon prendre le plus ancien
+           
             $candidats = [];
             foreach ($mouvs as $mv) {
                 $solde = $soldeModel->find($mv['sld_code']);
@@ -189,7 +183,7 @@ class CongeController extends ResourceController
         $req = service('request');
         // Réutilise la logique de getCongeDetail
         $congeModel = new CongeModel();
-        $detail = $congeModel->select('conge.*, employee.nom AS nom_emp, employee.prenom AS prenom_emp, employee.matricule AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+        $detail = $congeModel->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
             ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
             ->join('region', 'region.reg_code = conge.reg_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
@@ -198,7 +192,7 @@ class CongeController extends ResourceController
         if (!$detail) return $this->failNotFound('Congé non trouvé');
 
         $interimModel = new \App\Models\conge\InterimCongeModel();
-        $interims = $interimModel->select('interim_conge.*, e.nom AS nom, e.prenom AS prenom')
+        $interims = $interimModel->select('interim_conge.*, e.emp_nom AS nom, e.emp_prenom AS prenom')
             ->join('employee e', 'e.emp_code = interim_conge.emp_code', 'left')
             ->where('interim_conge.cng_code', $id)
             ->findAll();

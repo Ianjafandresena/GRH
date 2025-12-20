@@ -5,14 +5,14 @@ import { EmployeeService } from '../../../employee/service/employee.service';
 import { Employee } from '../../../employee/model/employee.model';
 import { PermissionService } from '../../service/permission.service';
 import { Permission } from '../../model/permission.model';
-import { LayoutService } from '../../../layout/service/layout.service';
+import { LayoutService } from '../../../../shared/layout/service/layout.service';
 
 @Component({
   selector: 'app-ajout-permission',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './ajout.html',
-  styleUrls: ['./ajout.css']
+  styleUrls: ['./ajout.scss']
 })
 export class AjoutPermissionComponent implements OnInit {
   private readonly layoutService = inject(LayoutService);
@@ -47,7 +47,7 @@ export class AjoutPermissionComponent implements OnInit {
 
     this.form.get('emp_search')?.valueChanges.subscribe((val: string) => {
       const v = (val || '').toLowerCase();
-      this.filteredEmployees = this.employees.filter(e => (`${e.nom} ${e.prenom}`.toLowerCase().includes(v)));
+      this.filteredEmployees = this.employees.filter(e => (`${e.emp_nom} ${e.emp_prenom}`.toLowerCase().includes(v)));
       if (!val) this.selectedEmployee = null;
     });
   }
@@ -66,7 +66,7 @@ export class AjoutPermissionComponent implements OnInit {
 
   selectEmployee(emp: Employee) {
     this.selectedEmployee = emp;
-    this.form.patchValue({ emp_search: `${emp.nom} ${emp.prenom}` });
+    this.form.patchValue({ emp_search: `${emp.emp_nom} ${emp.emp_prenom}` });
     this.filteredEmployees = [];
   }
 

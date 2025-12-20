@@ -17,10 +17,10 @@ VALUES (
 
 
 -- Employés
-INSERT INTO employee (emp_code, nom, prenom, matricule, sexe, date_embauche, email, is_actif) VALUES
-(1, 'RANDRIANTSIANA', 'Valério', 310698, TRUE, '2018-01-15', 'valerio@entreprise.mg', 1),
-(2, 'RABE', 'Jean', 311100, FALSE, '2020-03-05', 'jean.rabe@entreprise.mg', 1),
-(3, 'RAKOTO', 'Miora', 312211, TRUE, '2022-06-10', 'miora.rakoto@entreprise.mg', 1);
+INSERT INTO employee (emp_nom, emp_prenom, emp_imarmp, emp_sexe, emp_date_embauche, emp_email, emp_disponibilite, sign_code, pst_code) VALUES
+('RANDRIANTSIANA', 'Valério', 'H300698', TRUE, '2018-01-15', 'valerio@entreprise.mg', 1),
+('RABE', 'Jean', 'H301100', FALSE, '2020-03-05', 'jean.rabe@entreprise.mg', 1),
+('RAKOTO', 'Miora', 'H302211', TRUE, '2022-06-10', 'miora.rakoto@entreprise.mg', 1);
 
 
 INSERT INTO Region (reg_nom) VALUES
@@ -59,8 +59,8 @@ VALUES
 ('051/ARMP/DG-25'); 
 
 -- Région
-INSERT INTO type_conge (typ_appelation, typ_ref, is_paid) VALUES
-('Congé Annuel', 'CA', 1), ('Congé Exceptionnel', 'CE', 0);
+INSERT INTO type_conge (typ_appelation, typ_ref) VALUES
+('Congé Annuel', 'CA'), ('Congé Exceptionnel', 'CE'),('Congé de Paternité', 'CP'),('Repos Maladie', 'RM');
 
 -- Attribution soldes pour chaque employé, chaque année, chaque relié à sa décision
 -- Valério (1)
@@ -87,6 +87,15 @@ INSERT INTO solde_conge (sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj,
 (12, 2024, 12, 12, '2025-01-01 08:00:00', 4, 3),
 (12, 2025, 12, 12, '2025-01-01 08:00:00', 5, 3);
 
+ALTER TABLE etat_remb ADD COLUMN eta_libelle VARCHAR(50) NOT NULL DEFAULT 'EN_ATTENTE';
+
+INSERT INTO etat_remb (eta_libelle) VALUES 
+  ('EN_ATTENTE'),
+  ('VALIDE_RRH'),
+  ('VALIDE_DAAF'),
+  ('ENGAGE'),
+  ('PAYE'),
+  ('REFUSE');
 
 SELECT s.sld_restant, s.sld_anne, s.dec_code, d.dec_num
 FROM solde_conge s

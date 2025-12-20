@@ -9,11 +9,11 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   //  Vérifier si l'utilisateur est authentifié
   if (authService.isAuthenticated()) {
-    console.log('✅ Utilisateur authentifié, accès autorisé');
+    console.log('Utilisateur authentifié, accès autorisé');
     return true;  // Autoriser l'accès
   }
 
-  console.log('❌ Utilisateur non authentifié, redirection vers /login');
+  console.log('Utilisateur non authentifié, redirection vers /login');
   router.navigate([''], {
     queryParams: { returnUrl: state.url } 
   });

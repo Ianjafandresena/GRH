@@ -1,0 +1,140 @@
+.page-container {
+    padding: 1.5rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    h1 {
+        margin: 0;
+        color: var(--text-color);
+    }
+}
+
+.error-message {
+    background: var(--error-bg, #fee);
+    color: var(--error-color, #c00);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+
+    th,
+    td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background: var(--header-bg);
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    td {
+        color: var(--text-secondary);
+    }
+
+    .amount {
+        font-weight: 600;
+        text-align: right;
+    }
+
+    .empty {
+        text-align: center;
+        font-style: italic;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &.badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    &.badge-info {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    &.badge-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    &.badge-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    &.badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    &.badge-secondary {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+
+    &.btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    &.btn-secondary {
+        background: var(--secondary-color, #6c757d);
+        color: white;
+    }
+
+    &.btn-sm {
+        padding: 0.25rem 0.5rem;
+
+        .material-icons {
+            font-size: 18px;
+        }
+    }
+}

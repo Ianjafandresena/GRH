@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { DashboardService } from '../../service/dashboard.service';
-import { LayoutService } from '../../../layout/service/layout.service';
+import { LayoutService } from '../../../../shared/layout/service/layout.service';
 
 @Component({
   selector: 'app-home-index',
   standalone: true,
   imports: [CommonModule, MatIconModule],
   templateUrl: './index.html',
-  styleUrls: ['./index.css']
+  styleUrls: ['./index.scss']
 })
 export class HomeComponent implements OnInit {
   private readonly router = inject(Router);

@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-modification',
   imports: [],
   templateUrl: './modification.html',
-  styleUrl: './modification.css',
+  styleUrl: './modification.scss',
 })
 export class Modification {
 

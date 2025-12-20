@@ -1,0 +1,99 @@
+<div class="page-container">
+    <div class="page-header">
+        <button class="btn btn-secondary" (click)="goBack()">← Retour</button>
+        <h1>Demande #{{ demande?.rem_code }}</h1>
+    </div>
+
+    <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
+    <div class="loading" *ngIf="loading">Chargement...</div>
+
+    <div class="detail-card" *ngIf="demande && !loading">
+        <!-- En-tête -->
+        <div class="header-info">
+            <div class="num-demande">{{ demande.num_demande || 'N°---' }}</div>
+            <span class="badge" [class]="'badge-' + (demande.eta_libelle || 'default')">
+                {{ demande.eta_libelle || 'N/A' }}
+            </span>
+        </div>
+
+        <!-- Infos Agent -->
+        <div class="section">
+            <h3>Agent demandeur</h3>
+            <div class="info-row"><span class="label">Nom:</span><span>{{ demande.nom_emp }} {{ demande.prenom_emp
+                    }}</span></div>
+            <div class="info-row"><span class="label">Matricule:</span><span>{{ demande.matricule }}</span></div>
+            <div class="info-row"><span class="label">Direction:</span><span>{{ demande.direction }}</span></div>
+            <div class="info-row"><span class="label">Fonction:</span><span>{{ demande.fonction }}</span></div>
+        </div>
+
+        <!-- Infos Malade -->
+        <div class="section">
+            <h3>Malade</h3>
+            <div class="info-row"><span class="label">Nom:</span><span>{{ demande.nom_malade }}</span></div>
+            <div class="info-row"><span class="label">Lien:</span><span>{{ demande.lien_malade }}</span></div>
+        </div>
+
+        <!-- Montant -->
+        <div class="section">
+            <h3>Montant</h3>
+            <div class="info-row">
+                <span class="label">Demandé:</span>
+                <span class="amount">{{ demande.rem_montant | number:'1.2-2' }} Ar</span>
+            </div>
+            <div class="info-row" *ngIf="demande.montant_valide">
+                <span class="label">Validé:</span>
+                <span class="amount">{{ demande.montant_valide | number:'1.2-2' }} Ar</span>
+            </div>
+        </div>
+
+        <!-- Pièces fournies -->
+        <div class="section">
+            <h3>Pièces fournies</h3>
+            <div class="pieces-list">
+                <span class="piece" [class.checked]="demande.has_ordonnance">☐ Ordonnance</span>
+                <span class="piece" [class.checked]="demande.has_facture">☐ Facture(s)</span>
+                <span class="piece" [class.checked]="demande.has_prise_en_charge">☐ Prise en charge</span>
+            </div>
+            <div class="info-row" *ngIf="demande.pec_reference">
+                <span class="label">Réf PEC:</span><span>{{ demande.pec_reference }}</span>
+            </div>
+        </div>
+
+        <!-- Historique -->
+        <div class="section" *ngIf="historique.length">
+            <h3>Historique des validations</h3>
+            <ul class="history-list">
+                <li *ngFor="let h of historique">{{ h.sin_dem_code }} - {{ h.date_ }}</li>
+            </ul>
+        </div>
+
+        <!-- Rejet -->
+        <div class="section rejet" *ngIf="demande.motif_rejet">
+            <h3>Motif de rejet</h3>
+            <p>{{ demande.motif_rejet }}</p>
+        </div>
+
+        <!-- Actions selon état -->
+        <div class="actions">
+            <button class="btn btn-success" *ngIf="demande.eta_libelle === 'SOUMIS'" (click)="validerRRH()">
+                ✓ Valider RRH
+            </button>
+            <button class="btn btn-success" *ngIf="demande.eta_libelle === 'VALIDE_RRH'" (click)="validerDAAF()">
+                ✓ Valider DAAF
+            </button>
+            <button class="btn btn-primary" *ngIf="demande.eta_libelle === 'VALIDE_DAAF'" (click)="engager()">
+                📋 Engager
+            </button>
+            <button class="btn btn-success" *ngIf="demande.eta_libelle === 'ENGAGE'" (click)="payer()">
+                💰 Payer
+            </button>
+
+            <button class="btn btn-danger" *ngIf="['SOUMIS','VALIDE_RRH','VALIDE_DAAF'].includes(demande.eta_libelle)"
+                (click)="rejeter()">
+                ✗ Rejeter
+            </button>
+
+            <button class="btn btn-secondary" (click)="downloadPdf()">📄 PDF</button>
+        </div>
+    </div>
+</div>

@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-modif',
   imports: [],
   templateUrl: './modif.html',
-  styleUrl: './modif.css',
+  styleUrl: './modif.scss',
 })
 export class Modif {
 

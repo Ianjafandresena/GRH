@@ -120,7 +120,7 @@ class PermissionController extends ResourceController
     public function getAllPermissions()
     {
         $model = new PermissionModel();
-        $builder = $model->select('permission.*, employee.nom AS nom_emp, employee.prenom AS prenom_emp')
+        $builder = $model->select('permission.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp')
             ->join('employee', 'employee.emp_code = permission.emp_code', 'left');
         $start = $_GET['start'] ?? null;
         $end = $_GET['end'] ?? null;

@@ -1,0 +1,222 @@
+.page-container {
+    padding: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    h1 {
+        margin: 0;
+        color: var(--text-color);
+        font-size: 1.25rem;
+    }
+}
+
+.error-message {
+    background: var(--error-bg, #fee);
+    color: var(--error-color, #c00);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.detail-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.num-demande {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-SOUMIS {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-VALIDE_RRH,
+.badge-VALIDE_DAAF {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.badge-ENGAGE {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-PAYE {
+    background: #28a745;
+    color: white;
+}
+
+.badge-REJETE {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.section {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+
+    h3 {
+        margin: 0 0 0.75rem;
+        font-size: 0.95rem;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    &:last-of-type {
+        border-bottom: none;
+    }
+
+    &.rejet {
+        background: #fff5f5;
+        padding: 1rem;
+        border-radius: 4px;
+        border: 1px solid #f8d7da;
+
+        p {
+            margin: 0;
+            color: #721c24;
+        }
+    }
+}
+
+.info-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+
+    .label {
+        font-weight: 500;
+        min-width: 100px;
+        color: var(--text-secondary);
+    }
+
+    .amount {
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+}
+
+.pieces-list {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+
+    .piece {
+        color: var(--text-secondary);
+
+        &.checked {
+            color: var(--success-color, #28a745);
+
+            &::first-letter {
+                content: '☑';
+            }
+        }
+    }
+}
+
+.piece.checked::before {
+    content: '☑ ';
+}
+
+.piece:not(.checked)::before {
+    content: '☐ ';
+}
+
+.piece {
+    &::before {
+        display: none;
+    }
+}
+
+.history-list {
+    margin: 0;
+    padding-left: 1.25rem;
+
+    li {
+        margin-bottom: 0.25rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: filter 0.2s;
+
+    &:hover {
+        filter: brightness(1.1);
+    }
+
+    &.btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    &.btn-secondary {
+        background: var(--secondary-color, #6c757d);
+        color: white;
+    }
+
+    &.btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    &.btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+}

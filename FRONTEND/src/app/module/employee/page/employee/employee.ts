@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-employee',
   imports: [],
   templateUrl: './employee.html',
-  styleUrl: './employee.css',
+  styleUrl: './employee.scss',
 })
 export class Employee {
 
