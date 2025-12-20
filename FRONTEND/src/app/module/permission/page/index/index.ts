@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PermissionService } from '../../service/permission.service';
-import { LayoutService } from '../../../layout/service/layout.service';
+import { LayoutService } from '../../../../shared/layout/service/layout.service';
 
 @Component({
   selector: 'app-permission-index',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './index.html',
-  styleUrls: ['./index.css']
+  styleUrls: ['./index.scss']
 })
 export class PermissionIndexComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

@@ -1,0 +1,223 @@
+.page-container {
+    padding: 1.5rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 1.5rem;
+
+    h1 {
+        margin: 0;
+        color: var(--text-color);
+        font-size: 1.25rem;
+    }
+}
+
+.error-message {
+    background: var(--error-bg, #fee);
+    color: var(--error-color, #c00);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.form-card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+
+    h3 {
+        margin: 0 0 1rem;
+        font-size: 1rem;
+        color: var(--text-color);
+        font-weight: 600;
+    }
+
+    &:last-of-type {
+        border-bottom: none;
+    }
+}
+
+.form-group {
+    margin-bottom: 1rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--input-bg);
+        color: var(--text-color);
+        font-size: 0.95rem;
+    }
+
+    input:focus,
+    select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+    }
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: normal;
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary-color);
+        cursor: pointer;
+    }
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+
+    &.btn-primary {
+        background: var(--primary-color);
+        color: white;
+
+        &:hover {
+            filter: brightness(1.1);
+        }
+    }
+
+    &.btn-secondary {
+        background: var(--secondary-color, #6c757d);
+        color: white;
+
+        &:hover {
+            filter: brightness(1.1);
+        }
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+
+    input {
+        width: 100%;
+    }
+
+    .suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--card-bg, white);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        margin-top: 2px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            padding: 0.6rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+
+            &:hover {
+                background: var(--primary-color, #007bff);
+                color: white;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+    }
+}
+
+.employee-info {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--input-bg, #f8f9fa);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+
+    .info-row {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.montant-lettres-display {
+    padding: 0.6rem;
+    background: var(--input-bg, #f8f9fa);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-style: italic;
+    color: var(--text-color);
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.montant-lettres-placeholder {
+    padding: 0.6rem;
+    color: var(--text-color, #6c757d);
+    font-size: 0.85rem;
+    font-style: italic;
+    opacity: 0.7;
+}

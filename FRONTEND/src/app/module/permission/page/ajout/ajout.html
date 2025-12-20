@@ -7,7 +7,8 @@
           <input type="text" formControlName="emp_search" placeholder="Nom Prénom" />
         </label>
         <ul class="suggestions" *ngIf="filteredEmployees.length && form.get('emp_search')?.value && !selectedEmployee">
-          <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">{{ emp.nom }} {{ emp.prenom }}</li>
+          <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">{{ emp.emp_nom }} {{ emp.emp_prenom }}
+          </li>
         </ul>
       </div>
 

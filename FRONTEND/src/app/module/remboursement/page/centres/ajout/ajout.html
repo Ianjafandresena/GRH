@@ -1,0 +1,57 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>{{ isEdit ? 'Modifier' : 'Nouveau' }} Centre de Santé</h1>
+    </div>
+
+    <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+    <mat-card class="form-card">
+        <mat-card-content>
+            <form (ngSubmit)="submit()">
+
+                <div class="form-row">
+                    <!-- Nom -->
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Nom du centre *</mat-label>
+                        <input matInput [(ngModel)]="centre.cen_nom" name="cen_nom" required>
+                    </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                    <!-- Adresse -->
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Adresse</mat-label>
+                        <input matInput [(ngModel)]="centre.cen_adresse" name="cen_adresse">
+                        <mat-icon matSuffix>place</mat-icon>
+                    </mat-form-field>
+                </div>
+
+                <div class="form-row two-col">
+                    <!-- Ville -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>Ville</mat-label>
+                        <input matInput [(ngModel)]="centre.cen_ville" name="cen_ville">
+                    </mat-form-field>
+
+                    <!-- Convention -->
+                    <mat-form-field appearance="outline">
+                        <mat-label>Convention *</mat-label>
+                        <mat-select [(ngModel)]="centre.cnv_code" name="cnv_code" required>
+                            <mat-option *ngFor="let c of conventions" [value]="c.cnv_code">
+                                {{ c.cnv_taux_couver }}% (Début: {{ c.cnv_date_debut }})
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="form-actions">
+                    <button mat-button type="button" (click)="cancel()">Annuler</button>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+                        {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+                    </button>
+                </div>
+
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

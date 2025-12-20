@@ -1,0 +1,103 @@
+<div class="page-container">
+    <div class="card form-card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>Nouvelle Prise en Charge</h1>
+                <!-- <p class="subtitle">Enregistrer une nouvelle demande</p> -->
+            </div>
+            <button class="btn btn-outline btn-sm" routerLink="/remboursement/prises-en-charge">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
+        </div>
+
+        <form (ngSubmit)="submit()">
+            <div class="error-message" *ngIf="errorMsg && !errorField">{{ errorMsg }}</div>
+            <div class="form-section">
+                <!-- Employee Search -->
+                <div class="form-group required">
+                    <label>Employé concerné</label>
+                    <div class="select2-container">
+                        <div class="input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" [(ngModel)]="empSearchText" (input)="filterEmployees()"
+                                (focus)="onFocus()" (blur)="onBlur()" name="empSearch" class="form-control"
+                                [class.input-error]="errorField === 'emp'"
+                                placeholder="Rechercher par nom ou matricule..." autocomplete="off">
+                        </div>
+                        <ul class="suggestions" *ngIf="showDropdown && filteredEmployees.length > 0">
+                            <li *ngFor="let emp of filteredEmployees" (mousedown)="selectEmployee(emp)">
+                                <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
+                                <div class="suggestion-sub">{{ emp.emp_imarmp }}</div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="field-error-msg" *ngIf="errorField === 'emp'">{{ errorMsg }}</div>
+                </div>
+
+                <div *ngIf="selectedEmployee" class="selected-tag mb-4">
+                    <span><i class="fas fa-user-check"></i> {{ selectedEmployee.emp_nom }} {{
+                        selectedEmployee.emp_prenom }} ({{
+                        selectedEmployee.emp_imarmp }})</span>
+                </div>
+
+                <!-- Beneficiary Selection -->
+                <div class="form-group required">
+                    <label>Bénéficiaire</label>
+                    <div class="beneficiary-options">
+                        <label class="radio-card" [class.active]="model.beneficiaire_type === 'agent'">
+                            <input type="radio" name="beneficiaire_type" value="agent"
+                                [(ngModel)]="model.beneficiaire_type">
+                            <span class="radio-content">
+                                <i class="fas fa-user"></i> Agent
+                            </span>
+                        </label>
+                        <label class="radio-card" [class.active]="model.beneficiaire_type === 'conjoint'">
+                            <input type="radio" name="beneficiaire_type" value="conjoint"
+                                [(ngModel)]="model.beneficiaire_type">
+                            <span class="radio-content">
+                                <i class="fas fa-user-friends"></i> Conjoint(e)
+                            </span>
+                        </label>
+                        <label class="radio-card" [class.active]="model.beneficiaire_type === 'enfant'">
+                            <input type="radio" name="beneficiaire_type" value="enfant"
+                                [(ngModel)]="model.beneficiaire_type">
+                            <span class="radio-content">
+                                <i class="fas fa-child"></i> Enfant
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Conditional Inputs -->
+                <div class="form-group required" *ngIf="model.beneficiaire_type === 'conjoint'">
+                    <label>Nom du conjoint(e)</label>
+                    <div *ngIf="conjoints.length > 0; else noConjoint">
+                        <input type="text" class="form-control" [value]="conjoints[0].conj_nom" readonly>
+                    </div>
+                    <ng-template #noConjoint>
+                        <div class="alert-error-inline">
+                            <i class="fas fa-exclamation-circle"></i> Aucun conjoint enregistré pour cet employé.
+                        </div>
+                    </ng-template>
+                </div>
+
+                <div class="form-group required" *ngIf="model.beneficiaire_type === 'enfant'">
+                    <label>Sélectionner l'enfant</label>
+                    <select [(ngModel)]="model.enf_code" name="enf_code" class="form-control">
+                        <option [ngValue]="null">-- Sélectionner --</option>
+                        <option *ngFor="let e of enfants" [ngValue]="e.enf_code">
+                            {{ e.enf_nom }} ({{ e.date_naissance | date:'dd/MM/yyyy' }})
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+                <button type="submit" class="btn btn-primary" [disabled]="loading">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

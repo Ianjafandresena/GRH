@@ -1,0 +1,168 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Demande de Remboursement de Frais Médicaux</h1>
+    </div>
+
+    <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+    <form class="form-card" (ngSubmit)="submit()">
+        <!-- 1. Section Agent -->
+        <div class="form-section">
+            <h3>Agent *</h3>
+            <div class="form-group">
+                <label>Rechercher un employé</label>
+                <div class="search-container">
+                    <input type="text" [(ngModel)]="empSearchText" (input)="filterEmployees()" (focus)="onEmpFocus()"
+                        (blur)="onEmpBlur()" name="empSearch" placeholder="Rechercher par nom ou matricule..."
+                        autocomplete="off" required>
+
+                    <ul class="suggestions" *ngIf="showEmpDropdown && filteredEmployees.length > 0">
+                        <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
+                            {{ emp.emp_nom }} {{ emp.emp_prenom }} ({{ emp.emp_imarmp }})
+                        </li>
+                    </ul>
+                </div>
+
+                <div *ngIf="selectedEmployee" class="employee-info">
+                    <div class="info-row"><strong>Matricule :</strong> {{ selectedEmployee.emp_imarmp }}</div>
+                    <div class="info-row"><strong>Fonction :</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+                    <div class="info-row"><strong>Direction :</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Section Bénéficiaire -->
+        <div class="form-section">
+            <h3>Bénéficiaire *</h3>
+
+            <div class="form-group">
+                <label>Type de bénéficiaire</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="beneficiaire_type" value="agent"
+                            [(ngModel)]="demande.beneficiaire_type"> Agent
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="beneficiaire_type" value="conjoint"
+                            [(ngModel)]="demande.beneficiaire_type"> Conjoint(e)
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="beneficiaire_type" value="enfant"
+                            [(ngModel)]="demande.beneficiaire_type"> Enfant (&lt; 21 ans)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" *ngIf="demande.beneficiaire_type === 'conjoint'">
+                <label>Conjoint(e)</label>
+                <select [(ngModel)]="demande.conj_code" name="conj_code">
+                    <option [ngValue]="null">-- Sélectionner --</option>
+                    <option *ngFor="let c of conjoints" [ngValue]="c.conj_code">{{ c.conj_nom }}</option>
+                </select>
+            </div>
+
+            <div class="form-group" *ngIf="demande.beneficiaire_type === 'enfant'">
+                <label>Enfant</label>
+                <select [(ngModel)]="demande.enf_code" name="enf_code">
+                    <option [ngValue]="null">-- Sélectionner --</option>
+                    <option *ngFor="let e of enfants" [ngValue]="e.enf_code">
+                        {{ e.enf_nom }} ({{ e.date_naissance }})
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 3. Section Pièces justificatives -->
+        <div class="form-section">
+            <h3>Pièces justificatives</h3>
+
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="selectedPieces['Ordonnance']" name="pc_ordonnance"
+                        (ngModelChange)="demande.has_ordonnance = selectedPieces['Ordonnance']">
+                    Ordonnance
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="selectedPieces['Facture']" name="pc_facture"
+                        (ngModelChange)="demande.has_facture = selectedPieces['Facture']">
+                    Facture(s)
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="selectedPieces['Prise en charge']" name="pc_pec"
+                        (ngModelChange)="onPecCheckChange()">
+                    Prise en charge
+                </label>
+            </div>
+
+            <div class="form-group" *ngIf="demande.has_prise_en_charge">
+                <label for="pec_reference">N° Prise en charge</label>
+                <select id="pec_reference" [(ngModel)]="demande.pec_reference" name="pec_reference">
+                    <option [ngValue]="''">-- Sélectionner une PEC --</option>
+                    <option *ngFor="let p of pecs" [ngValue]="p.pec_num">
+                        {{ p.pec_num }} ({{ p.cen_nom || 'Centre inconnu' }})
+                    </option>
+                </select>
+                <input type="hidden" [(ngModel)]="demande.pec_code" name="pec_code">
+            </div>
+        </div>
+
+        <!-- 4. Section Objet et Montant -->
+        <div class="form-section">
+            <h3>Objet et montant</h3>
+
+            <div class="form-group">
+                <label for="rem_objet">Objet du remboursement (type de soin) *</label>
+                <input type="text" id="rem_objet" [(ngModel)]="demande.rem_objet" name="rem_objet"
+                    placeholder="Ex: Achat de montures et de verres correcteurs" required>
+            </div>
+
+            <div class="form-group">
+                <label for="rem_montant">Montant (Ariary) *</label>
+                <input type="number" id="rem_montant" [(ngModel)]="demande.rem_montant" name="rem_montant" min="0"
+                    (ngModelChange)="onMontantChange()" required>
+            </div>
+
+            <div class="form-group">
+                <label for="rem_montant_lettre">Montant en lettres</label>
+                <div class="montant-lettres-display" *ngIf="demande.rem_montant_lettre">
+                    {{ demande.rem_montant_lettre }}
+                </div>
+                <div class="montant-lettres-placeholder" *ngIf="!demande.rem_montant_lettre">
+                    Le montant en lettres s'affichera automatiquement
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Section Centre de santé (optionnel) -->
+        <div class="form-section">
+            <div class="form-group">
+                <label for="cen_code">Centre de santé</label>
+                <select id="cen_code" [(ngModel)]="demande.cen_code" name="cen_code">
+                    <option [ngValue]="null">-- Sélectionner un centre --</option>
+                    <option *ngFor="let c of centres" [ngValue]="c.cen_code">
+                        {{ c.cen_nom }} {{ c.cen_adresse ? ' - ' + c.cen_adresse : '' }}
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 6. Section Date consultation -->
+        <div class="form-section">
+            <div class="form-group">
+                <label for="date_consultation">Date de consultation</label>
+                <input type="date" id="date_consultation" [(ngModel)]="demande.date_consultation"
+                    name="date_consultation">
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading">
+                {{ loading ? 'Envoi en cours...' : 'Soumettre la demande' }}
+            </button>
+        </div>
+    </form>
+</div>

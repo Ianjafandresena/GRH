@@ -7,14 +7,14 @@ import { CongeService } from '../../service/conge.service';
 import { Conge, TypeConge } from '../../model/conge.model';
 import { InterimConge } from '../../model/interimconge.model';
 import { Region } from '../../model/region.model';
-import { LayoutService } from '../../../layout/service/layout.service';
+import { LayoutService } from '../../../../shared/layout/service/layout.service';
 
 @Component({
   selector: 'app-ajout-conge',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './ajout.html',
-  styleUrls: ['./ajout.css']
+  styleUrls: ['./ajout.scss']
 })
 export class AjoutCongeComponent implements OnInit {
   private readonly layoutService = inject(LayoutService);
@@ -41,6 +41,10 @@ export class AjoutCongeComponent implements OnInit {
   anneeSolde: string = '';
   numeroDecision: string = '';
 
+  showEmpDropdown = false;
+  showRegionDropdown = false;
+  showInterimDropdowns: boolean[] = [];
+
   constructor(
     private fb: FormBuilder,
     private employeeService: EmployeeService,
@@ -52,6 +56,7 @@ export class AjoutCongeComponent implements OnInit {
       region_search: ['', Validators.required],
       cng_debut: [null, Validators.required],
       cng_fin: [null, Validators.required],
+      cng_demande: [new Date().toISOString().split('T')[0]], // Default to today
       interims: this.fb.array([this.fb.group({
         interim_search: [''],
         selectedInterim: [null]
@@ -69,6 +74,7 @@ export class AjoutCongeComponent implements OnInit {
       this.employees = employees ?? [];
       this.filteredEmployees = employees ?? [];
       this.filteredInterims = [this.employees];
+      this.showInterimDropdowns = [false];
       this.interims.controls.forEach((ctrl, i) => this.interimSearchListener(ctrl, i));
     });
 
@@ -83,7 +89,10 @@ export class AjoutCongeComponent implements OnInit {
 
     this.congeForm.get('emp_search')?.valueChanges.subscribe((val: string) => {
       this.filterEmployees(val ?? '');
-      if (!val) this.selectedEmployee = null;
+      if (!val) {
+        this.selectedEmployee = null;
+        this.filteredEmployees = this.employees; // Show all if empty
+      }
     });
 
     this.congeForm.get('region_search')?.valueChanges.subscribe((val: string) => {
@@ -91,24 +100,41 @@ export class AjoutCongeComponent implements OnInit {
       this.filteredRegions = this.regions.filter(region =>
         region.reg_nom.toLowerCase().includes(filterVal)
       );
-      if (!val) this.selectedRegion = null;
+      if (!val) {
+        this.selectedRegion = null;
+        this.filteredRegions = this.regions;
+      }
     });
 
     this.congeForm.get('cng_debut')?.valueChanges.subscribe(() => this.updateNbJours());
     this.congeForm.get('cng_fin')?.valueChanges.subscribe(() => this.updateNbJours());
   }
 
+  // Employee Dropdown Handlers
+  onEmpFocus() {
+    this.showEmpDropdown = true;
+    if (!this.congeForm.get('emp_search')?.value) {
+      this.filteredEmployees = this.employees;
+    }
+  }
+
+  onEmpBlur() {
+    setTimeout(() => { this.showEmpDropdown = false; }, 200);
+  }
+
   filterEmployees(value: string) {
     const filterVal = value ? value.toLowerCase() : '';
     this.filteredEmployees = this.employees.filter(emp =>
-      (`${emp.nom} ${emp.prenom}`.toLowerCase().includes(filterVal))
+    (`${emp.emp_nom} ${emp.emp_prenom}`.toLowerCase().includes(filterVal) ||
+      emp.emp_imarmp.toLowerCase().includes(filterVal))
     );
+    this.showEmpDropdown = true;
   }
 
   selectEmployee(emp: Employee) {
     this.selectedEmployee = emp;
-    this.congeForm.patchValue({ emp_search: `${emp.nom} ${emp.prenom}` });
-    this.filteredEmployees = [];
+    this.congeForm.patchValue({ emp_search: `${emp.emp_nom} ${emp.emp_prenom}` }, { emitEvent: false });
+    this.showEmpDropdown = false;
     // Appel direct à l'API métier unique !
     this.congeService.getLastSoldeDispo(emp.emp_code).subscribe((solde) => {
       if (solde) {
@@ -130,10 +156,22 @@ export class AjoutCongeComponent implements OnInit {
     });
   }
 
+  // Region Dropdown Handlers
+  onRegionFocus() {
+    this.showRegionDropdown = true;
+    if (!this.congeForm.get('region_search')?.value) {
+      this.filteredRegions = this.regions;
+    }
+  }
+
+  onRegionBlur() {
+    setTimeout(() => { this.showRegionDropdown = false; }, 200);
+  }
+
   selectRegion(region: Region) {
     this.selectedRegion = region;
-    this.congeForm.patchValue({ region_search: region.reg_nom });
-    this.filteredRegions = [];
+    this.congeForm.patchValue({ region_search: region.reg_nom }, { emitEvent: false });
+    this.showRegionDropdown = false;
   }
 
   updateNbJours() {
@@ -149,20 +187,37 @@ export class AjoutCongeComponent implements OnInit {
     }
   }
 
+  // Interim Dropdown Handlers
+  onInterimFocus(idx: number) {
+    this.showInterimDropdowns[idx] = true;
+    const ctrl = this.interims.at(idx);
+    if (!ctrl.get('interim_search')?.value) {
+      this.filteredInterims[idx] = this.employees.filter(e =>
+        !this.selectedEmployee || e.emp_code !== this.selectedEmployee.emp_code
+      );
+    }
+  }
+
+  onInterimBlur(idx: number) {
+    setTimeout(() => { this.showInterimDropdowns[idx] = false; }, 200);
+  }
+
   interimSearchListener(ctrl: AbstractControl, idx: number) {
     ctrl.get('interim_search')?.valueChanges.subscribe((val: string) => {
       const filterVal = val ? val.toLowerCase() : '';
       this.filteredInterims[idx] = this.employees
         .filter(e =>
           (!this.selectedEmployee || e.emp_code !== this.selectedEmployee.emp_code) &&
-          (`${e.nom} ${e.prenom}`.toLowerCase().includes(filterVal))
+          (`${e.emp_nom} ${e.emp_prenom}`.toLowerCase().includes(filterVal) ||
+            e.emp_imarmp.toLowerCase().includes(filterVal))
         );
+      this.showInterimDropdowns[idx] = true;
     });
   }
 
   selectInterim(idx: number, emp: Employee) {
-    this.interims.at(idx).patchValue({ interim_search: `${emp.nom} ${emp.prenom}`, selectedInterim: emp });
-    this.filteredInterims[idx] = [];
+    this.interims.at(idx).patchValue({ interim_search: `${emp.emp_nom} ${emp.emp_prenom}`, selectedInterim: emp }, { emitEvent: false });
+    this.showInterimDropdowns[idx] = false;
   }
 
   addInterimField() {
@@ -171,12 +226,14 @@ export class AjoutCongeComponent implements OnInit {
       selectedInterim: [null]
     }));
     this.filteredInterims.push(this.employees);
+    this.showInterimDropdowns.push(false);
     this.interimSearchListener(this.interims.at(this.interims.length - 1), this.interims.length - 1);
   }
 
   removeInterimField(idx: number) {
     this.interims.removeAt(idx);
     this.filteredInterims.splice(idx, 1);
+    this.showInterimDropdowns.splice(idx, 1);
   }
 
   submit() {
@@ -200,8 +257,8 @@ export class AjoutCongeComponent implements OnInit {
     this.lastCongeDraft = {
       typ_code: this.congeForm.value.typ_code,
       emp_code: this.selectedEmployee.emp_code,
-      nom_emp: this.selectedEmployee.nom + ' ' + this.selectedEmployee.prenom,
-      matricule: this.selectedEmployee.matricule,
+      nom_emp: this.selectedEmployee.emp_nom + ' ' + this.selectedEmployee.emp_prenom,
+      matricule: this.selectedEmployee.emp_imarmp,
       id_region: this.selectedRegion.reg_code,
       nom_region: this.selectedRegion.reg_nom,
       cng_debut: this.congeForm.value.cng_debut,

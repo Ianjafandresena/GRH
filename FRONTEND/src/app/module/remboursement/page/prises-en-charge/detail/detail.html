@@ -1,0 +1,64 @@
+<div class="page-container">
+    <div class="card detail-card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>Détails de la Prise en Charge</h1>
+                <p class="subtitle" *ngIf="pec">{{ pec.pec_num }}</p>
+            </div>
+            <div class="actions">
+                <button class="btn btn-outline" (click)="goBack()">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </button>
+                <button class="btn btn-primary" (click)="downloadBulletin()" *ngIf="pec">
+                    <i class="fas fa-file-pdf"></i> Générer Bulletin
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="loading" class="loading">Chargement...</div>
+        <div *ngIf="errorMsg" class="alert alert-danger">{{ errorMsg }}</div>
+
+        <div class="content" *ngIf="pec && !loading">
+            <!-- Info Section 1: Employee -->
+            <div class="info-section">
+                <h3><i class="fas fa-user-circle"></i> Informations de l'Employé</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Nom et Prénom</span>
+                        <span class="value">{{ pec.nom_emp }} {{ pec.prenom_emp }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Matricule</span>
+                        <span class="value">{{ pec.matricule || '-' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Section 2: Beneficiary & Centre -->
+            <div class="info-section">
+                <h3><i class="fas fa-notes-medical"></i> Détails de la demande</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Bénéficiaire</span>
+                        <span class="value capitalize">
+                            {{ pec.beneficiaire_type }}
+                            <span *ngIf="pec.beneficiaire_nom">({{ pec.beneficiaire_nom }})</span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Centre de Santé</span>
+                        <span class="value">{{ pec.cen_nom || 'Non spécifié' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Date de demande</span>
+                        <span class="value">{{ pec.pec_date | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Statut</span>
+                        <span class="value status-badge">{{ pec.pec_statut || 'En attente' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

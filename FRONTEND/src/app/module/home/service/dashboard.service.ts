@@ -30,8 +30,11 @@ export class DashboardService {
         const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
         // --- CONGES STATS ---
+        // Filter only validated leaves (cng_status = true)
+        const validatedConges = conges.filter(c => c.cng_status === true || c.cng_status === 't');
+
         // 1. Congés en cours (Active leaves)
-        const activeLeaves = conges.filter(c => {
+        const activeLeaves = validatedConges.filter(c => {
             if (!c.cng_debut || !c.cng_fin) return false;
             const start = new Date(c.cng_debut);
             const end = new Date(c.cng_fin);
@@ -42,7 +45,7 @@ export class DashboardService {
         let currentMonthLeaves = 0;
         let lastMonthLeaves = 0;
 
-        conges.forEach(c => {
+        validatedConges.forEach(c => {
             if (c.cng_debut) {
                 const date = new Date(c.cng_debut);
                 if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
@@ -115,10 +118,11 @@ export class DashboardService {
         const congeCounts = new Array(12).fill(0);
         const permissionCounts = new Array(12).fill(0);
 
-        // Traitement des Congés
+        // Traitement des Congés (only validated ones - cng_status = true)
         if (Array.isArray(conges)) {
             conges.forEach(c => {
-                if (c.cng_debut) {
+                // Only count validated leaves
+                if ((c.cng_status === true || c.cng_status === 't') && c.cng_debut) {
                     const date = new Date(c.cng_debut);
                     if (date.getFullYear() === currentYear) {
                         congeCounts[date.getMonth()]++;

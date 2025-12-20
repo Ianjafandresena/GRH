@@ -1,0 +1,64 @@
+import { Component, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { CommonModule } from '@angular/common';
+import { HeaderComponent } from './component/header/header';
+import { AuthService } from '../../module/auth/service/auth-service';
+
+@Component({
+  selector: 'app-layout',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, HeaderComponent],
+  templateUrl: './layout.html',
+  styleUrls: ['./layout.scss']
+})
+export class LayoutComponent {
+  private readonly authService = inject(AuthService);
+
+  isCollapsed = false;
+  showConge = false;
+  showPermission = false;
+  showRemb = false;
+  showPec = false;
+
+  toggleConge() {
+    this.showConge = !this.showConge;
+    if (this.showConge) {
+      this.showPermission = false;
+      this.showRemb = false;
+      this.showPec = false;
+    }
+  }
+
+  togglePermission() {
+    this.showPermission = !this.showPermission;
+    if (this.showPermission) {
+      this.showConge = false;
+      this.showRemb = false;
+      this.showPec = false;
+    }
+  }
+
+  toggleRemb() {
+    this.showRemb = !this.showRemb;
+    if (this.showRemb) {
+      this.showConge = false;
+      this.showPermission = false;
+      this.showPec = false;
+    }
+  }
+
+  togglePec() {
+    this.showPec = !this.showPec;
+    if (this.showPec) {
+      this.showConge = false;
+      this.showPermission = false;
+      this.showRemb = false;
+    }
+  }
+  toggleSidebar() { this.isCollapsed = !this.isCollapsed; }
+
+  logout() {
+    this.authService.logout();
+  }
+}

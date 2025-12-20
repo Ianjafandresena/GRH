@@ -1,216 +1,225 @@
-<div class="container">
-  <div class="card" style="max-width: 800px; margin: 0 auto;">
-    <h2 style="margin-bottom: 1.5rem; color: var(--text-primary);">Nouvelle Demande de Congé</h2>
+<div class="page-container">
+  <div class="card form-card">
+    <div class="card-header-internal">
+      <div class="title-group">
+        <h1>Nouvelle Demande de Congé</h1>
+        <!-- <p class="subtitle">Remplissez le formulaire</p> -->
+      </div>
+      <button class="btn btn-outline btn-sm" routerLink="/conge">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+    </div>
 
     <form *ngIf="!showRecap" [formGroup]="congeForm" (ngSubmit)="submit()" novalidate>
 
-      <!-- Employé Selection -->
-      <div style="margin-bottom: 1.5rem;">
-        <label for="emp_search">Employé</label>
-        <div style="position: relative;">
-          <input id="emp_search" type="text" formControlName="emp_search" autocomplete="off"
-            placeholder="Rechercher un employé..."
-            [class.is-invalid]="congeForm.get('emp_search')?.invalid && congeForm.get('emp_search')?.touched">
-          <ul class="suggestions"
-            *ngIf="filteredEmployees.length && congeForm.get('emp_search')?.value && !selectedEmployee">
-            <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
-              {{ emp.nom }} {{ emp.prenom }}
-            </li>
-          </ul>
-        </div>
-        <div *ngIf="selectedEmployee" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
-          <strong>Matricule :</strong> {{ selectedEmployee.matricule }}
-        </div>
-      </div>
-
-      <div class="form-row">
-        <!-- Motif -->
-        <div>
-          <label for="typ_code">Motif du congé</label>
-          <select id="typ_code" formControlName="typ_code" required>
-            <option value="">-- Sélectionner --</option>
-            <option *ngFor="let t of typesConge" [value]="t.typ_code">{{ t.typ_appelation }}</option>
-          </select>
-        </div>
-
-        <!-- Région -->
-        <div>
-          <label for="region_search">Région</label>
-          <div style="position: relative;">
-            <input id="region_search" type="text" formControlName="region_search" autocomplete="off"
-              placeholder="Rechercher une région..." />
-            <ul class="suggestions"
-              *ngIf="filteredRegions.length && congeForm.get('region_search')?.value && !selectedRegion">
-              <li *ngFor="let region of filteredRegions" (click)="selectRegion(region)">
-                {{ region.reg_nom }}
+      <!-- Employee Section (Admin View) -->
+      <div class="form-section">
+        <h3 class="section-title">Informations Salarié</h3>
+        <div class="form-group required">
+          <label for="emp_search">Employé concerné</label>
+          <div class="select2-container">
+            <div class="input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input id="emp_search" type="text" formControlName="emp_search" autocomplete="off" class="form-control"
+                placeholder="Rechercher par nom ou matricule..." (focus)="onEmpFocus()" (blur)="onEmpBlur()"
+                [class.is-invalid]="congeForm.get('emp_search')?.invalid && congeForm.get('emp_search')?.touched">
+            </div>
+            <ul class="suggestions" *ngIf="showEmpDropdown && filteredEmployees.length > 0">
+              <li *ngFor="let emp of filteredEmployees" (mousedown)="selectEmployee(emp)">
+                <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
+                <div class="suggestion-sub">{{ emp.emp_imarmp }}</div>
               </li>
             </ul>
           </div>
-          <div *ngIf="selectedRegion" style="margin-top: 0.25rem; font-size: 0.875rem; color: var(--text-secondary);">
-            <small>Sélectionné : {{ selectedRegion.reg_nom }}</small>
+          <div *ngIf="selectedEmployee" class="selected-employee-info">
+            <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_imarmp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+            <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
           </div>
         </div>
       </div>
 
-      <div class="form-row">
-        <!-- Dates -->
-        <div>
-          <label for="cng_debut">Date début</label>
-          <input type="date" id="cng_debut" formControlName="cng_debut" required>
-        </div>
-        <div>
-          <label for="cng_fin">Date fin</label>
-          <input type="date" id="cng_fin" formControlName="cng_fin" required>
-        </div>
-      </div>
-
-      <!-- Info Solde & Durée -->
-      <div
-        style="background: var(--bg-main); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: 1px solid var(--border-light);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <span style="font-weight: 600; color: var(--text-secondary);">Durée calculée</span>
-          <span style="font-size: 1.25rem; font-weight: 700; color: var(--stat-blue);">
-            {{ calculatedNbJours !== null ? calculatedNbJours : '-' }} jours
-          </span>
-        </div>
-
-        <div *ngIf="dernierSolde"
-          style="border-top: 1px solid var(--border-medium); padding-top: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-            <div>Décision n° <strong>{{ numeroDecision }}</strong></div>
-            <div>Année : <strong>{{ anneeSolde }}</strong></div>
-            <div style="grid-column: span 2;">
-              Solde restant : <strong [style.color]="joursRestants==0?'var(--stat-red)':'var(--stat-green)'">{{
-                joursRestants }} jours</strong>
+      <!-- Leave Details -->
+      <div class="form-section">
+        <h3 class="section-title">Détails du Congé</h3>
+        <div class="form-grid">
+          <div class="form-group required">
+            <label for="typ_code">Type de congé</label>
+            <div class="select-wrapper">
+              <select id="typ_code" formControlName="typ_code" class="form-control">
+                <option [ngValue]="null">-- Sélectionner le motif --</option>
+                <option *ngFor="let t of typesConge" [value]="t.typ_code">{{ t.typ_appelation }}</option>
+              </select>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Suppléants -->
-      <div formArrayName="interims" style="margin-bottom: 1.5rem;">
-        <label style="margin-bottom: 0.75rem; display: block;">Suppléant(s)</label>
-        <div *ngFor="let group of interims.controls; let i=index" [formGroupName]="i" style="margin-bottom: 0.75rem;">
-          <div style="display: flex; gap: 0.5rem;">
-            <div style="position: relative; flex: 1;">
-              <input type="text" formControlName="interim_search" placeholder="Rechercher un suppléant..."
-                autocomplete="off">
-              <ul class="suggestions"
-                *ngIf="filteredInterims[i]?.length && group.get('interim_search')?.value && !group.get('selectedInterim')?.value">
-                <li *ngFor="let emp of filteredInterims[i]" (click)="selectInterim(i, emp)">
-                  {{ emp.nom }} {{ emp.prenom }} <small>({{ emp.matricule }})</small>
+          <div class="form-group required">
+            <label for="region_search">Lieu de jouissance</label>
+            <div class="select2-container">
+              <div class="input-wrapper">
+                <i class="fas fa-map-marker-alt search-icon"></i>
+                <input id="region_search" type="text" formControlName="region_search" autocomplete="off"
+                  class="form-control" placeholder="Rechercher une région..." (focus)="onRegionFocus()"
+                  (blur)="onRegionBlur()">
+              </div>
+              <ul class="suggestions" *ngIf="showRegionDropdown && filteredRegions.length > 0">
+                <li *ngFor="let region of filteredRegions" (mousedown)="selectRegion(region)">
+                  {{ region.reg_nom }}
                 </li>
               </ul>
             </div>
-            <button class="btn btn-danger" type="button" *ngIf="interims.length>1" (click)="removeInterimField(i)"
-              style="padding: 0.5rem;">
-              🗑️
-            </button>
           </div>
-          <div *ngIf="group.get('selectedInterim')?.value"
-            style="margin-top: 0.25rem; font-size: 0.875rem; color: var(--stat-green);">
-            ✓ {{ group.get('selectedInterim')?.value.nom }} {{ group.get('selectedInterim')?.value.prenom }}
+
+          <div class="form-group required">
+            <label for="cng_debut">Date de début</label>
+            <input type="date" id="cng_debut" formControlName="cng_debut" class="form-control">
+          </div>
+
+          <div class="form-group required">
+            <label for="cng_fin">Date de fin</label>
+            <input type="date" id="cng_fin" formControlName="cng_fin" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="cng_demande">Date de demande</label>
+            <input type="date" id="cng_demande" formControlName="cng_demande" class="form-control">
+            <span class="hint">Par défaut: aujourd'hui</span>
           </div>
         </div>
-        <button class="btn btn-primary" type="button" (click)="addInterimField()"
-          style="width: 100%; justify-content: center; background: transparent; color: var(--stat-blue); border: 1px dashed var(--stat-blue);">
-          + Ajouter un suppléant
+      </div>
+
+      <!-- Calculation Summary -->
+      <div class="summary-box">
+        <div class="summary-item duration">
+          <span class="label">Durée calculée</span>
+          <span class="value">{{ calculatedNbJours !== null ? calculatedNbJours + ' jours' : '-' }}</span>
+        </div>
+
+        <div class="balance-info" *ngIf="dernierSolde">
+          <div class="balance-header">
+            <i class="fas fa-info-circle"></i> Situation Solde ({{ anneeSolde }})
+          </div>
+          <div class="balance-grid">
+            <div class="balance-item">
+              <span class="lbl">Décision N°</span>
+              <span class="val">{{ numeroDecision }}</span>
+            </div>
+            <div class="balance-item">
+              <span class="lbl">Année du solde</span>
+              <span class="val">{{ anneeSolde }}</span>
+            </div>
+            <div class="balance-item main">
+              <span class="lbl">Solde Restant</span>
+              <span class="val" [class.negative]="(joursRestants || 0) === 0"
+                [class.positive]="(joursRestants || 0) > 0">
+                {{ joursRestants }} jours
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interims -->
+      <div class="form-section" formArrayName="interims">
+        <h3 class="section-title">Intérimaires / Suppléants</h3>
+
+        <div *ngFor="let group of interims.controls; let i=index" [formGroupName]="i" class="interim-row">
+          <div class="select2-container flex-grow">
+            <div class="input-wrapper">
+              <i class="fas fa-user-friends search-icon"></i>
+              <input type="text" formControlName="interim_search" class="form-control"
+                placeholder="Rechercher un suppléant..." autocomplete="off" (focus)="onInterimFocus(i)"
+                (blur)="onInterimBlur(i)">
+            </div>
+            <ul class="suggestions" *ngIf="showInterimDropdowns[i] && (filteredInterims[i]?.length || 0) > 0">
+              <li *ngFor="let emp of filteredInterims[i]" (mousedown)="selectInterim(i, emp)">
+                {{ emp.emp_nom }} {{ emp.emp_prenom }}
+              </li>
+            </ul>
+          </div>
+
+          <button type="button" class="btn btn-icon delete" *ngIf="interims.length > 1" (click)="removeInterimField(i)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-dashed" (click)="addInterimField()">
+          <i class="fas fa-plus"></i> Ajouter un suppléant
         </button>
       </div>
 
-      <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
-
-      <div class="form-actions" style="justify-content: flex-end;">
-        <button class="btn btn-primary" type="submit"
-          [disabled]="loading || !selectedEmployee || !selectedRegion || calculatedNbJours == null || calculatedNbJours < 1">
-          <span *ngIf="!loading">Enregistrer la demande</span>
-          <span *ngIf="loading">Enregistrement...</span>
-        </button>
+      <div class="form-footer">
+        <div *ngIf="errorMsg" class="alert-error">
+          <i class="fas fa-exclamation-circle"></i> {{ errorMsg }}
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" routerLink="/conge">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading || congeForm.invalid">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+        </div>
       </div>
     </form>
 
-    <!-- FICHE RECAPITULATIVE -->
-    <div *ngIf="showRecap">
-      <div style="text-align: center; margin-bottom: 1.5rem;">
-        <h3 style="color: var(--stat-blue);">Récapitulatif de la demande</h3>
-        <p style="color: var(--text-secondary);">Veuillez vérifier les informations avant confirmation</p>
+    <!-- Recap View -->
+    <div *ngIf="showRecap" class="recap-container">
+      <div class="recap-header">
+        <h2>Confirmation de la demande</h2>
+        <p>Veuillez vérifier l'exactitude des informations ci-dessous</p>
       </div>
 
-      <div style="background: var(--bg-main); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div>
-            <small style="color: var(--text-secondary);">Employé</small>
-            <div style="font-weight: 600;">{{ lastCongeDraft.nom_emp }}</div>
-            <div style="font-size: 0.875rem;">{{ lastCongeDraft.matricule }}</div>
+      <div class="recap-card">
+        <div class="recap-grid">
+          <div class="recap-group">
+            <label>Employé</label>
+            <div class="val">{{ lastCongeDraft.nom_emp }} ({{ lastCongeDraft.matricule }})</div>
           </div>
-          <div>
-            <small style="color: var(--text-secondary);">Région</small>
-            <div style="font-weight: 600;">{{ lastCongeDraft.nom_region }}</div>
+          <div class="recap-group">
+            <label>Motif</label>
+            <div class="val">{{ motifLibelle }}</div>
           </div>
-
-          <div
-            style="grid-column: span 2; border-top: 1px solid var(--border-medium); margin-top: 0.5rem; padding-top: 0.5rem;">
+          <div class="recap-group">
+            <label>Période</label>
+            <div class="val">Du {{ lastCongeDraft.cng_debut | date:'dd/MM/yyyy' }} au {{ lastCongeDraft.cng_fin |
+              date:'dd/MM/yyyy' }}</div>
           </div>
-
-          <div>
-            <small style="color: var(--text-secondary);">Motif</small>
-            <div style="font-weight: 600;">{{ motifLibelle }}</div>
+          <div class="recap-group">
+            <label>Durée</label>
+            <div class="val highlight">{{ lastCongeDraft.cng_nb_jour }} jours</div>
           </div>
-          <div>
-            <small style="color: var(--text-secondary);">Durée</small>
-            <div style="font-weight: 600;">{{ lastCongeDraft.cng_nb_jour }} jours</div>
+          <div class="recap-group full-width">
+            <label>Lieu</label>
+            <div class="val">{{ lastCongeDraft.nom_region }}</div>
           </div>
-
-          <div style="grid-column: span 2;">
-            <small style="color: var(--text-secondary);">Période</small>
-            <div style="font-weight: 600;">Du {{ lastCongeDraft.cng_debut | date:'dd/MM/yyyy' }} au {{
-              lastCongeDraft.cng_fin | date:'dd/MM/yyyy' }}</div>
-          </div>
-
-          <div
-            style="grid-column: span 2; border-top: 1px solid var(--border-medium); margin-top: 0.5rem; padding-top: 0.5rem;">
-          </div>
-
-          <div>
-            <small style="color: var(--text-secondary);">Solde utilisé</small>
-            <div>Décision {{ lastCongeDraft.numeroDecision }} ({{ lastCongeDraft.anneeSolde }})</div>
-          </div>
-          <div>
-            <small style="color: var(--text-secondary);">Reste après</small>
-            <div [style.color]="lastCongeDraft.joursRestants==0 ? 'var(--stat-red)' : 'var(--stat-green)'"
-              style="font-weight: 700;">
-              {{ lastCongeDraft.joursRestants }} jours
+          <div class="recap-group full-width">
+            <label>Solde restant après déduction</label>
+            <div class="val" [class.warning]="lastCongeDraft.joursRestants < 5">{{ lastCongeDraft.joursRestants }} jours
             </div>
           </div>
-
-          <div
-            style="grid-column: span 2; border-top: 1px solid var(--border-medium); margin-top: 0.5rem; padding-top: 0.5rem;">
+          <div class="recap-group">
+            <label>Décision N°</label>
+            <div class="val">{{ lastCongeDraft.numeroDecision }}</div>
           </div>
-
-          <div style="grid-column: span 2;">
-            <small style="color: var(--text-secondary);">Suppléants</small>
-            <ul style="margin: 0; padding-left: 1.25rem;">
-              <li *ngFor="let interim of lastCongeDraft.interims ? lastCongeDraft.interims : []">
-                {{ interim?.nom }} {{ interim?.prenom }} <span *ngIf="interim?.matricule">({{ interim?.matricule
-                  }})</span>
-              </li>
-              <li *ngIf="!lastCongeDraft.interims || lastCongeDraft.interims.length === 0"
-                style="font-style: italic; color: var(--text-muted);">Aucun suppléant</li>
-            </ul>
+          <div class="recap-group">
+            <label>Année du solde</label>
+            <div class="val">{{ lastCongeDraft.anneeSolde }}</div>
           </div>
+        </div>
+
+        <div class="recap-interims" *ngIf="lastCongeDraft.interims?.length">
+          <label>Suppléants désignés</label>
+          <ul>
+            <li *ngFor="let int of lastCongeDraft.interims">{{ int.emp_nom }} {{ int.emp_prenom }}</li>
+          </ul>
         </div>
       </div>
 
-      <div class="form-actions" style="justify-content: flex-end; gap: 1rem;">
-        <button class="btn btn-danger" type="button" (click)="annulerRecap()"
-          style="background: transparent; color: var(--stat-red); border: 1px solid var(--stat-red);">
-          Modifier
-        </button>
-        <button class="btn btn-success" type="button" (click)="confirmEnvoi()" [disabled]="loading">
-          Confirmer la demande
+      <div class="form-footer">
+        <button type="button" class="btn btn-secondary" (click)="annulerRecap()">Modifier</button>
+        <button type="button" class="btn btn-success" (click)="confirmEnvoi()" [disabled]="loading">
+          <i class="fas fa-check-circle"></i> Confirmer l'envoi
         </button>
       </div>
-      <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
     </div>
   </div>
 </div>

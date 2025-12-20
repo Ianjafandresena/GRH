@@ -9,7 +9,7 @@ import { environment } from '../../../../../environments/environment';
     standalone: true,
     imports: [CommonModule],
     templateUrl: './viewer.html',
-    styleUrls: ['./viewer.css']
+    styleUrls: ['./viewer.scss']
 })
 export class ViewerCongeComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

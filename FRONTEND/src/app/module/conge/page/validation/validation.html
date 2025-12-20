@@ -1,0 +1,68 @@
+<div class="page-container">
+    <div class="card">
+        <div class="card-header">
+            <h1>Demandes en attente de validation</h1>
+            <button class="btn btn-outline" (click)="loadPendingLeaves()" [disabled]="loading">
+                <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+        </div>
+
+        <div class="alert alert-success" *ngIf="successMsg" (click)="clearMessages()">
+            <i class="fas fa-check-circle"></i> {{ successMsg }}
+        </div>
+        <div class="alert alert-danger" *ngIf="errorMsg" (click)="clearMessages()">
+            <i class="fas fa-exclamation-circle"></i> {{ errorMsg }}
+        </div>
+
+        <div class="loading" *ngIf="loading">
+            <i class="fas fa-spinner fa-spin"></i> Chargement...
+        </div>
+
+        <div class="empty-state" *ngIf="!loading && pendingLeaves.length === 0">
+            <i class="fas fa-inbox"></i>
+            <p>Aucune demande en attente de votre validation</p>
+        </div>
+
+        <div class="table-responsive" *ngIf="!loading && pendingLeaves.length > 0">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employé</th>
+                        <th>Matricule</th>
+                        <th class="text-center">Date demande</th>
+                        <th class="text-center">Période</th>
+                        <th class="text-center">Durée</th>
+                        <th>Type</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let leave of pendingLeaves">
+                        <td class="emp-name">{{ leave.emp_nom }} {{ leave.emp_prenom }}</td>
+                        <td class="matricule">{{ leave.emp_imarmp }}</td>
+                        <td class="text-center">{{ leave.cng_demande | date:'dd/MM/yyyy' }}</td>
+                        <td class="text-center">
+                            {{ leave.cng_debut | date:'dd/MM' }} - {{ leave.cng_fin | date:'dd/MM/yyyy' }}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge">{{ leave.cng_nb_jour }} j</span>
+                        </td>
+                        <td>{{ leave.typ_appelation }}</td>
+                        <td class="text-center actions">
+                            <button class="btn-action btn-view" (click)="openDetail(leave.cng_code)"
+                                title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-approve" (click)="approve(leave.cng_code)" title="Valider">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-action btn-reject" (click)="reject(leave.cng_code)" title="Rejeter">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

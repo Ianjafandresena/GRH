@@ -1,0 +1,74 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Demandes de Remboursement</h1>
+        <div class="header-actions">
+            <div class="filters">
+                <label>
+                    Code employé :
+                    <input type="number" [(ngModel)]="filter.emp_code" placeholder="emp_code">
+                </label>
+                <label>
+                    Mois :
+                    <input type="number" min="1" max="12" [(ngModel)]="filter.mois">
+                </label>
+                <label>
+                    Année :
+                    <input type="number" [(ngModel)]="filter.annee">
+                </label>
+                <button class="btn btn-secondary" (click)="loadDemandes()">Filtrer</button>
+                <button class="btn btn-outline" (click)="downloadEtatAgent()">
+                    <span class="material-icons">picture_as_pdf</span>
+                    Etat Agent
+                </button>
+            </div>
+            <button class="btn btn-primary" (click)="goToCreate()">
+                <span class="material-icons">add</span>
+                Nouvelle Demande
+            </button>
+        </div>
+    </div>
+
+    <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
+    <div class="loading" *ngIf="loading">Chargement...</div>
+
+    <div class="table-container" *ngIf="!loading">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Employé</th>
+                    <th>Objet</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let d of demandes">
+                    <td>{{ d.rem_code }}</td>
+                    <td>{{ d.nom_emp }} {{ d.prenom_emp }}</td>
+                    <td>{{ d.rem_objet }}</td>
+                    <td>{{ d.rem_date }}</td>
+                    <td class="amount">{{ d.rem_montant | number:'1.2-2' }} Ar</td>
+                    <td>
+                        <span class="badge" [ngClass]="getStatutClass(d.eta_libelle || '')">
+                            {{ d.eta_libelle || 'N/A' }}
+                        </span>
+                    </td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-secondary" (click)="viewDetail(d.rem_code!)" title="Détails">
+                            <span class="material-icons">visibility</span>
+                        </button>
+                        <button class="btn btn-sm btn-primary" (click)="downloadPdf(d.rem_code!)" title="PDF">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="!demandes.length">
+                    <td colspan="7" class="empty">Aucune demande enregistrée</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

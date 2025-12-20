@@ -11,7 +11,7 @@ import { LoginCredentials } from '../../model/auth-model';
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './login.html',
-  styleUrls: ['./login.css']
+  styleUrls: ['./login.scss']
 })
 export class LoginComponent {
   private readonly authService = inject(AuthService);

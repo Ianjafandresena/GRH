@@ -8,7 +8,9 @@ class EmployeeModel extends Model
     protected $table = 'employee';
     protected $primaryKey = 'emp_code';
     protected $allowedFields = [
-        'nom', 'prenom', 'matricule', 'sexe', 'date_embauche', 'email', 'is_actif'
+        'emp_nom', 'emp_prenom', 'emp_imarmp', 'emp_sexe', 
+        'emp_date_embauche', 'emp_mail', 'emp_disponibilite',
+        'sign_code'
     ];
     public $useTimestamps = false;
 }

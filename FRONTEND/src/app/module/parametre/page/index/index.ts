@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LayoutService } from '../../../layout/service/layout.service';
+import { LayoutService } from '../../../../shared/layout/service/layout.service';
 import { ThemeService } from '../../../../core/service/theme.service';
 import { FormsModule } from '@angular/forms';
 
@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
     standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './index.html',
-    styleUrls: ['./index.css']
+    styleUrls: ['./index.scss']
 })
 export class ParametreIndexComponent implements OnInit {
     private readonly layoutService = inject(LayoutService);
