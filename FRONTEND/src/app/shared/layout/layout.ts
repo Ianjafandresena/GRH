@@ -1,19 +1,30 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './component/header/header';
 import { AuthService } from '../../module/auth/service/auth-service';
+import { ChatbotComponent } from '../chatbot/chatbot.component';  // ➕ CHATBOT
+import { ChatbotService } from '../chatbot/chatbot.service';       // ➕ CHATBOT
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, HeaderComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatIconModule,
+    HeaderComponent,
+    ChatbotComponent  // ➕ CHATBOT
+  ],
   templateUrl: './layout.html',
   styleUrls: ['./layout.scss']
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly chatbotService = inject(ChatbotService);  // ➕ CHATBOT
 
   isCollapsed = false;
   showConge = false;
@@ -56,7 +67,16 @@ export class LayoutComponent {
       this.showRemb = false;
     }
   }
+
   toggleSidebar() { this.isCollapsed = !this.isCollapsed; }
+
+  ngOnInit() {
+    // ➕ Initialiser chatbot avec emp_code de l'utilisateur connecté
+    const empCode = localStorage.getItem('emp_code');
+    if (empCode) {
+      this.chatbotService.setEmployee(parseInt(empCode));
+    }
+  }
 
   logout() {
     this.authService.logout();

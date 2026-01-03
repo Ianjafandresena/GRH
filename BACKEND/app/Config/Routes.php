@@ -236,5 +236,12 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('/', 'FactureController::create');
         $routes->delete('(:num)', 'FactureController::delete/$1');
     });
+    
+    // ========== CHATBOT routes (MODULE BONUS - ISOLÉ) ==========
+    $routes->group('chatbot', ['namespace' => 'App\Controllers\chatbot', 'filter' => 'jwtauth'], function($routes) {
+        $routes->post('message', 'ChatbotController::sendMessage');
+        $routes->get('suggestions', 'ChatbotController::getSuggestions');
+        $routes->get('health', 'ChatbotController::health');
+    });
 
 });
