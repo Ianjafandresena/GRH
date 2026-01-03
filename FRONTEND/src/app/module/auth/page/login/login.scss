@@ -1,190 +1,256 @@
-.login-container {
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:host {
+  display: block;
+  height: 100vh;
+  font-family: 'Roboto', sans-serif;
+}
+
+.login-wrapper {
   display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0F2942 0%, #1A3E5F 100%);
-  padding: 1rem;
-}
-
-.login-card {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   width: 100%;
-  max-width: 420px;
-  animation: slideUp 0.5s ease-out;
-}
+  background: white;
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  @media (max-width: 900px) {
+    flex-direction: column;
   }
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.logo-circle {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
+/* Left Side: Brand Section */
+.brand-section {
+  flex: 1;
+  background: linear-gradient(180deg, #04acc2 0%, #025f5f 100%);
   color: white;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 900px) {
+    min-height: 300px;
+    flex: none;
+  }
 }
 
-.logo-circle mat-icon {
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-}
-
-h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 0.5rem;
-}
-
-.subtitle {
-  color: #6B7280;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.error-message {
-  background: #FEF2F2;
-  color: #B91C1C;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #FECACA;
+.brand-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
-  font-size: 0.875rem;
+  font-size: 1.1rem;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
 }
 
-.input-wrapper {
-  position: relative;
+.brand-content {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Align left as per screenshot, or center? Screenshot shows left/center mix */
+  text-align: center;
+  align-self: center;
+  margin-top: -3rem;
+  /* Visual balance */
+  width: 100%;
   align-items: center;
 }
 
-.input-icon {
-  position: absolute;
-  left: 1rem;
-  color: #9CA3AF;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+.main-title {
+  font-size: 4rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: 2px;
 }
 
-input {
+.subtitle {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin: 0.5rem 0 3rem;
+  opacity: 0.9;
+}
+
+.sector-badge {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-top: 2rem;
+}
+
+.brand-footer {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  text-align: center;
+}
+
+
+/* Right Side: Form Section */
+.form-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  padding: 2rem;
+}
+
+.login-card {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.75rem;
-  border: 1px solid #D1D5DB;
-  border-radius: 0.5rem;
+  max-width: 450px;
+  padding: 2rem;
+}
+
+.logos-container {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.armp-logo {
+  height: 80px;
+  /* Adjust based on asset */
+  object-fit: contain;
+}
+
+.partner-logo {
+  /* Placeholder style if PNUD image is missing */
+  height: 80px;
+  width: 60px;
+  background: #00548f;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.input-label {
+  display: block;
+  color: #4b5563;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
   font-size: 0.95rem;
-  transition: all 0.2s;
-  color: #1F2937;
 }
 
-input:focus {
-  outline: none;
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.form-group {
+  margin-bottom: 1.5rem;
 }
 
-input::placeholder {
-  color: #9CA3AF;
+.custom-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: #eef2f6;
+  /* Light gray/blue from mockup */
+  border: 1px solid transparent;
+  border-radius: 4px;
+  /* Slightly rounded */
+  font-size: 1rem;
+  color: #333;
+  transition: all 0.3s;
+
+  &:focus {
+    outline: none;
+    background-color: #fff;
+    border-color: #04acc2;
+    box-shadow: 0 0 0 3px rgba(4, 172, 194, 0.1);
+  }
+
+  &::placeholder {
+    color: #888;
+  }
 }
 
 .form-options {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-end;
+  /* Align "Forgot password" to right as typical, mock centered but right is better UX */
   margin-bottom: 1.5rem;
-  font-size: 0.875rem;
-}
-
-.remember-me {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  cursor: pointer;
-  color: #4B5563;
 }
 
 .forgot-password {
-  color: #3B82F6;
+  color: #04acc2;
   text-decoration: none;
-  font-weight: 500;
+  font-size: 0.9rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
-.forgot-password:hover {
-  text-decoration: underline;
+.error-text {
+  color: #dc2626;
+  background-color: #fef2f2;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1px solid #fee2e2;
 }
 
-.btn-login {
+.btn-connect {
   width: 100%;
-  padding: 0.875rem;
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  padding: 0.9rem;
+  background-color: #04acc2;
+  /* Cyan similar to gradient top */
   color: white;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 50px;
+  /* Pill shape */
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 6px rgba(4, 172, 194, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 2rem;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(4, 172, 194, 0.3);
+    background-color: #039db0;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 }
 
-.btn-login:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.5);
+.separator {
+  height: 1px;
+  background: #eee;
+  margin: 0 0 2rem;
 }
 
-.btn-login:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+.btn-register {
+  width: 100%;
+  padding: 0.9rem;
+  background-color: white;
+  color: #444;
+  border: none;
+  border-radius: 50px;
+  /* Pill shape */
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  /* Soft shadow */
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #eee;
 
-.login-footer {
-  margin-top: 2rem;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #9CA3AF;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    background-color: #fafafa;
+  }
 }
 
 .spinner {
@@ -194,6 +260,7 @@ input::placeholder {
   border-radius: 50%;
   border-top-color: white;
   animation: spin 1s ease-in-out infinite;
+  margin: 0 auto;
 }
 
 @keyframes spin {

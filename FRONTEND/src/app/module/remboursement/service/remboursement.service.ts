@@ -25,6 +25,11 @@ export class RemboursementService {
         return this.http.post<any>(`${this.baseUrl}/indirect`, data, { withCredentials: true });
     }
 
+    // Créer plusieurs demandes en batch (transactionnel)
+    createBatch(demandes: any[]): Observable<any> {
+        return this.http.post<any>(`${this.baseUrl}/batch`, { demandes }, { withCredentials: true });
+    }
+
     // Récupérer les membres de la famille
     getFamilyMembers(empCode: number): Observable<any> {
         return this.http.get<any>(`${this.baseUrl}/family/${empCode}`, { withCredentials: true });

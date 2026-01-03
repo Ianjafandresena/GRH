@@ -1,0 +1,144 @@
+<div class="etat-conge-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="title-group">
+            <i class="fas fa-chart-line header-icon"></i>
+            <div>
+                <h1>État de Congé</h1>
+                <p class="subtitle">Suivi des soldes de congés par employé</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-section">
+        <div class="filter-group">
+            <label><i class="fas fa-search"></i> Rechercher</label>
+            <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()"
+                placeholder="Nom, prénom, matricule..." class="filter-input">
+        </div>
+
+        <div class="filter-group">
+            <label><i class="fas fa-calendar-alt"></i> Année (avec décision sortie)</label>
+            <select [(ngModel)]="selectedYear" (ngModelChange)="onYearChange()" class="filter-select">
+                <option [ngValue]="null">Toutes les années</option>
+                <option *ngFor="let year of availableYears" [ngValue]="year">
+                    {{ year }}
+                </option>
+            </select>
+        </div>
+
+        <div class="filter-info">
+            <i class="fas fa-info-circle"></i>
+            <small>
+                Les soldes affichés sont pour l'année sélectionnée et <strong>toutes les années antérieures</strong>
+                (FIFO).
+            </small>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des états de congé...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+    </div>
+
+    <!-- Liste Employés -->
+    <div *ngIf="!loading && !error" class="employees-list">
+        <div *ngFor="let employee of filteredEmployees" class="employee-card">
+            <!-- En-tête Employé -->
+            <div class="employee-header">
+                <div class="employee-info">
+                    <h3>{{ employee.emp_nom }} {{ employee.emp_prenom }}</h3>
+                    <div class="employee-meta">
+                        <span class="badge badge-primary">
+                            <i class="fas fa-id-card"></i> {{ employee.emp_imarmp }}
+                        </span>
+                        <span class="meta-text">
+                            <i class="fas fa-building"></i> {{ employee.direction }}
+                        </span>
+                        <span class="meta-text">
+                            <i class="fas fa-briefcase"></i> {{ employee.fonction }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="employee-actions">
+                    <button (click)="exportPDF(employee)" class="btn-export">
+                        <i class="fas fa-file-pdf"></i>
+                        Générer PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tableau Soldes (Format Document Officiel) -->
+            <div class="soldes-table-wrapper">
+                <table class="soldes-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-calendar"></i> ANNÉE</th>
+                            <th><i class="fas fa-file-signature"></i> DÉCISION</th>
+                            <th><i class="fas fa-calendar-plus"></i> NOMBRE DE JOURS</th>
+                            <th><i class="fas fa-clock"></i> RESTE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let solde of employee.soldes" [class.depleted]="solde.reste === 0">
+                            <td class="year-cell">{{ solde.annee }}</td>
+                            <td class="decision-cell">
+                                <code>{{ solde.decision }}</code>
+                            </td>
+                            <td class="initial-cell">
+                                <span class="number">{{ solde.initial }}</span> jours
+                            </td>
+                            <td class="reste-cell">
+                                <span class="number" [class.zero]="solde.reste === 0">
+                                    {{ solde.reste }}
+                                </span> jours
+                            </td>
+                        </tr>
+
+                        <!-- Ligne Total -->
+                        <tr class="total-row">
+                            <td colspan="2"><strong>TOTAL</strong></td>
+                            <td>
+                                <strong class="number">{{ getTotalInitial(employee) }}</strong> jours
+                            </td>
+                            <td>
+                                <strong class="number">{{ getTotalReste(employee) }}</strong> jours
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Résumé -->
+            <div class="employee-summary">
+                <div class="summary-item">
+                    <span class="label">Total accordé :</span>
+                    <span class="value">{{ getTotalInitial(employee) }} jours</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Total pris :</span>
+                    <span class="value taken">{{ getTotalPris(employee) }} jours</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Total restant :</span>
+                    <span class="value remaining">{{ getTotalReste(employee) }} jours</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredEmployees.length === 0" class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>Aucun employé trouvé avec ces critères</p>
+        </div>
+    </div>
+</div>

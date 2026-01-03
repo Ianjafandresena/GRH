@@ -10,7 +10,19 @@
       </button>
     </div>
 
-    <form *ngIf="!showRecap" [formGroup]="congeForm" (ngSubmit)="submit()" novalidate>
+    <!-- ========== TOGGLE TYPE D'ABSENCE (Congé/Permission) ========== -->
+    <div class="mode-toggle">
+      <button type="button" [class.active]="absenceType === 'conge'" (click)="absenceType = 'conge'; onTypeChange()">
+        📅 Congé
+      </button>
+      <button type="button" [class.active]="absenceType === 'permission'"
+        (click)="absenceType = 'permission'; onTypeChange()">
+        ⏰ Permission
+      </button>
+    </div>
+
+    <!-- ========== FORMULAIRE CONGÉ (existant - NE PAS MODIFIER) ========== -->
+    <form *ngIf="absenceType === 'conge'" [formGroup]="congeForm" (ngSubmit)="submit()" novalidate>
 
       <!-- Employee Section (Admin View) -->
       <div class="form-section">
@@ -160,66 +172,79 @@
         </div>
       </div>
     </form>
+    <!-- ========== FORMULAIRE PERMISSION (nouveau) ========== -->
+    <form *ngIf="absenceType === 'permission'" [formGroup]="permissionForm" (ngSubmit)="submitPermission()" novalidate>
 
-    <!-- Recap View -->
-    <div *ngIf="showRecap" class="recap-container">
-      <div class="recap-header">
-        <h2>Confirmation de la demande</h2>
-        <p>Veuillez vérifier l'exactitude des informations ci-dessous</p>
-      </div>
-
-      <div class="recap-card">
-        <div class="recap-grid">
-          <div class="recap-group">
-            <label>Employé</label>
-            <div class="val">{{ lastCongeDraft.nom_emp }} ({{ lastCongeDraft.matricule }})</div>
-          </div>
-          <div class="recap-group">
-            <label>Motif</label>
-            <div class="val">{{ motifLibelle }}</div>
-          </div>
-          <div class="recap-group">
-            <label>Période</label>
-            <div class="val">Du {{ lastCongeDraft.cng_debut | date:'dd/MM/yyyy' }} au {{ lastCongeDraft.cng_fin |
-              date:'dd/MM/yyyy' }}</div>
-          </div>
-          <div class="recap-group">
-            <label>Durée</label>
-            <div class="val highlight">{{ lastCongeDraft.cng_nb_jour }} jours</div>
-          </div>
-          <div class="recap-group full-width">
-            <label>Lieu</label>
-            <div class="val">{{ lastCongeDraft.nom_region }}</div>
-          </div>
-          <div class="recap-group full-width">
-            <label>Solde restant après déduction</label>
-            <div class="val" [class.warning]="lastCongeDraft.joursRestants < 5">{{ lastCongeDraft.joursRestants }} jours
+      <!-- Employee Section -->
+      <div class="form-section">
+        <h3 class="section-title">Informations Employé</h3>
+        <div class="form-group required">
+          <label for="perm_emp_search">Employé concerné</label>
+          <div class="select2-container">
+            <div class="input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input id="perm_emp_search" type="text" formControlName="emp_search" autocomplete="off"
+                class="form-control" placeholder="Rechercher par nom ou matricule..." (focus)="onPermissionEmpFocus()"
+                (blur)="onPermissionEmpBlur()" (input)="filterPermissionEmployees($any($event.target).value)">
             </div>
+            <ul class="suggestions" *ngIf="permissionShowEmpDropdown && permissionFilteredEmployees.length > 0">
+              <li *ngFor="let emp of permissionFilteredEmployees" (mousedown)="selectPermissionEmployee(emp)">
+                <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
+                <div class="suggestion-sub">{{ emp.emp_imarmp }}</div>
+              </li>
+            </ul>
           </div>
-          <div class="recap-group">
-            <label>Décision N°</label>
-            <div class="val">{{ lastCongeDraft.numeroDecision }}</div>
+          <div *ngIf="permissionSelectedEmployee" class="selected-employee-info">
+            <div class="info-row"><strong>Matricule:</strong> {{ permissionSelectedEmployee.emp_imarmp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ permissionSelectedEmployee.pst_fonction || '-' }}</div>
           </div>
-          <div class="recap-group">
-            <label>Année du solde</label>
-            <div class="val">{{ lastCongeDraft.anneeSolde }}</div>
-          </div>
-        </div>
-
-        <div class="recap-interims" *ngIf="lastCongeDraft.interims?.length">
-          <label>Suppléants désignés</label>
-          <ul>
-            <li *ngFor="let int of lastCongeDraft.interims">{{ int.emp_nom }} {{ int.emp_prenom }}</li>
-          </ul>
         </div>
       </div>
 
+      <!-- Permission Details -->
+      <div class="form-section">
+        <h3 class="section-title">Détails de la Permission</h3>
+        <div class="form-grid">
+          <div class="form-group required">
+            <label for="prm_debut">Début</label>
+            <input type="datetime-local" id="prm_debut" formControlName="prm_debut" class="form-control"
+              (change)="updatePermissionDurations()">
+          </div>
+
+          <div class="form-group required">
+            <label for="prm_fin">Fin</label>
+            <input type="datetime-local" id="prm_fin" formControlName="prm_fin" class="form-control"
+              (change)="updatePermissionDurations()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Duration Summary -->
+      <div class="summary-box">
+        <div class="summary-item duration">
+          <span class="label">Durée calculée</span>
+          <span class="value">
+            <span *ngIf="permissionCalculatedDays !== null">
+              {{ permissionCalculatedDays }} jour(s) <small>({{ permissionCalculatedHours }}h)</small>
+            </span>
+            <span *ngIf="permissionCalculatedDays === null">-</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
       <div class="form-footer">
-        <button type="button" class="btn btn-secondary" (click)="annulerRecap()">Modifier</button>
-        <button type="button" class="btn btn-success" (click)="confirmEnvoi()" [disabled]="loading">
-          <i class="fas fa-check-circle"></i> Confirmer l'envoi
-        </button>
+        <div *ngIf="permissionErrorMsg" class="alert-error">
+          <i class="fas fa-exclamation-circle"></i> {{ permissionErrorMsg }}
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" routerLink="/conge">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="permissionLoading || permissionForm.invalid">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+        </div>
       </div>
-    </div>
+    </form>
+
   </div>
 </div>

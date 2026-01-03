@@ -1,6 +1,10 @@
 export interface PrisEnCharge {
     pec_code?: number;
     pec_num?: string;
+    pec_date_arrive?: string;
+    pec_date_depart?: string;
+    pec_creation?: string;
+    pec_approuver?: boolean | string;
     cen_code?: number;
     enf_code?: number;
     conj_code?: number;

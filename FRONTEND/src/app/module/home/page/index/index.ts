@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
@@ -52,6 +52,12 @@ export class HomeComponent implements OnInit {
   tooltipY = 0;
   tooltipData = { label: '', conges: 0, permissions: 0 };
 
+  // New Signals for widgets
+  employeesOnLeave = signal<any[]>([]);
+  pendingRequests = signal<any>({ count: 0, total: 0 });
+  recentActivity = signal<any[]>([]);
+  donutData = signal<any>({ stats: { approuve: 0, en_attente: 0, total: 0 }, montants: { en_attente: 0 } });
+
   ngOnInit() {
     this.layoutService.setTitle('Tableau de Bord');
 
@@ -63,6 +69,10 @@ export class HomeComponent implements OnInit {
 
     this.loadChartData();
     this.loadStats();
+    this.loadEmployeesOnLeave();
+    this.loadPendingRequests();
+    this.loadRecentActivity();
+    this.loadDonutData();
   }
 
   loadStats() {
@@ -232,5 +242,52 @@ export class HomeComponent implements OnInit {
 
   onChartMouseLeave() {
     this.hoveredIndex = -1;
+  }
+
+  // Widget data loading methods
+  loadEmployeesOnLeave() {
+    this.dashboardService.getEmployeesOnLeave().subscribe({
+      next: (data) => this.employeesOnLeave.set(data),
+      error: (err) => console.error('Erreur chargement employés en congé', err)
+    });
+  }
+
+  loadPendingRequests() {
+    this.dashboardService.getPendingReimbursements().subscribe({
+      next: (data) => this.pendingRequests.set(data),
+      error: (err) => console.error('Erreur chargement demandes en attente', err)
+    });
+  }
+
+  loadRecentActivity() {
+    this.dashboardService.getRecentActivity().subscribe({
+      next: (data) => this.recentActivity.set(data),
+      error: (err) => console.error('Erreur chargement activité récente', err)
+    });
+  }
+
+  loadDonutData() {
+    this.dashboardService.getReimbursementDistribution().subscribe({
+      next: (data) => this.donutData.set(data),
+      error: (err) => console.error('Erreur chargement répartition remboursements', err)
+    });
+  }
+
+  // Helper methods for templates
+  activityIcon(type: string): string {
+    return type === 'conge' ? 'event_available' : 'local_hospital';
+  }
+
+  formatTime(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffHrs < 1) return 'Il y a quelques minutes';
+    if (diffHrs < 24) return `Il y a ${diffHrs} heure${diffHrs > 1 ? 's' : ''}`;
+    if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+    return date.toLocaleDateString('fr-FR');
   }
 }

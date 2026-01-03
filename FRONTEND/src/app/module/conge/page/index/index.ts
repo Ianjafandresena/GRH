@@ -18,13 +18,18 @@ export class CongeIndexComponent implements OnInit {
   private readonly congeService = inject(CongeService);
   private readonly layoutService = inject(LayoutService);
 
-  conges: any[] = [];
+  conges: any[] = [];  // Conservé pour compatibilité
+  absences: any[] = [];  // ➕ NOUVEAU: Liste unifiée congés + permissions
+  displayMode: 'unified' | 'conge-only' = 'unified';  // ➕ Mode d'affichage
+  absenceTypeFilter: string = '';  // ➕ '' = tous, 'conge' = congés, 'permission' = permissions
+
   start: string | null = null;
   end: string | null = null;
   typ_code: number | null = null;
   lieu: string | null = null;
   loading = false;
   errorMsg = '';
+  successMsg: string | null = null;  // ➕ AJOUTÉ pour notification
 
   regions: any[] = [];
   filteredRegions: any[] = [];
@@ -44,11 +49,15 @@ export class CongeIndexComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.layoutService.setTitle('Gestion des Congés');
+    this.layoutService.setTitle('Gestion des Absences');  // 🔄 MODIFIÉ: Titre unifié
     this.route.data.subscribe(data => {
+      // Charger données initiales (resolver peut retourner congés)
       this.conges = data['conges'] || [];
       if (!this.conges.length) {
         this.applyFilter();
+      } else {
+        // Si données du resolver, mapper en absences
+        this.absences = this.conges.map(c => ({ ...c, absence_type: 'conge' }));
       }
     });
 
@@ -56,6 +65,11 @@ export class CongeIndexComponent implements OnInit {
     this.congeService.getRegions().subscribe((regions: any[]) => {
       this.regions = regions;
       this.filteredRegions = regions;
+    });
+
+    // ➕ NOUVEAU: Écouter les messages de succès
+    this.layoutService.successMessage$.subscribe(msg => {
+      this.successMsg = msg;
     });
   }
 
@@ -110,13 +124,49 @@ export class CongeIndexComponent implements OnInit {
     if (this.end) params.end = this.end;
     if (this.typ_code) params.typ_code = this.typ_code;
     if (this.lieu) params.lieu = this.lieu;
+
     this.loading = true;
     this.errorMsg = '';
-    this.congeService.getConges(params).subscribe({
-      next: list => { this.conges = list || []; },
-      error: err => { this.errorMsg = err?.message || 'Erreur lors du chargement'; },
-      complete: () => { this.loading = false; }
+
+    // ➕ NOUVEAU: Charger absences unifiées (congés + permissions)
+    this.congeService.getAbsences(params).subscribe({
+      next: (absences) => {
+        this.absences = absences || [];
+        // Conserver aussi dans conges pour compatibilité
+        this.conges = this.absences.filter(a => a.absence_type === 'conge');
+        this.applyClientSideFilter();  // Appliquer filtre type côté client
+      },
+      error: (err) => {
+        this.errorMsg = err?.message || 'Erreur lors du chargement';
+      },
+      complete: () => {
+        this.loading = false;
+      }
     });
+  }
+
+  /**
+   * ➕ NOUVEAU: Filtrage côté client par type d'absence
+   */
+  applyClientSideFilter() {
+    if (!this.absenceTypeFilter) {
+      // Aucun filtre type → afficher tout
+      return;
+    }
+
+    // Filtrer par type
+    this.absences = this.absences.filter(a => a.absence_type === this.absenceTypeFilter);
+  }
+
+  /**
+   * ➕ NOUVEAU: Helper pour déterminer le type d'absence
+   */
+  getAbsenceType(item: any): string {
+    return item.absence_type === 'permission' ? 'Permission' : 'Congé';
+  }
+
+  getAbsenceTypeClass(item: any): string {
+    return item.absence_type === 'permission' ? 'badge-permission' : 'badge-conge';
   }
 
   reload() {

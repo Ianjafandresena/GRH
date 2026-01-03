@@ -43,6 +43,16 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('export-excel', 'CongeController::exportExcel');
     });
 
+    // Dashboard endpoints
+    $routes->group('dashboard', ['namespace' => 'App\Controllers', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('stats', 'DashboardController::getDashboardStats');
+        $routes->get('evolution', 'DashboardController::getEvolutionStats');
+        $routes->get('employees-on-leave', 'DashboardController::getEmployeesOnLeave');
+        $routes->get('pending-reimbursements', 'DashboardController::getPendingReimbursements');
+        $routes->get('recent-activity', 'DashboardController::getRecentActivity');
+        $routes->get('reimbursement-distribution', 'DashboardController::getReimbursementDistribution');
+    });
+
     // Validation congé (workflow multi-étapes: CHEF -> RRH -> DAAF -> DG)
     $routes->group('validation_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
         $routes->get('status/(:num)', 'ValidationCongeController::getStatus/$1');
@@ -50,7 +60,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('approve', 'ValidationCongeController::approveStep');
         $routes->post('reject', 'ValidationCongeController::reject');
         $routes->get('pending/(:num)', 'ValidationCongeController::getPendingForSigner/$1');
+        $routes->get('steps/(:num)', 'ValidationCongeController::getStepsForEmployee/$1');
     });
+
+    // Validation par email (sans JWT - lien public sécurisé par token)
+    $routes->get('conge/email-validate', '\App\Controllers\conge\ValidationEmailController::handleEmailValidation');
 
     $routes->group('permission', ['namespace' => 'App\Controllers\permission', 'filter' => 'jwtauth'], function($routes) {
         $routes->post('/', 'PermissionController::createPermission');
@@ -78,6 +92,13 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->put('(:num)', 'SoldeCongeController::update/$1');
         $routes->delete('(:num)', 'SoldeCongeController::delete/$1');
         $routes->get('last_dispo/(:any)', 'SoldeCongeController::lastDispo/$1');
+    });
+
+    // État de Congé (Suivi soldes multi-années)
+    $routes->group('etat_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'EtatCongeController::index');
+        $routes->get('years', 'EtatCongeController::getAvailableYears');
+        $routes->get('(:num)', 'EtatCongeController::show/$1');
     });
 
     $routes->group('debit_solde_cng', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
@@ -147,14 +168,24 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('/', 'DemandeRembController::getAllDemandes');
         $routes->get('(:num)', 'DemandeRembController::getDemande/$1');
         $routes->get('family/(:num)', 'DemandeRembController::getFamilyMembers/$1');
-        $routes->post('/indirect', 'DemandeRembController::createIndirect');
+        $routes->post('indirect', 'DemandeRembController::createIndirect');
+        $routes->post('batch', 'DemandeRembController::createBatch');
         $routes->post('(:num)/valider-rrh', 'DemandeRembController::validerRRH/$1');
         $routes->post('(:num)/valider-daaf', 'DemandeRembController::validerDAAF/$1');
         $routes->post('(:num)/engager', 'DemandeRembController::engager/$1');
         $routes->post('(:num)/payer', 'DemandeRembController::payer/$1');
         $routes->post('(:num)/rejeter', 'DemandeRembController::rejeter/$1');
+        $routes->post('(:num)/traiter', 'DemandeRembController::traiter/$1');
         $routes->get('(:num)/pdf', 'DemandeRembController::exportPdf/$1');
         $routes->get('etat/agent/pdf', 'DemandeRembController::exportEtatAgentPdf');
+    });
+
+    // États de Remboursement
+    $routes->group('etat_remb', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'EtatRembController::index');
+        $routes->get('agent/(:num)', 'EtatRembController::getByAgent/$1');
+        $routes->post('/', 'EtatRembController::create');
+        $routes->get('(:num)/pdf', 'EtatPdfController::generateEtatPdf/$1');  // PDF
     });
 
     // Prises en charge
@@ -162,9 +193,19 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('/', 'PrisEnChargeController::getAll');
         $routes->get('(:num)', 'PrisEnChargeController::get/$1');
         $routes->post('/', 'PrisEnChargeController::create');
-        $routes->post('(:num)/valider', 'PrisEnChargeController::valider/$1');
+        $routes->post('(:num)/approuver', 'PrisEnChargeController::approuver/$1');
         $routes->get('(:num)/bulletin', 'PrisEnChargeController::genererBulletin/$1');
         $routes->get('employee/(:num)', 'PrisEnChargeController::getByEmployee/$1');
+    });
+
+    // Centres de santé
+    $routes->group('centre_sante', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'CentreSanteController::index');
+        $routes->get('types', 'CentreSanteController::getTypes');
+        $routes->get('(:num)', 'CentreSanteController::show/$1');
+        $routes->post('/', 'CentreSanteController::create');
+        $routes->put('(:num)', 'CentreSanteController::update/$1');
+        $routes->delete('(:num)', 'CentreSanteController::delete/$1');
     });
 
     // Bénéficiaires (conjoints/enfants)
@@ -178,6 +219,22 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
     // États de remboursement
     $routes->group('etat_remb', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
         $routes->get('/', 'EtatRembController::index');
+    });
+
+    // Objets de remboursement (articles)
+    $routes->group('objet_remboursement', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'ObjetRemboursementController::index');
+        $routes->get('(:num)', 'ObjetRemboursementController::show/$1');
+        $routes->post('/', 'ObjetRemboursementController::create');
+        $routes->delete('(:num)', 'ObjetRemboursementController::delete/$1');
+    });
+
+    // Factures
+    $routes->group('facture', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'FactureController::index');
+        $routes->get('(:num)', 'FactureController::show/$1');
+        $routes->post('/', 'FactureController::create');
+        $routes->delete('(:num)', 'FactureController::delete/$1');
     });
 
 });

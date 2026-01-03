@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +15,7 @@ import { LayoutService } from '../../../../shared/layout/service/layout.service'
   templateUrl: './detail.html',
   styleUrls: ['./detail.scss']
 })
-export class DetailCongeComponent implements OnInit {
+export class DetailCongeComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(CongeService);
@@ -37,13 +37,10 @@ export class DetailCongeComponent implements OnInit {
   showRejectModal = false;
   rejectObservation = '';
 
-  // Map step name to sign_code
-  private readonly stepToSignCode: Record<string, number> = {
-    'CHEF': 1,
-    'RRH': 2,
-    'DAAF': 3,
-    'DG': 4
-  };
+  // Auto-refresh interval
+  private refreshInterval: any = null;
+
+  // Map removed - dynamic lookup now
 
   ngOnInit() {
     this.layoutService.setTitle('Gestion des Congés');
@@ -70,6 +67,8 @@ export class DetailCongeComponent implements OnInit {
       },
       complete: () => {
         this.loading = false;
+        // Start auto-refresh every 10 seconds
+        this.startAutoRefresh();
       }
     });
   }
@@ -78,6 +77,7 @@ export class DetailCongeComponent implements OnInit {
     this.validationService.getStatus(cngCode).subscribe({
       next: status => {
         this.validationStatus = status;
+        this.validating = false;
       }
     });
   }
@@ -131,8 +131,9 @@ export class DetailCongeComponent implements OnInit {
   }
 
   getCurrentSignCode(): number {
-    if (!this.validationStatus?.current_step) return 1;
-    return this.stepToSignCode[this.validationStatus.current_step] || 1;
+    if (!this.validationStatus?.current_step || !this.validationStatus?.steps) return 1;
+    const currentStepObj = this.validationStatus.steps.find(s => s.step === this.validationStatus?.current_step);
+    return currentStepObj?.sign_code || 1;
   }
 
   approveStep() {
@@ -191,5 +192,36 @@ export class DetailCongeComponent implements OnInit {
         this.validating = false;
       }
     });
+  }
+
+  /**
+   * Start automatic refresh of validation status every 10 seconds
+   * This allows the UI to update reactively when validation happens via email
+   */
+  private startAutoRefresh() {
+    // Clear any existing interval
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+
+    // Refresh every 10 seconds
+    this.refreshInterval = setInterval(() => {
+      if (this.congeId) {
+        // Only refresh if not already validated
+        if (!this.isValidated()) {
+          this.loadValidationStatus(this.congeId);
+          this.reloadCongeData();
+        }
+      }
+    }, 10000); // 10 seconds
+  }
+
+  /**
+   * Cleanup interval on component destroy
+   */
+  ngOnDestroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 }

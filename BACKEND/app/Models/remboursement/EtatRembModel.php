@@ -9,7 +9,10 @@ class EtatRembModel extends Model
     protected $primaryKey = 'eta_code';
 
     protected $allowedFields = [
-        'eta_libelle'
+        'eta_date',
+        'eta_total',
+        'etat_num',
+        'emp_code'
     ];
 
     protected $useAutoIncrement = true;

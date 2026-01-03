@@ -1,0 +1,59 @@
+<div class="preview-container">
+    <div class="dialog-header">
+        <h2>Confirmation de la demande</h2>
+        <p>Veuillez vérifier l'exactitude des informations ci-dessous</p>
+    </div>
+
+    <div class="dialog-content">
+        <div class="recap-grid">
+            <div class="recap-group">
+                <label>Employé</label>
+                <div class="val">{{ data.draft.nom_emp }} ({{ data.draft.matricule }})</div>
+            </div>
+            <div class="recap-group">
+                <label>Motif</label>
+                <div class="val">{{ data.motif }}</div>
+            </div>
+            <div class="recap-group">
+                <label>Période</label>
+                <div class="val">Du {{ data.draft.cng_debut | date:'dd/MM/yyyy' }} au {{ data.draft.cng_fin |
+                    date:'dd/MM/yyyy' }}</div>
+            </div>
+            <div class="recap-group">
+                <label>Durée</label>
+                <div class="val highlight">{{ data.draft.cng_nb_jour }} jours</div>
+            </div>
+            <div class="recap-group full-width">
+                <label>Lieu</label>
+                <div class="val">{{ data.draft.nom_region }}</div>
+            </div>
+            <div class="recap-group full-width">
+                <label>Solde restant après déduction</label>
+                <div class="val" [class.warning]="data.draft.joursRestants < 5">{{ data.draft.joursRestants }} jours
+                </div>
+            </div>
+            <div class="recap-group">
+                <label>Décision N°</label>
+                <div class="val">{{ data.draft.numeroDecision || '-' }}</div>
+            </div>
+            <div class="recap-group">
+                <label>Année du solde</label>
+                <div class="val">{{ data.draft.anneeSolde || '-' }}</div>
+            </div>
+        </div>
+
+        <div class="recap-interims" *ngIf="data.draft.interims?.length">
+            <label>Suppléants désignés</label>
+            <ul>
+                <li *ngFor="let int of data.draft.interims">{{ int.emp_nom }} {{ int.emp_prenom }}</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="dialog-actions">
+        <button mat-button (click)="onCancel()" class="btn-cancel">Modifier</button>
+        <button mat-raised-button color="primary" (click)="onConfirm()" class="btn-confirm">
+            Confirmer l'envoi
+        </button>
+    </div>
+</div>

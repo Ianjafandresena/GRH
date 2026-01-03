@@ -5,24 +5,34 @@
 
     <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
 
-    <form class="form-card" (ngSubmit)="submit()">
-        <!-- 1. Section Agent -->
-        <div class="form-section">
+    <!-- ========== MODE TOGGLE ========== -->
+    <div class="mode-toggle">
+        <button type="button" [class.active]="demandeMode === 'agent'" (click)="demandeMode = 'agent'; onModeChange()">
+            👤 Agent
+        </button>
+        <button type="button" [class.active]="demandeMode === 'centre'"
+            (click)="demandeMode = 'centre'; onModeChange()">
+            🏥 Centre de Santé
+        </button>
+    </div>
+
+    <!-- ========== FORMULAIRE ========== -->
+    <form class="form-card">
+        <!-- 1a. Agent (Mode Agent) -->
+        <div class="form-section" *ngIf="demandeMode === 'agent'">
             <h3>Agent *</h3>
             <div class="form-group">
-                <label>Rechercher un employé</label>
                 <div class="search-container">
                     <input type="text" [(ngModel)]="empSearchText" (input)="filterEmployees()" (focus)="onEmpFocus()"
                         (blur)="onEmpBlur()" name="empSearch" placeholder="Rechercher par nom ou matricule..."
-                        autocomplete="off" required>
-
-                    <ul class="suggestions" *ngIf="showEmpDropdown && filteredEmployees.length > 0">
+                        autocomplete="off" [disabled]="isAgentLocked">
+                    <ul class="suggestions" *ngIf="showEmpDropdown && filteredEmployees.length > 0 && !isAgentLocked">
                         <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
                             {{ emp.emp_nom }} {{ emp.emp_prenom }} ({{ emp.emp_imarmp }})
                         </li>
                     </ul>
                 </div>
-
+                <div class="hint" *ngIf="isAgentLocked">Agent verrouillé (demandes en attente)</div>
                 <div *ngIf="selectedEmployee" class="employee-info">
                     <div class="info-row"><strong>Matricule :</strong> {{ selectedEmployee.emp_imarmp }}</div>
                     <div class="info-row"><strong>Fonction :</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
@@ -31,138 +41,264 @@
             </div>
         </div>
 
-        <!-- 2. Section Bénéficiaire -->
-        <div class="form-section">
-            <h3>Bénéficiaire *</h3>
-
+        <!-- 1b. Centre (Mode Centre) -->
+        <div class="form-section" *ngIf="demandeMode === 'centre'">
+            <h3>Centre de Santé *</h3>
             <div class="form-group">
-                <label>Type de bénéficiaire</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="radio" name="beneficiaire_type" value="agent"
-                            [(ngModel)]="demande.beneficiaire_type"> Agent
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="radio" name="beneficiaire_type" value="conjoint"
-                            [(ngModel)]="demande.beneficiaire_type"> Conjoint(e)
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="radio" name="beneficiaire_type" value="enfant"
-                            [(ngModel)]="demande.beneficiaire_type"> Enfant (&lt; 21 ans)
-                    </label>
+                <div class="custom-select-wrapper">
+                    <div class="search-input-wrapper" [class.disabled]="isCentreLocked">
+                        <input type="text" [(ngModel)]="centreSearchText" (input)="filterCentres()"
+                            (focus)="showCentreDropdown = true" (blur)="onCentreBlur()" [disabled]="isCentreLocked"
+                            placeholder="🔍 Rechercher un centre de santé..." autocomplete="off" name="centreSearch">
+                        <button type="button" class="clear-btn" *ngIf="selectedCentre && !isCentreLocked"
+                            (click)="clearCentre()">×</button>
+                    </div>
+                    <ul class="custom-dropdown"
+                        *ngIf="showCentreDropdown && filteredCentres.length > 0 && !isCentreLocked">
+                        <li *ngFor="let cen of filteredCentres" (mousedown)="selectCentre(cen)">
+                            <strong>{{ cen.cen_nom }}</strong>
+                            <span class="subtitle">{{ cen.tp_cen || 'Centre de santé' }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="hint" *ngIf="isCentreLocked">🔒 Centre verrouillé (demandes en attente)</div>
+                <div *ngIf="selectedCentre" class="employee-info">
+                    <div class="info-row"><strong>Établissement :</strong> {{ selectedCentre.cen_nom }}</div>
+                    <div class="info-row"><strong>Type :</strong> {{ selectedCentre.tp_cen || '-' }}</div>
                 </div>
             </div>
+        </div>
 
-            <div class="form-group" *ngIf="demande.beneficiaire_type === 'conjoint'">
-                <label>Conjoint(e)</label>
-                <select [(ngModel)]="demande.conj_code" name="conj_code">
-                    <option [ngValue]="null">-- Sélectionner --</option>
-                    <option *ngFor="let c of conjoints" [ngValue]="c.conj_code">{{ c.conj_nom }}</option>
-                </select>
-            </div>
-
-            <div class="form-group" *ngIf="demande.beneficiaire_type === 'enfant'">
-                <label>Enfant</label>
-                <select [(ngModel)]="demande.enf_code" name="enf_code">
-                    <option [ngValue]="null">-- Sélectionner --</option>
-                    <option *ngFor="let e of enfants" [ngValue]="e.enf_code">
-                        {{ e.enf_nom }} ({{ e.date_naissance }})
+        <!-- 2. PEC -->
+        <div class="form-section">
+            <h3>Prise en charge *</h3>
+            <div class="form-group">
+                <select [(ngModel)]="demande.pec_code" name="pec_code" (ngModelChange)="onPecSelect($event)">
+                    <option [ngValue]="null">-- Sélectionner une PEC --</option>
+                    <option *ngFor="let p of pecs" [ngValue]="p.pec_code">
+                        {{ p.pec_num }} -
+                        <span *ngIf="demandeMode === 'centre'">{{ p.nom_emp }} {{ p.prenom_emp }} - </span>
+                        {{ p.beneficiaire_nom }} ({{ p.beneficiaire_type }})
+                        {{ isPecApproved(p) ? '✓' : '⚠' }}
                     </option>
                 </select>
             </div>
-        </div>
-
-        <!-- 3. Section Pièces justificatives -->
-        <div class="form-section">
-            <h3>Pièces justificatives</h3>
-
-            <div class="checkbox-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" [(ngModel)]="selectedPieces['Ordonnance']" name="pc_ordonnance"
-                        (ngModelChange)="demande.has_ordonnance = selectedPieces['Ordonnance']">
-                    Ordonnance
-                </label>
-
-                <label class="checkbox-label">
-                    <input type="checkbox" [(ngModel)]="selectedPieces['Facture']" name="pc_facture"
-                        (ngModelChange)="demande.has_facture = selectedPieces['Facture']">
-                    Facture(s)
-                </label>
-
-                <label class="checkbox-label">
-                    <input type="checkbox" [(ngModel)]="selectedPieces['Prise en charge']" name="pc_pec"
-                        (ngModelChange)="onPecCheckChange()">
-                    Prise en charge
-                </label>
-            </div>
-
-            <div class="form-group" *ngIf="demande.has_prise_en_charge">
-                <label for="pec_reference">N° Prise en charge</label>
-                <select id="pec_reference" [(ngModel)]="demande.pec_reference" name="pec_reference">
-                    <option [ngValue]="''">-- Sélectionner une PEC --</option>
-                    <option *ngFor="let p of pecs" [ngValue]="p.pec_num">
-                        {{ p.pec_num }} ({{ p.cen_nom || 'Centre inconnu' }})
-                    </option>
-                </select>
-                <input type="hidden" [(ngModel)]="demande.pec_code" name="pec_code">
+            <div *ngIf="selectedPec" class="pec-info-box">
+                <div class="info-row" *ngIf="demandeMode === 'centre'">
+                    <strong>Agent :</strong> {{ selectedPec.nom_emp }} {{ selectedPec.prenom_emp }}
+                </div>
+                <div class="info-row"><strong>N° PEC :</strong> {{ selectedPec.pec_num }}</div>
+                <div class="info-row"><strong>Bénéficiaire :</strong> {{ selectedPec.beneficiaire_nom }}</div>
+                <div class="info-row"><strong>Lien :</strong> {{ selectedPec.beneficiaire_type }}</div>
+                <div class="info-row"><strong>Centre :</strong> {{ selectedPec.cen_nom || '-' }}</div>
             </div>
         </div>
 
-        <!-- 4. Section Objet et Montant -->
+        <!-- 3. Article -->
         <div class="form-section">
-            <h3>Objet et montant</h3>
-
+            <h3>Objet du remboursement *</h3>
             <div class="form-group">
-                <label for="rem_objet">Objet du remboursement (type de soin) *</label>
-                <input type="text" id="rem_objet" [(ngModel)]="demande.rem_objet" name="rem_objet"
-                    placeholder="Ex: Achat de montures et de verres correcteurs" required>
+                <div class="search-container">
+                    <input type="text" [(ngModel)]="articleSearchText" (input)="filterArticles()"
+                        (focus)="onArticleFocus()" (blur)="onArticleBlur()" name="articleSearch"
+                        placeholder="Rechercher un article..." autocomplete="off">
+                    <ul class="suggestions" *ngIf="showArticleDropdown && filteredArticles.length > 0">
+                        <li *ngFor="let obj of filteredArticles" (click)="selectArticle(obj)">
+                            {{ obj.obj_article }}
+                        </li>
+                    </ul>
+                </div>
+                <div class="selected-item" *ngIf="selectedArticle">
+                    <span class="item-badge">{{ selectedArticle.obj_article }}</span>
+                    <button type="button" class="btn-clear" (click)="clearArticle()">×</button>
+                </div>
             </div>
+        </div>
 
+        <!-- 4. Montant -->
+        <div class="form-section">
+            <h3>Montant *</h3>
             <div class="form-group">
-                <label for="rem_montant">Montant (Ariary) *</label>
-                <input type="number" id="rem_montant" [(ngModel)]="demande.rem_montant" name="rem_montant" min="0"
-                    (ngModelChange)="onMontantChange()" required>
-            </div>
-
-            <div class="form-group">
-                <label for="rem_montant_lettre">Montant en lettres</label>
-                <div class="montant-lettres-display" *ngIf="demande.rem_montant_lettre">
+                <input type="number" [(ngModel)]="demande.rem_montant" name="rem_montant" min="0"
+                    (ngModelChange)="onMontantChange()" placeholder="Montant en Ariary">
+                <div class="montant-lettres" *ngIf="demande.rem_montant_lettre">
                     {{ demande.rem_montant_lettre }}
                 </div>
-                <div class="montant-lettres-placeholder" *ngIf="!demande.rem_montant_lettre">
-                    Le montant en lettres s'affichera automatiquement
+            </div>
+        </div>
+
+        <!-- 5. Pièces -->
+        <div class="form-section">
+            <h3>Pièces justificatives</h3>
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="selectedPieces['Ordonnance']" name="pc_ord"> Ordonnance
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="selectedPieces['Facture']" name="pc_fac"> Facture
+                </label>
+            </div>
+            <div class="form-group" *ngIf="selectedPieces['Facture']">
+                <!-- Sélection facture existante ou nouvelle -->
+                <div *ngIf="existingFactures.length > 0" class="facture-select">
+                    <label>Choisir une facture</label>
+                    <select (change)="onFactureSelect($any($event.target).value)">
+                        <option value="new" [selected]="!selectedFactureId">+ Nouvelle facture</option>
+                        <option *ngFor="let f of existingFactures" [value]="f.fac_num"
+                            [selected]="selectedFactureId === f.fac_num">
+                            {{ f.fac_num }} ({{ f.fac_date }})
+                        </option>
+                    </select>
+                </div>
+                <div *ngIf="!selectedFactureId">
+                    <label>N° Facture</label>
+                    <input type="text" [(ngModel)]="factureData.fac_num" name="fac_num" placeholder="Numéro de facture">
+                    <label>Date</label>
+                    <input type="date" [(ngModel)]="factureData.fac_date" name="fac_date">
+                </div>
+                <div *ngIf="selectedFactureId" class="selected-facture">
+                    <strong>Facture sélectionnée :</strong> {{ factureData.fac_num }} du {{ factureData.fac_date }}
                 </div>
             </div>
         </div>
 
-        <!-- 5. Section Centre de santé (optionnel) -->
-        <div class="form-section">
-            <div class="form-group">
-                <label for="cen_code">Centre de santé</label>
-                <select id="cen_code" [(ngModel)]="demande.cen_code" name="cen_code">
-                    <option [ngValue]="null">-- Sélectionner un centre --</option>
-                    <option *ngFor="let c of centres" [ngValue]="c.cen_code">
-                        {{ c.cen_nom }} {{ c.cen_adresse ? ' - ' + c.cen_adresse : '' }}
-                    </option>
-                </select>
-            </div>
-        </div>
-
-        <!-- 6. Section Date consultation -->
-        <div class="form-section">
-            <div class="form-group">
-                <label for="date_consultation">Date de consultation</label>
-                <input type="date" id="date_consultation" [(ngModel)]="demande.date_consultation"
-                    name="date_consultation">
-            </div>
-        </div>
-
-        <!-- Actions -->
+        <!-- Actions formulaire -->
         <div class="form-actions">
-            <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
-            <button type="submit" class="btn btn-primary" [disabled]="loading">
-                {{ loading ? 'Envoi en cours...' : 'Soumettre la demande' }}
+            <button type="button" class="btn btn-secondary" (click)="clearAll()">Effacer</button>
+            <button type="button" class="btn btn-primary" (click)="openPreview()">
+                {{ editingId ? 'Modifier' : 'Ajouter' }}
             </button>
         </div>
     </form>
+
+    <!-- ========== PANIER - CARDS ========== -->
+    <div class="cart-section" *ngIf="demandesLocales.length > 0">
+        <h3>{{ demandesLocales.length }} demande(s) en attente</h3>
+        <div class="cart-cards">
+            <div class="cart-card" *ngFor="let dem of demandesLocales">
+                <div class="card-header">
+                    <strong>{{ dem.pec_num }}</strong>
+                    <span class="badge">{{ dem.beneficiaire_type }}</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>Bénéficiaire :</strong> {{ dem.beneficiaire_nom }}</p>
+                    <p><strong>Objet :</strong> {{ dem.obj_article }}</p>
+                    <p><strong>Montant :</strong> {{ dem.rem_montant | number }} Ar</p>
+                    <p><strong>Centre :</strong> {{ dem.cen_nom }}</p>
+                    <p *ngIf="dem.fac_num"><strong>Facture :</strong> {{ dem.fac_num }}</p>
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="btn btn-sm btn-secondary" (click)="editFromCart(dem)">Modifier</button>
+                    <button type="button" class="btn btn-sm btn-danger"
+                        (click)="removeFromCart(dem.id)">Supprimer</button>
+                </div>
+            </div>
+        </div>
+        <div class="cart-actions">
+            <button type="button" class="btn btn-success" (click)="openFinalModal()">
+                Envoyer {{ demandesLocales.length }} demande(s)
+            </button>
+        </div>
+    </div>
+
+    <!-- ========== MODAL PREVIEW (avant ajout) ========== -->
+    <div class="modal-overlay" *ngIf="showPreviewModal" (click)="closePreview()">
+        <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+            <h3>Prévisualisation</h3>
+            <div class="preview-grid">
+                <p><strong>Agent :</strong>
+                    {{ demandeMode === 'agent' ? (selectedEmployee?.emp_nom + ' ' + selectedEmployee?.emp_prenom) :
+                    (selectedPec?.nom_emp + ' ' + selectedPec?.prenom_emp) }}
+                </p>
+                <p *ngIf="demandeMode === 'agent'"><strong>Matricule :</strong> {{ selectedEmployee?.emp_imarmp }}</p>
+                <p><strong>PEC :</strong> {{ selectedPec?.pec_num }}</p>
+                <p><strong>Bénéficiaire :</strong> {{ selectedPec?.beneficiaire_nom }} ({{
+                    selectedPec?.beneficiaire_type }})</p>
+                <p><strong>Centre :</strong>
+                    {{ demandeMode === 'agent' ? selectedPec?.cen_nom : selectedCentre?.cen_nom }}
+                </p>
+                <p><strong>Objet :</strong> {{ selectedArticle?.obj_article }}</p>
+                <p><strong>Montant :</strong> {{ demande.rem_montant | number }} Ar</p>
+                <p><strong>En lettres :</strong> {{ demande.rem_montant_lettre }}</p>
+                <p *ngIf="factureData.fac_num"><strong>Facture :</strong> {{ factureData.fac_num }} du {{
+                    factureData.fac_date }}</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="closePreview()">Modifier</button>
+                <button type="button" class="btn btn-primary" (click)="validateAndAddToCart()">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL PEC VALIDATION ========== -->
+    <div class="modal-overlay" *ngIf="showPecModal" (click)="closePecModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <h3>Valider la Prise en Charge</h3>
+            <p>Cette PEC n'est pas encore validée.</p>
+            <div class="form-group">
+                <label>Date d'arrivée *</label>
+                <input type="datetime-local" [(ngModel)]="pecModalData.pec_date_arrive">
+            </div>
+            <div class="form-group">
+                <label>Date départ</label>
+                <input type="datetime-local" [(ngModel)]="pecModalData.pec_date_depart">
+            </div>
+            <!-- Centre: readonly si déjà défini, sinon select2 -->
+            <div class="form-group" *ngIf="selectedPec?.cen_code">
+                <label>Centre de santé</label>
+                <div class="readonly-value">{{ selectedPec?.cen_nom }}</div>
+            </div>
+            <div class="form-group" *ngIf="!selectedPec?.cen_code">
+                <label>Centre de santé *</label>
+                <div *ngIf="demandeMode === 'centre' && selectedCentreModal" class="readonly-value">
+                    🔒 {{ selectedCentreModal.cen_nom }} (verrouillé)
+                </div>
+                <div class="select2-container" *ngIf="demandeMode === 'agent' || !selectedCentreModal">
+                    <div class="input-wrapper">
+                        <i class="fas fa-hospital search-icon"></i>
+                        <input type="text" [(ngModel)]="centreSearchText" (input)="filterCentresModal()"
+                            (focus)="onCentreModalFocus()" (blur)="onCentreModalBlur()"
+                            placeholder="Rechercher un centre..." autocomplete="off">
+                    </div>
+                    <ul class="suggestions" *ngIf="showCentreModalDropdown && filteredCentresModal.length > 0">
+                        <li *ngFor="let c of filteredCentresModal" (mousedown)="selectCentreModal(c)">
+                            {{ c.cen_nom }}
+                        </li>
+                    </ul>
+                </div>
+                <div *ngIf="selectedCentreModal && demandeMode === 'agent'" class="selected-item mt-2">
+                    <span class="item-badge">{{ selectedCentreModal.cen_nom }}</span>
+                    <button type="button" class="btn-clear" (click)="clearCentreModal()">×</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="closePecModal()">Annuler</button>
+                <button type="button" class="btn btn-primary" (click)="confirmPecApproval()" [disabled]="loading">
+                    {{ loading ? 'Validation...' : 'Valider PEC' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL FINAL (récap avant envoi) ========== -->
+    <div class="modal-overlay" *ngIf="showFinalModal" (click)="closeFinalModal()">
+        <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
+            <h3>Confirmer l'envoi de {{ demandesLocales.length }} demande(s)</h3>
+            <div class="final-recap">
+                <div class="recap-card" *ngFor="let dem of demandesLocales; let i = index">
+                    <h4>Demande {{ i + 1 }}</h4>
+                    <p><strong>PEC :</strong> {{ dem.pec_num }}</p>
+                    <p><strong>Bénéficiaire :</strong> {{ dem.beneficiaire_nom }}</p>
+                    <p><strong>Objet :</strong> {{ dem.obj_article }}</p>
+                    <p><strong>Montant :</strong> {{ dem.rem_montant | number }} Ar</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="closeFinalModal()">Annuler</button>
+                <button type="button" class="btn btn-success" (click)="submitAll()" [disabled]="loading">
+                    {{ loading ? 'Envoi en cours...' : 'Confirmer et envoyer' }}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

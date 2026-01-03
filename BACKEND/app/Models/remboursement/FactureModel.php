@@ -9,9 +9,8 @@ class FactureModel extends Model
     protected $primaryKey = 'fac_code';
 
     protected $allowedFields = [
-        'fac_objet',
-        'fac_total',
-        'cen_code'
+        'fac_num',
+        'fac_date'
     ];
 
     protected $useAutoIncrement = true;

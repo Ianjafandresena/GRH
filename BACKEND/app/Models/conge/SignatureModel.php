@@ -11,7 +11,8 @@ class SignatureModel extends Model
 
     protected $allowedFields = [
         'sign_libele',
-        'sign_observation'
+        'sign_observation',
+        'emp_code'
     ];
 
     protected $useAutoIncrement = true;

@@ -10,5 +10,6 @@ export const congeRoutes: Routes = [
   { path: 'viewer/:id', loadComponent: () => import('./page/viewer/viewer').then(m => m.ViewerCongeComponent) },
   { path: 'interruption/:id', loadComponent: () => import('./page/interruption/interruption').then(m => m.InterruptionComponent) },
   { path: 'validation', loadComponent: () => import('./page/validation/validation').then(m => m.ValidationComponent) },
+  { path: 'etat', loadComponent: () => import('./page/etat-conge/etat-conge.component').then(m => m.EtatCongeComponent) },
   { path: '', redirectTo: 'index', pathMatch: 'full' }
 ];

@@ -90,6 +90,29 @@
                         </option>
                     </select>
                 </div>
+
+                <!-- Centre de santé (optionnel - peut être rempli plus tard) -->
+                <div class="form-group">
+                    <label>Centre de santé <span class="optional">(optionnel)</span></label>
+                    <div class="select2-container">
+                        <div class="input-wrapper">
+                            <i class="fas fa-hospital search-icon"></i>
+                            <input type="text" [(ngModel)]="centreSearchText" (input)="filterCentres()"
+                                (focus)="onCentreFocus()" (blur)="onCentreBlur()" name="centreSearch"
+                                class="form-control" placeholder="Rechercher un centre..." autocomplete="off">
+                        </div>
+                        <ul class="suggestions" *ngIf="showCentreDropdown && filteredCentres.length > 0">
+                            <li *ngFor="let c of filteredCentres" (mousedown)="selectCentre(c)">
+                                {{ c.cen_nom }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div *ngIf="selectedCentre" class="selected-tag mt-2">
+                        <span>{{ selectedCentre.cen_nom }}</span>
+                        <button type="button" class="btn-clear" (click)="clearCentre()">×</button>
+                    </div>
+                    <small class="hint">Si connu, vous pouvez le sélectionner maintenant</small>
+                </div>
             </div>
 
             <div class="form-footer">

@@ -1,13 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RemboursementService } from '../../../service/remboursement.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
+import { TraiterDialogComponent } from './traiter-dialog/traiter-dialog';
 
 @Component({
     selector: 'app-detail-demande',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, MatDialogModule],
     templateUrl: './detail.html',
     styleUrls: ['./detail.scss']
 })
@@ -16,6 +18,7 @@ export class DetailDemandeComponent {
     private readonly router = inject(Router);
     private readonly rembService = inject(RemboursementService);
     private readonly layoutService = inject(LayoutService);
+    private readonly dialog = inject(MatDialog);
 
     demande: any = null;
     historique: any[] = [];
@@ -119,5 +122,25 @@ export class DetailDemandeComponent {
 
     goBack() {
         this.router.navigate(['/remboursement/demandes']);
+    }
+
+    traiter() {
+        if (!this.demande) return;
+
+        const dialogRef = this.dialog.open(TraiterDialogComponent, {
+            width: '500px',
+            data: {
+                rem_code: this.demande.rem_code,
+                emp_code: this.demande.emp_code,
+                emp_nom: `${this.demande.nom_emp} ${this.demande.prenom_emp}`
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result && result.success) {
+                alert(`Demande traitée! État: ${result.eta_code}, Total: ${result.eta_total} Ar`);
+                this.loadDetail(this.demande.rem_code);
+            }
+        });
     }
 }

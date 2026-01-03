@@ -10,7 +10,9 @@
     <div class="detail-card" *ngIf="demande && !loading">
         <!-- En-tête -->
         <div class="header-info">
-            <div class="num-demande">{{ demande.num_demande || 'N°---' }}</div>
+            <div class="num-demande">{{ demande.rem_num || 'N°---' }}</div>
+            <span class="badge badge-type" *ngIf="demande.rem_is_centre" style="background: #17a2b8;">🏥 Centre</span>
+            <span class="badge badge-type" *ngIf="!demande.rem_is_centre" style="background: #6c757d;">👤 Agent</span>
             <span class="badge" [class]="'badge-' + (demande.eta_libelle || 'default')">
                 {{ demande.eta_libelle || 'N/A' }}
             </span>
@@ -26,11 +28,16 @@
             <div class="info-row"><span class="label">Fonction:</span><span>{{ demande.fonction }}</span></div>
         </div>
 
-        <!-- Infos Malade -->
+        <!-- Infos Bénéficiaire/Malade -->
         <div class="section">
-            <h3>Malade</h3>
-            <div class="info-row"><span class="label">Nom:</span><span>{{ demande.nom_malade }}</span></div>
-            <div class="info-row"><span class="label">Lien:</span><span>{{ demande.lien_malade }}</span></div>
+            <h3>Bénéficiaire</h3>
+            <div class="info-row"><span class="label">N° PEC:</span><span>{{ demande.pec_num || '-' }}</span></div>
+            <div class="info-row"><span class="label">Nom:</span><span>{{ demande.beneficiaire_nom || demande.nom_malade
+                    || '-' }}</span></div>
+            <div class="info-row"><span class="label">Lien:</span><span>{{ demande.beneficiaire_lien ||
+                    demande.lien_malade || '-' }}</span></div>
+            <div class="info-row"><span class="label">Centre de santé:</span><span>{{ demande.cen_nom || '-' }}</span>
+            </div>
         </div>
 
         <!-- Montant -->
@@ -91,6 +98,11 @@
             <button class="btn btn-danger" *ngIf="['SOUMIS','VALIDE_RRH','VALIDE_DAAF'].includes(demande.eta_libelle)"
                 (click)="rejeter()">
                 ✗ Rejeter
+            </button>
+
+            <button class="btn btn-primary" *ngIf="demande.rem_status !== true && demande.rem_status !== 't'"
+                (click)="traiter()">
+                📋 Traiter
             </button>
 
             <button class="btn btn-secondary" (click)="downloadPdf()">📄 PDF</button>

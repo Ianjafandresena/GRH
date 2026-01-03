@@ -276,3 +276,23 @@ table {
     text-align: center;
     color: $secondary;
 }
+
+// Status badges
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    &.valid {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    &.pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+}

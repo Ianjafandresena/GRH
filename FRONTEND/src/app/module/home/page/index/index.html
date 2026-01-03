@@ -50,11 +50,27 @@
         <div class="stat-subtitle">{{ stats.permissionsStatus }}</div>
       </div>
     </div>
+
+    <!-- NEW: Pending Requests Card -->
+    <div class="stat-card green">
+      <div class="stat-header">
+        <div class="stat-icon"><mat-icon>pending_actions</mat-icon></div>
+        <div class="stat-value">{{ pendingRequests().count }}</div>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Remboursements</div>
+      </div>
+      <div class="stat-footer">
+        <div class="stat-subtitle">À traiter</div>
+        <div class="stat-amount">{{ pendingRequests().total | number:'1.0-0' }} Ar</div>
+      </div>
+    </div>
   </div>
 
   <!-- Charts Section -->
   <div class="charts-grid">
-    <div class="chart-card full-width">
+    <!-- Existing Chart -->
+    <div class="chart-card">
       <h3>Évolution des Congés et Permissions</h3>
       <div class="chart-placeholder" (mousemove)="onChartMouseMove($event)" (mouseleave)="onChartMouseLeave()">
 
@@ -131,6 +147,96 @@
             </g>
           </g>
         </svg>
+      </div>
+    </div>
+
+    <!-- NEW: Employees On Leave Widget -->
+    <div class="on-leave-widget">
+      <h3>En congé actuellement</h3>
+      <div class="employee-list">
+        @if (employeesOnLeave().length === 0) {
+        <div class="empty-state">Aucun employé en congé</div>
+        }
+        @for (emp of employeesOnLeave(); track emp.emp_code) {
+        <div class="employee-item">
+          <div class="avatar">{{ emp.emp_nom?.charAt(0) || '?' }}</div>
+          <div class="info">
+            <div class="name">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
+            <div class="meta">{{ emp.typ_appelation || 'Congé' }}</div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW: Bottom Section - Donut Chart + Recent Activity -->
+  <div class="bottom-grid">
+    <!-- Donut Chart -->
+    <div class="chart-card donut-card">
+      <h3>Répartition Remboursements</h3>
+      <div class="donut-container">
+        <svg viewBox="0 0 200 200" class="donut-chart">
+          <!-- Simple donut using circles -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="30" />
+
+          <!-- Approved segment (green) -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#10B981" stroke-width="30"
+            [attr.stroke-dasharray]="(donutData().stats.approuve / donutData().stats.total * 502.65) + ' 502.65'"
+            transform="rotate(-90 100 100)" />
+
+          <!-- Pending segment (yellow) - offset by approved -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#F59E0B" stroke-width="30"
+            [attr.stroke-dasharray]="(donutData().stats.en_attente / donutData().stats.total * 502.65) + ' 502.65'"
+            [attr.stroke-dashoffset]="-(donutData().stats.approuve / donutData().stats.total * 502.65)"
+            transform="rotate(-90 100 100)" />
+
+          <!-- Center text -->
+          <text x="100" y="95" text-anchor="middle" font-size="14" fill="var(--text-muted)">En attente</text>
+          <text x="100" y="115" text-anchor="middle" font-size="20" font-weight="600" fill="var(--text-primary)">
+            {{ donutData().stats.en_attente }}
+          </text>
+        </svg>
+
+        <div class="donut-legend">
+          <div class="legend-item">
+            <span class="dot" style="background: #10B981;"></span>
+            <span>Approuvés ({{ donutData().stats.approuve }})</span>
+          </div>
+          <div class="legend-item">
+            <span class="dot" style="background: #F59E0B;"></span>
+            <span>En attente ({{ donutData().stats.en_attente }})</span>
+          </div>
+          <div class="legend-total">
+            Total: {{ donutData().montants.en_attente | number:'1.0-0' }} Ar
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity Feed -->
+    <div class="activity-widget">
+      <h3>Activité Récente</h3>
+      <div class="timeline">
+        @if (recentActivity().length === 0) {
+        <div class="empty-state">Aucune activité récente</div>
+        }
+        @for (activity of recentActivity(); track $index) {
+        <div class="activity-item">
+          <div class="icon" [class.conge]="activity.type === 'conge'"
+            [class.remboursement]="activity.type === 'remboursement'">
+            <mat-icon>{{ activityIcon(activity.type) }}</mat-icon>
+          </div>
+          <div class="content">
+            <div class="title">{{ activity.label || 'Action' }}</div>
+            <div class="meta">
+              {{ activity.emp_nom }} {{ activity.emp_prenom }}
+              <span class="badge" [class]="activity.status.toLowerCase()">{{ activity.status }}</span>
+            </div>
+            <div class="time">{{ formatTime(activity.date) }}</div>
+          </div>
+        </div>
+        }
       </div>
     </div>
   </div>
