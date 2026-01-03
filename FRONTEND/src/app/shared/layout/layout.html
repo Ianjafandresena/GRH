@@ -21,10 +21,10 @@
       </a>
 
       <div>
-        <a (click)="toggleConge()" [class.active]="showConge" style="cursor:pointer;" title="Gestion des Congés">
+        <a (click)="toggleConge()" [class.active]="showConge" style="cursor:pointer;" title="Gestion des Absences">
           <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>date_range</mat-icon>
-            <span *ngIf="!isCollapsed">Gestion des Congés</span>
+            <mat-icon>event_available</mat-icon> <!-- 🔄 MODIFIÉ: calendar → event_available -->
+            <span *ngIf="!isCollapsed">Gestion des Absences</span>
           </div>
           <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showConge ? 'expand_less' : 'expand_more' }}</mat-icon>
         </a>
@@ -40,31 +40,14 @@
         </div>
       </div>
 
-      <div>
-        <a (click)="togglePermission()" [class.active]="showPermission" style="cursor:pointer;" title="Permissions">
-          <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>schedule</mat-icon>
-            <span *ngIf="!isCollapsed">Permissions</span>
-          </div>
-          <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showPermission ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </a>
-        <div *ngIf="showPermission && !isCollapsed" class="submenu">
-          <a routerLink="/permission/index" routerLinkActive="active">
-            <mat-icon class="small-icon">history</mat-icon>
-            <span>Historique</span>
-          </a>
-          <a routerLink="/permission/create" routerLinkActive="active">
-            <mat-icon class="small-icon">add_circle_outline</mat-icon>
-            <span>Nouvelle permission</span>
-          </a>
-        </div>
-      </div>
+
+      <!-- ❌ SUPPRIMÉ: Menu Permissions fusionné dans Gestion des Absences -->
 
       <!-- Remboursements -->
       <div>
         <a (click)="toggleRemb()" [class.active]="showRemb" style="cursor:pointer;" title="Remboursements">
           <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>favorite_border</mat-icon>
+            <mat-icon>payments</mat-icon> <!-- 🔄 MODIFIÉ: favorite_border → payments -->
             <span *ngIf="!isCollapsed">Remboursements</span>
           </div>
           <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showRemb ? 'expand_less' : 'expand_more' }}</mat-icon>
@@ -78,16 +61,16 @@
             <mat-icon class="small-icon">add_circle_outline</mat-icon>
             <span>Nouvelle demande</span>
           </a>
-           <a routerLink="/remboursement/demandes/create" routerLinkActive="active">
-            <mat-icon class="small-icon">add_circle_outline</mat-icon>
-            <span>Etats</span>
+          <a routerLink="/remboursement/etats" routerLinkActive="active">
+            <mat-icon class="small-icon">receipt_long</mat-icon>
+            <span>États</span>
           </a>
         </div>
       </div>
       <div>
-        <a (click)="togglePec()" [class.active]="showPec" style="cursor:pointer;" title="Remboursements">
+        <a (click)="togglePec()" [class.active]="showPec" style="cursor:pointer;" title="Pris en charge">
           <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>favorite_border</mat-icon>
+            <mat-icon>local_hospital</mat-icon> <!-- 🔄 MODIFIÉ: favorite_border → local_hospital -->
             <span *ngIf="!isCollapsed">Pris en charge</span>
           </div>
           <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showPec ? 'expand_less' : 'expand_more' }}</mat-icon>

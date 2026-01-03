@@ -4,10 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PrisEnChargeService } from '../../../service/prise-en-charge.service';
 import { RemboursementService } from '../../../service/remboursement.service';
+import { CentreSanteService } from '../../../service/centre-sante.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
 import { AuthService } from '../../../../auth/service/auth-service';
 import { EmployeeService } from '../../../../employee/service/employee.service';
 import { Employee } from '../../../../employee/model/employee.model';
+import { CentreSante } from '../../../model/centre-sante.model';
 
 @Component({
     selector: 'app-ajout-prise-en-charge',
@@ -20,6 +22,7 @@ export class AjoutPriseEnChargeComponent {
     private readonly router = inject(Router);
     private readonly pecService = inject(PrisEnChargeService);
     private readonly rembService = inject(RemboursementService);
+    private readonly centreService = inject(CentreSanteService);
     private readonly layoutService = inject(LayoutService);
     private readonly authService = inject(AuthService);
     private readonly employeeService = inject(EmployeeService);
@@ -40,12 +43,50 @@ export class AjoutPriseEnChargeComponent {
 
     conjoints: any[] = [];
     enfants: any[] = [];
+    centres: CentreSante[] = [];
+    filteredCentres: CentreSante[] = [];
+    centreSearchText = '';
+    showCentreDropdown = false;
+    selectedCentre: CentreSante | null = null;
     errorMsg = '';
     loading = false;
 
     ngOnInit() {
         this.layoutService.setTitle('Nouvelle prise en charge');
         this.loadEmployees();
+        this.loadCentres();
+    }
+
+    loadCentres() {
+        this.centreService.getCentres().subscribe({
+            next: (res) => {
+                this.centres = res || [];
+                this.filteredCentres = this.centres;
+            },
+            error: (err: any) => console.error('Erreur chargement centres', err)
+        });
+    }
+
+    // Centre search methods
+    onCentreFocus() { this.showCentreDropdown = true; }
+    onCentreBlur() { setTimeout(() => this.showCentreDropdown = false, 200); }
+
+    filterCentres() {
+        const s = this.centreSearchText.toLowerCase();
+        this.filteredCentres = this.centres.filter(c => c.cen_nom.toLowerCase().includes(s));
+    }
+
+    selectCentre(c: CentreSante) {
+        this.selectedCentre = c;
+        this.model.cen_code = c.cen_code;
+        this.centreSearchText = '';
+        this.showCentreDropdown = false;
+    }
+
+    clearCentre() {
+        this.selectedCentre = null;
+        this.model.cen_code = null;
+        this.centreSearchText = '';
     }
 
     loadEmployees() {

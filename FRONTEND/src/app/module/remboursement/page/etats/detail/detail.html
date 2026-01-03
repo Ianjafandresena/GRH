@@ -1,0 +1,83 @@
+<div class="detail-container">
+    <div class="header">
+        <button class="btn-back" (click)="goBack()">← Retour</button>
+        <h1>{{ etat()?.etat_num || 'État de Remboursement' }}</h1>
+        <button class="btn-pdf" (click)="downloadPdf()">📄 Télécharger PDF</button>
+    </div>
+
+    @if (loading()) {
+    <div class="loading">Chargement...</div>
+    }
+
+    @if (errorMsg()) {
+    <div class="error">{{ errorMsg() }}</div>
+    }
+
+    @if (!loading() && etat()) {
+    <!-- État Summary Card -->
+    <div class="summary-card">
+        <div class="summary-row">
+            <div class="summary-item">
+                <span class="label">Agent :</span>
+                <span class="value">{{ etat()?.emp_nom }} {{ etat()?.emp_prenom }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Nombre de demandes :</span>
+                <span class="value">{{ etat()?.count }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Montant total :</span>
+                <span class="value total">{{ etat()?.eta_total | number:'1.2-2' }} Ar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demandes List -->
+    <div class="section">
+        <h2>Demandes de Remboursement</h2>
+
+        @if (demandes().length === 0) {
+        <div class="empty-state">Aucune demande associée à cet état</div>
+        }
+
+        @if (demandes().length > 0) {
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>N° Demande</th>
+                        <th>Date</th>
+                        <th>Bénéficiaire</th>
+                        <th>Centre</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (demande of demandes(); track demande.rem_code) {
+                    <tr>
+                        <td><strong>{{ demande.rem_num }}</strong></td>
+                        <td>{{ demande.rem_date | date:'dd/MM/yyyy' }}</td>
+                        <td>{{ demande.beneficiaire_nom || '-' }}</td>
+                        <td>{{ demande.cen_nom || '-' }}</td>
+                        <td class="montant">{{ demande.rem_montant | number:'1.2-2' }} Ar</td>
+                        <td>
+                            <span [ngClass]="getStatutClass(demande)">
+                                {{ getStatutLabel(demande) }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-icon" (click)="viewDemande(demande.rem_code)" title="Voir détails">
+                                👁️
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
+    }
+</div>

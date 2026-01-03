@@ -1,0 +1,66 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>États de Remboursement</h1>
+        <div class="header-actions">
+            <div class="filters">
+                <label>
+                    Code employé :
+                    <input type="number" [(ngModel)]="filter().emp_code"
+                        (ngModelChange)="filter.set({emp_code: filter().emp_code})" placeholder="Filtrer par agent">
+                </label>
+                <button class="btn btn-secondary" (click)="loadEtats()">Actualiser</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="summary-card" *ngIf="filteredEtats().length > 0">
+        <div class="stat">
+            <span class="label">Total États:</span>
+            <span class="value">{{ filteredEtats().length }}</span>
+        </div>
+        <div class="stat highlight">
+            <span class="label">Montant Total:</span>
+            <span class="value">{{ totalAmount() | number:'1.2-2' }} Ar</span>
+        </div>
+    </div>
+
+    <div class="loading" *ngIf="loading()">Chargement...</div>
+
+    <div class="table-container" *ngIf="!loading()">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>N° État</th>
+                    <th>Date</th>
+                    <th>Agent</th>
+                    <th>Matricule</th>
+                    <th>Nb Demandes</th>
+                    <th>Montant Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let etat of filteredEtats()">
+                    <td class="num-etat">{{ etat.etat_num }}</td>
+                    <td>{{ etat.eta_date | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ etat.nom_emp }} {{ etat.prenom_emp }}</td>
+                    <td>{{ etat.matricule }}</td>
+                    <td class="text-center">{{ etat.nb_demandes || 0 }}</td>
+                    <td class="amount">{{ etat.eta_total | number:'1.2-2' }} Ar</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-secondary" (click)="viewDetails(etat.eta_code)" title="Détails">
+                            <span class="material-icons">visibility</span>
+                        </button>
+                        <button class="btn btn-sm btn-primary" (click)="downloadPdf(etat.eta_code)"
+                            title="Télécharger PDF">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="!filteredEtats().length">
+                    <td colspan="7" class="empty">Aucun état de remboursement enregistré</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

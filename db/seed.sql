@@ -25,7 +25,7 @@ INSERT INTO employee (emp_nom, emp_prenom, emp_imarmp, emp_sexe, emp_date_embauc
 
 INSERT INTO Region (reg_nom) VALUES
 ('Alaotra-Mangoro'),
-('Amoron i Mania'),
+('Amoron''i Mania'),
 ('Analamanga'),
 ('Analanjirofo'),
 ('Androy'),

@@ -1,58 +1,64 @@
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <div class="logo-circle">
-        <mat-icon>lock</mat-icon>
-      </div>
-      <h2>Connexion</h2>
-      <p class="subtitle">Système de Gestion RH - ARMP</p>
+<div class="login-wrapper">
+  <!-- Left Side: Branding -->
+  <div class="brand-section">
+    <div class="brand-header">
+      <mat-icon>home</mat-icon> <span>Portail</span>
     </div>
 
-    <!-- Message d'erreur -->
-    <div *ngIf="errorMessage" class="error-message">
-      <mat-icon>error_outline</mat-icon>
-      <span>{{ errorMessage }}</span>
+    <div class="brand-content">
+      <h1 class="main-title">GRH</h1>
+      <p class="subtitle">ARMP gestion RH</p>
+
+      <div class="sector-badge">
+        Secteur public
+      </div>
     </div>
 
-    <!-- Formulaire de connexion -->
-    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-      <!-- username -->
-      <div class="form-group">
-        <label for="username">Nom d'utilisateur</label>
-        <div class="input-wrapper">
-          <mat-icon class="input-icon">person_outline</mat-icon>
-          <input type="text" id="username" name="username" [(ngModel)]="credentials.username" required
-            placeholder="Entrez votre identifiant" [disabled]="isLoading" autocomplete="username">
+    <div class="brand-footer">
+      <p>© Autorité de Régulation des Marchés Publics</p>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="login-card">
+
+      <div class="logos-container">
+        <img src="assets/logo.png" alt="ARMP Logo" class="armp-logo">
+    
+      </div>
+
+      <div class="form-content">
+        <label class="input-label">Identifiant</label>
+        <div class="form-group">
+          <input type="text" name="username" [(ngModel)]="credentials.username" placeholder="Identifiant"
+            [disabled]="isLoading" class="custom-input">
         </div>
-      </div>
 
-      <!-- Mot de passe -->
-      <div class="form-group">
-        <label for="password">Mot de passe</label>
-        <div class="input-wrapper">
-          <mat-icon class="input-icon">lock_outline</mat-icon>
-          <input type="password" id="password" name="password" [(ngModel)]="credentials.password" required minlength="6"
-            placeholder="Entrez votre mot de passe" [disabled]="isLoading" autocomplete="current-password">
+        <label class="input-label">Mot de passe</label>
+        <div class="form-group">
+          <input type="password" name="password" [(ngModel)]="credentials.password" placeholder="••••••"
+            [disabled]="isLoading" class="custom-input">
         </div>
+
+        <div class="form-options">
+          <a href="#" class="forgot-password">Login ou mot de passe oublié?</a>
+        </div>
+
+        <div *ngIf="errorMessage" class="error-text">
+          {{ errorMessage }}
+        </div>
+
+        <button (click)="onSubmit()" [disabled]="isLoading" class="btn-connect">
+          <span *ngIf="!isLoading">Connecter</span>
+          <div *ngIf="isLoading" class="spinner"></div>
+        </button>
+
+        <div class="separator"></div>
+
+        <button class="btn-register">
+          S'inscrire
+        </button>
       </div>
-
-      <div class="form-options">
-        <label class="remember-me">
-          <input type="checkbox" name="remember">
-          <span>Se souvenir de moi</span>
-        </label>
-        <a href="#" class="forgot-password">Mot de passe oublié ?</a>
-      </div>
-
-      <!-- Bouton de connexion -->
-      <button type="submit" [disabled]="isLoading || loginForm.invalid" class="btn-login">
-        <span *ngIf="!isLoading">Se connecter</span>
-        <div *ngIf="isLoading" class="spinner"></div>
-      </button>
-    </form>
-
-    <div class="login-footer">
-      <p>© 2025 ARMP. Tous droits réservés.</p>
     </div>
   </div>
 </div>

@@ -16,29 +16,43 @@ class DemandeRembController extends ResourceController
     use ResponseTrait;
 
     /**
-     * Générer le numéro de demande: N/ARMP/DG/DAAF/SRH-YY
+     * Générer le numéro de demande: NNN/ARMP/DG/DAAF/[SERVICE]/[MOIS]-YY
+     * Exemple: 001/ARMP/DG/DAAF/SRH/DE-25
      */
-    private function generateNumDemande()
+    private function generateNumDemande(int $empCode)
     {
         $db = \Config\Database::connect();
-        $year = date('y'); // 25 pour 2025
         
-        // Récupérer le dernier numéro de cette année
-        $lastDemande = $db->table('demande_remb')
-            ->like('num_demande', "/ARMP/DG/DAAF/SRH-$year", 'after')
-            ->orderBy('rem_code', 'DESC')
-            ->get()->getRow();
+        // 1. Déterminer le service de l'agent
+        $employee = $db->table('employee')
+            ->select('direction.dir_code')
+            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
+            ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
+            ->where('employee.emp_code', $empCode)
+            ->get()->getRowArray();
         
-        $nextNum = 1;
-        if ($lastDemande && $lastDemande->num_demande) {
-            // Extraire le numéro du format "123/ARMP/DG/DAAF/SRH-25"
-            $parts = explode('/', $lastDemande->num_demande);
-            if (isset($parts[0]) && is_numeric($parts[0])) {
-                $nextNum = intval($parts[0]) + 1;
-            }
-        }
+        // Mapping direction -> code service
+        $serviceMap = [
+            1 => 'DG', 2 => 'DAAF', 3 => 'DSI',
+            4 => 'SRH', 5 => 'COMPTA', 6 => 'LOG'
+        ];
+        $serviceCode = $serviceMap[$employee['dir_code'] ?? 4] ?? 'SRH';
         
-        return "$nextNum/ARMP/DG/DAAF/SRH-$year";
+        // 2. Obtenir mois et année actuels
+        $moisMap = [
+            '01' => 'JA', '02' => 'FE', '03' => 'MA', '04' => 'AV',
+            '05' => 'MI', '06' => 'JU', '07' => 'JL', '08' => 'AO',
+            '09' => 'SE', '10' => 'OC', '11' => 'NO', '12' => 'DE'
+        ];
+        $moisCode = $moisMap[date('m')];
+        $annee = date('y');
+        
+        // 3. Compter TOUTES les demandes pour obtenir le séquentiel global
+        $count = $db->table('demande_remb')->countAllResults();
+        $sequential = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        
+        // 4. Construire le numéro final
+        return "{$sequential}/ARMP/DG/DAAF/{$serviceCode}/{$moisCode}-{$annee}";
     }
 
     /**
@@ -49,16 +63,17 @@ class DemandeRembController extends ResourceController
     {
         $db = \Config\Database::connect();
         $yy = substr((string)$year, -2);
-        // On cherche dans num_engagement ou on pourrait créer une table dédiée
-        $last = $db->table('demande_remb')
-            ->like('num_engagement', "/ARMP/DG/DAAF/SRH/FM-$yy", 'after')
-            ->orderBy('rem_code', 'DESC')
+        
+        // Chercher le dernier numéro d'état pour cette année
+        $last = $db->table('etat_remb')
+            ->like('etat_num', "/ARMP/DG/DAAF/SRH/FM-$yy", 'after')
+            ->orderBy('eta_code', 'DESC')
             ->get()
             ->getRow();
 
         $next = 1;
-        if ($last && $last->num_engagement) {
-            $parts = explode('/', $last->num_engagement);
+        if ($last && $last->etat_num) {
+            $parts = explode('/', $last->etat_num);
             if (isset($parts[0]) && is_numeric($parts[0])) {
                 $next = intval($parts[0]) + 1;
             }
@@ -270,14 +285,13 @@ class DemandeRembController extends ResourceController
     public function getAllDemandes()
     {
         $model = new DemandeRembModel();
-        $builder = $model->select('demande_remb.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, etat_remb.eta_libelle, poste.pst_fonction AS fonction, direction.dir_nom AS direction')
+        $builder = $model->select('DISTINCT ON (demande_remb.rem_code) demande_remb.*, demande_remb.rem_is_centre, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, poste.pst_fonction AS fonction, direction.dir_nom AS direction, etat_remb.etat_num')
             ->join('employee', 'employee.emp_code = demande_remb.emp_code', 'left')
-            ->join('etat_remb', 'etat_remb.eta_code = demande_remb.eta_code', 'left')
             ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
             ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
             ->join('fonction_direc', 'fonction_direc.pst_code = poste.pst_code', 'left')
+            ->join('etat_remb', 'etat_remb.eta_code = demande_remb.eta_code', 'left')
             ->join('direction', 'direction.dir_code = fonction_direc.dir_code', 'left')
-            ->groupBy('demande_remb.rem_code') // Pour éviter les doublons si multiples affectations (bien que limitées par logique métier)
             ->orderBy('demande_remb.rem_code', 'DESC');
 
         // Filtres optionnels
@@ -292,6 +306,13 @@ class DemandeRembController extends ResourceController
         if ($end) $builder->where('demande_remb.rem_date <=', $end);
 
         $demandes = $builder->findAll();
+        
+        // Normaliser les booléens PostgreSQL pour JavaScript
+        foreach ($demandes as &$demande) {
+            $demande['rem_is_centre'] = ($demande['rem_is_centre'] === true || $demande['rem_is_centre'] === 't');
+            $demande['rem_status'] = ($demande['rem_status'] === true || $demande['rem_status'] === 't');
+        }
+        
         $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
         return $this->respond($demandes);
     }
@@ -301,14 +322,35 @@ class DemandeRembController extends ResourceController
      */
     public function getDemande($id = null)
     {
+        try {
         $model = new DemandeRembModel();
-        $demande = $model->select('demande_remb.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, etat_remb.eta_libelle, poste.pst_fonction AS fonction, direction.dir_nom AS direction')
+        $demande = $model->select('demande_remb.*, 
+                              employee.emp_nom AS nom_emp, 
+                              employee.emp_prenom AS prenom_emp, 
+                              employee.emp_imarmp AS matricule, 
+                              poste.pst_fonction AS fonction, 
+                              direction.dir_nom AS direction, 
+                              etat_remb.etat_num,
+                              pris_en_charge.pec_num,
+                              COALESCE(pec_employee.emp_nom || \' \' || pec_employee.emp_prenom, pec_conj.conj_nom, pec_enf.enf_nom) AS beneficiaire_nom,
+                              CASE 
+                                WHEN pris_en_charge.emp_code IS NOT NULL THEN \'Agent\'
+                                WHEN pris_en_charge.conj_code IS NOT NULL THEN \'Conjoint\'
+                                WHEN pris_en_charge.enf_code IS NOT NULL THEN \'Enfant\'
+                                ELSE NULL
+                              END AS beneficiaire_lien,
+                              centre_sante.cen_nom')
             ->join('employee', 'employee.emp_code = demande_remb.emp_code', 'left')
-            ->join('etat_remb', 'etat_remb.eta_code = demande_remb.eta_code', 'left')
             ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
             ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
             ->join('fonction_direc', 'fonction_direc.pst_code = poste.pst_code', 'left')
             ->join('direction', 'direction.dir_code = fonction_direc.dir_code', 'left')
+            ->join('etat_remb', 'etat_remb.eta_code = demande_remb.eta_code', 'left')
+            ->join('pris_en_charge', 'pris_en_charge.pec_code = demande_remb.pec_code', 'left')
+            ->join('employee pec_employee', 'pec_employee.emp_code = pris_en_charge.emp_code', 'left')
+            ->join('conjointe pec_conj', 'pec_conj.conj_code = pris_en_charge.conj_code', 'left')
+            ->join('enfant pec_enf', 'pec_enf.enf_code = pris_en_charge.enf_code', 'left')
+            ->join('centre_sante', 'centre_sante.cen_code = demande_remb.cen_code', 'left')
             ->where('demande_remb.rem_code', $id)
             ->first();
 
@@ -324,10 +366,15 @@ class DemandeRembController extends ResourceController
             ->orderBy('signature_demande.date_', 'ASC')
             ->findAll();
 
-        return $this->respond([
-            'demande' => $demande,
-            'historique' => $signatures
-        ]);
+            return $this->respond([
+                'demande' => $demande,
+                'historique' => $signatures
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', '[getDemande] Error: ' . $e->getMessage());
+            log_message('error', '[getDemande] Trace: ' . $e->getTraceAsString());
+            return $this->failServerError('Erreur: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -339,7 +386,7 @@ class DemandeRembController extends ResourceController
 
         try {
             // Validation minimale
-            $required = ['rem_montant', 'emp_code', 'beneficiaire_type'];
+            $required = ['rem_montant', 'emp_code', 'pec_code'];
             foreach ($required as $field) {
                 if (!isset($data[$field]) || $data[$field] === '') {
                     return $this->fail("Champ obligatoire manquant: $field");
@@ -350,83 +397,124 @@ class DemandeRembController extends ResourceController
             }
 
             $empCode = (int)$data['emp_code'];
+            $pecCode = (int)$data['pec_code'];
+
+            // Récupérer les infos depuis la PEC (bénéficiaire + centre)
+            $pecModel = new \App\Models\remboursement\PrisEnChargeModel();
+            $pec = $pecModel->find($pecCode);
+            if (!$pec) {
+                return $this->failNotFound('Prise en charge introuvable');
+            }
+            if (empty($pec['pec_approuver']) || $pec['pec_approuver'] === 'f' || $pec['pec_approuver'] === false) {
+                return $this->failValidationErrors('La prise en charge doit être validée avant de créer une demande');
+            }
+
+            // Déduire beneficiaire_type depuis la PEC
+            if (!empty($pec['conj_code'])) {
+                $data['beneficiaire_type'] = 'conjoint';
+                $data['conj_code'] = $pec['conj_code'];
+            } elseif (!empty($pec['enf_code'])) {
+                $data['beneficiaire_type'] = 'enfant';
+                $data['enf_code'] = $pec['enf_code'];
+            } else {
+                $data['beneficiaire_type'] = 'agent';
+            }
+
+            // Utiliser le centre de la PEC si non fourni
+            if (empty($data['cen_code']) && !empty($pec['cen_code'])) {
+                $data['cen_code'] = $pec['cen_code'];
+            }
 
             // Résoudre le bénéficiaire (et vérifier enfant < 21 ans)
             $benef = $this->resolveBeneficiaire($empCode, $data);
-
-            // Récupérer l'état SOUMIS
-            $etatModel = new EtatRembModel();
-            $etatSoumis = $etatModel->where('eta_libelle', 'SOUMIS')->first();
-            if (!$etatSoumis) {
-                $etatModel->insert(['eta_libelle' => 'SOUMIS']);
-                $etatSoumis = $etatModel->where('eta_libelle', 'SOUMIS')->first();
-            }
 
             // Générer le numéro de demande
             $numDemande = $this->generateNumDemande();
 
             $demandeData = [
-                'num_demande' => $numDemande,
-                'rem_objet' => $data['rem_objet'] ?? 'Demande de remboursement de frais médicaux',
+                'rem_num' => $numDemande,
                 'rem_date' => date('Y-m-d'),
                 'rem_montant' => $data['rem_montant'],
                 'rem_montant_lettre' => $data['rem_montant_lettre'] ?? null,
-                'nom_malade' => trim($benef['nom'] . ' ' . ($benef['prenom'] ?? '')),
-                'lien_malade' => $benef['lien'],
-                'has_ordonnance' => $data['has_ordonnance'] ?? false,
-                'has_facture' => $data['has_facture'] ?? false,
-                'has_prise_en_charge' => $data['has_prise_en_charge'] ?? false,
-                'pec_reference' => $data['pec_reference'] ?? null,
-                'date_consultation' => $data['date_consultation'] ?? null,
+                'rem_status' => false, // New demande starts as not validated
                 'emp_code' => $empCode,
-                'eta_code' => $etatSoumis['eta_code'],
+                'obj_code' => $data['obj_code'] ?? null,
+                'cen_code' => $data['cen_code'] ?? null,
+                'fac_code' => $data['fac_code'] ?? null,
+                'pec_code' => $pecCode,
             ];
-
-            // Lier un pec_code si fourni
-            if (!empty($data['pec_code'])) {
-                $demandeData['pec_code'] = (int)$data['pec_code'];
-            }
 
             $model = new DemandeRembModel();
             $db = \Config\Database::connect();
             $db->transStart();
 
-            $id = $model->insert($demandeData);
-            if ($id === false) {
-                throw new \Exception('Impossible de créer la demande');
+            // Step 1: Insert demande
+            try {
+                $id = $model->insert($demandeData);
+                if ($id === false) {
+                    $err = $model->errors();
+                    throw new \Exception('Insert demande failed: ' . json_encode($err));
+                }
+            } catch (\Throwable $e) {
+                $db->transRollback();
+                throw new \Exception('Step 1 (insert demande): ' . $e->getMessage());
             }
 
-            // Enregistrer les pièces cochées (optionnel)
+            // Step 2: Insert pieces (optional)
             if (!empty($data['pieces']) && is_array($data['pieces'])) {
-                $pieceModel = new PieceModel();
-                foreach ($data['pieces'] as $pc) {
-                    $pieceModel->insert([
-                        'pc_piece' => (string)$pc,
-                        'rem_code' => $id,
-                    ]);
+                try {
+                    $pieceModel = new PieceModel();
+                    foreach ($data['pieces'] as $pc) {
+                        $result = $pieceModel->insert([
+                            'pc_nom' => (string)$pc,
+                            'rem_code' => $id,
+                        ]);
+                        if ($result === false) {
+                            throw new \Exception('Piece insert failed: ' . json_encode($pieceModel->errors()));
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    $db->transRollback();
+                    throw new \Exception('Step 2 (insert pieces): ' . $e->getMessage());
                 }
             }
 
-            // Lier le centre de santé si fourni (table Asso_30)
+            // Step 3: Link centre (table Asso_30) - SKIP if not needed
+            // Note: This might fail if Asso_30 table doesn't exist or has different structure
+            // Commenting out for now since cen_code is already in demande_remb
+            /*
             if (!empty($data['cen_code'])) {
-                $db->table('Asso_30')->insert([
-                    'rem_code' => $id,
-                    'cen_code' => (int)$data['cen_code']
-                ]);
+                try {
+                    $db->table('Asso_30')->insert([
+                        'rem_code' => $id,
+                        'cen_code' => (int)$data['cen_code']
+                    ]);
+                } catch (\Throwable $e) {
+                    $db->transRollback();
+                    throw new \Exception('Step 3 (Asso_30): ' . $e->getMessage());
+                }
             }
+            */
 
             $db->transComplete();
             if ($db->transStatus() === false) {
-                throw new \Exception('Erreur lors de la transaction');
+                $error = $db->error();
+                throw new \Exception('Erreur lors de la transaction: ' . ($error['message'] ?? 'Unknown'));
             }
 
             $created = $model->find($id);
             return $this->respondCreated([
                 'demande' => $created,
                 'message' => 'Demande créée avec succès',
-                'num_demande' => $numDemande
+                'num_demande' => $numDemande,
+                'rem_num' => $numDemande
             ]);
         } catch (\Exception $e) {
+            if (isset($db)) {
+                $error = $db->error();
+                $sqlError = $error['message'] ?? '';
+                return $this->fail($e->getMessage() . ' | SQL: ' . $sqlError, 500);
+            }
             return $this->fail($e->getMessage(), 500);
         }
     }
@@ -437,6 +525,122 @@ class DemandeRembController extends ResourceController
     public function validerRRH($id = null)
     {
         return $this->traiterValidation($id, 'SOUMIS', 'VALIDE_RRH', 'RRH');
+    }
+
+    /**
+     * Créer plusieurs demandes en batch (transactionnel)
+     */
+    public function createBatch()
+    {
+        $data = $this->request->getJSON(true);
+        $demandes = $data['demandes'] ?? [];
+
+        if (empty($demandes) || !is_array($demandes)) {
+            return $this->fail('Aucune demande fournie');
+        }
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $results = [];
+        $factureMap = []; // Map fac_num => fac_code pour réutiliser les factures
+        $factureModel = new \App\Models\remboursement\FactureModel();
+        $demandeModel = new DemandeRembModel();
+        $pieceModel = new PieceModel();
+        $pecModel = new \App\Models\remboursement\PrisEnChargeModel();
+
+        try {
+            foreach ($demandes as $idx => $dem) {
+                // Validation basique
+                if (empty($dem['pec_code']) || empty($dem['rem_montant']) || empty($dem['obj_code'])) {
+                    throw new \Exception("Demande #" . ($idx + 1) . ": champs obligatoires manquants");
+                }
+
+                // Récupérer PEC pour emp_code et cen_code
+                $pec = $pecModel->find($dem['pec_code']);
+                if (!$pec) {
+                    throw new \Exception("Demande #" . ($idx + 1) . ": PEC introuvable");
+                }
+                if (empty($pec['pec_approuver']) || $pec['pec_approuver'] === 'f') {
+                    throw new \Exception("Demande #" . ($idx + 1) . ": PEC non validée");
+                }
+
+                $empCode = $pec['emp_code'];
+                $cenCode = $pec['cen_code'] ?? null;
+
+                // 1. Créer la facture si fournie (ou réutiliser si déjà créée)
+                $facCode = null;
+                if (!empty($dem['fac_num'])) {
+                    // Vérifier si cette facture a déjà été créée dans ce batch
+                    if (isset($factureMap[$dem['fac_num']])) {
+                        $facCode = $factureMap[$dem['fac_num']];
+                    } else {
+                        // Créer nouvelle facture
+                        $facId = $factureModel->insert([
+                            'fac_num' => $dem['fac_num'],
+                            'fac_date' => $dem['fac_date'] ?? date('Y-m-d')
+                        ]);
+                        if ($facId === false) {
+                            throw new \Exception("Demande #" . ($idx + 1) . ": erreur création facture");
+                        }
+                        $facCode = $facId;
+                        $factureMap[$dem['fac_num']] = $facId;
+                    }
+                }
+
+                // 2. Générer numéro demande
+                $numDemande = $this->generateNumDemande($empCode);
+
+                // 3. Créer la demande
+                $demandeData = [
+                    'rem_num' => $numDemande,
+                    'rem_date' => date('Y-m-d'),
+                    'rem_montant' => $dem['rem_montant'],
+                    'rem_montant_lettre' => $dem['rem_montant_lettre'] ?? null,
+                    'rem_status' => false,
+                    'rem_is_centre' => $dem['rem_is_centre'] ?? false,  // Définir le type
+                    'emp_code' => $empCode,
+                    'pec_code' => $dem['pec_code'],
+                    'obj_code' => $dem['obj_code'],
+                    'cen_code' => $cenCode,
+                    'fac_code' => $facCode
+                ];
+
+                $remId = $demandeModel->insert($demandeData);
+                if ($remId === false) {
+                    throw new \Exception("Demande #" . ($idx + 1) . ": erreur création demande");
+                }
+
+                // 4. Créer les pièces
+                if (!empty($dem['pieces']) && is_array($dem['pieces'])) {
+                    foreach ($dem['pieces'] as $pc) {
+                        $pieceModel->insert([
+                            'pc_nom' => (string)$pc,
+                            'rem_code' => $remId
+                        ]);
+                    }
+                }
+
+                $results[] = [
+                    'rem_code' => $remId,
+                    'rem_num' => $numDemande
+                ];
+            }
+
+            $db->transComplete();
+            if ($db->transStatus() === false) {
+                throw new \Exception('Erreur lors de la transaction');
+            }
+
+            return $this->respondCreated([
+                'message' => count($results) . ' demande(s) créée(s) avec succès',
+                'demandes' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            $db->transRollback();
+            return $this->fail($e->getMessage(), 500);
+        }
     }
 
     /**
@@ -557,6 +761,84 @@ class DemandeRembController extends ResourceController
     }
 
     /**
+     * Traiter une demande - l'associer à un État de Remboursement
+     * POST /remboursement/:id/traiter
+     * Body: { eta_code: number } (existing) OR { new_etat_num: string } (new)
+     */
+    public function traiter($id = null)
+    {
+        $model = new DemandeRembModel();
+        $demande = $model->find($id);
+        if (!$demande) {
+            return $this->failNotFound('Demande non trouvée');
+        }
+
+        // Vérifier si déjà traité
+        if ($demande['rem_status'] === true || $demande['rem_status'] === 't') {
+            return $this->fail('Cette demande a déjà été traitée');
+        }
+
+        $data = $this->request->getJSON(true);
+    $etaCode = $data['eta_code'] ?? null;
+
+    // Si pas d'eta_code fourni, créer un nouvel état
+    if (!$etaCode && (!empty($data['new_etat_num']) || !empty($data['create_new']))) {
+        $empCode = $demande['emp_code'];
+        
+        $etatModel = new EtatRembModel();
+        
+        // Si create_new = true, générer automatiquement le numéro
+        if (!empty($data['create_new'])) {
+            $currentYear = date('y'); // 2 digits
+            $newEtatNum = $this->generateEtatNum($currentYear);
+        } else {
+            $newEtatNum = $data['new_etat_num'];
+            
+            // Vérifier unicité
+            $existing = $etatModel->where('etat_num', $newEtatNum)->first();
+            if ($existing) {
+                return $this->fail('Ce numéro d\'état existe déjà');
+            }
+        }
+
+        $newId = $etatModel->insert([
+            'etat_num' => $newEtatNum,
+            'emp_code' => $empCode,
+            'eta_date' => date('Y-m-d'),
+            'eta_total' => 0
+        ]);
+
+        if (!$newId) {
+            return $this->fail('Erreur création état');
+        }
+
+        $etaCode = $newId;
+    }
+
+    if (!$etaCode) {
+        return $this->fail('Veuillez sélectionner un état ou créer un nouvel état');
+    }    
+
+        // Mettre à jour la demande
+        $model->update($id, [
+            'eta_code' => $etaCode,
+            'rem_status' => true
+        ]);
+
+        // Recalculer le total de l'état
+        $etatController = new EtatRembController();
+        $newTotal = $etatController->recalculerTotal($etaCode);
+
+        return $this->respond([
+            'success' => true,
+            'message' => 'Demande traitée avec succès',
+            'eta_code' => $etaCode,
+            'eta_total' => $newTotal,
+            'demande' => $model->find($id)
+        ]);
+    }
+
+    /**
      * Traiter une validation (méthode générique)
      */
     private function traiterValidation($id, $etatAttendu, $prochainEtat, $role)
@@ -655,7 +937,7 @@ class DemandeRembController extends ResourceController
 
         // Numéro de demande
         $pdf->SetFont('Arial', '', 10);
-        $pdf->Cell(0, 5, utf8_decode('N°: ' . ($demande['num_demande'] ?? '___/ARMP/DG/DAAF/SRH-' . date('y'))), 0, 1, 'L');
+        $pdf->Cell(0, 5, utf8_decode('N°: ' . ($demande['rem_num'] ?? '___/ARMP/DG/DAAF/SRH-' . date('y'))), 0, 1, 'L');
         $pdf->Ln(5);
 
         // Infos agent

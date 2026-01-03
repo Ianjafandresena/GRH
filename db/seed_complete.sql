@@ -1,336 +1,11 @@
 -- ============================================
--- SEED COMPLET - SI-GPRH
--- Compatible avec schema.sql mis à jour
+-- SEED COMPLET GRH - SI-GPRH
 -- ============================================
-
--- Nettoyage (ordre inverse des dépendances)
-TRUNCATE TABLE signature_engagement, debit_solde_cng, fonction_direc, 
-    Interim_permission, Interim_conge, validation_prm, emp_conj, validation_cng, 
-    piece, demande_remb, pris_en_charge, solde_permission, centre_sante, 
-    interruption, permission, enfant, conge, solde_conge, employee,
-    objet_remboursement, engagement, direction, poste, type_centre, 
-    convention, etat_remb, Signature, facture, decision, conjointe, 
-    type_conge, Region, modification CASCADE;
-
--- Reset des séquences
-ALTER SEQUENCE IF EXISTS signature_sign_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS poste_pst_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS direction_dir_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS region_reg_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS type_conge_typ_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS decision_dec_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS solde_conge_sld_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS conge_cng_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS conjointe_conj_code_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS enfant_enf_code_seq RESTART WITH 1;
+-- Exécuter après schema.sql
+-- \c grh;
 
 -- ============================================
--- 1. SIGNATURES (Types de signataires)
--- ============================================
-INSERT INTO Signature (sign_libele, sign_observation) VALUES
-('CHEF', 'Chef hiérarchique direct'),
-('RRH', 'Responsable Ressources Humaines'),
-('DAAF', 'Directeur Affaires Administratives et Financières'),
-('DG', 'Directeur Général');
-
--- ============================================
--- 2. DIRECTIONS
--- ============================================
-INSERT INTO direction (dir_nom, dir_abreviation) VALUES
-('Direction Générale', 'DG'),
-('Direction des Affaires Administratives et Financières', 'DAAF'),
-('Direction des Systèmes d''Information', 'DSI'),
-('Direction des Ressources Humaines', 'DRH'),
-('Direction de la Régulation', 'DR');
-
--- ============================================
--- 3. POSTES (avec fonctions hiérarchiques)
--- ============================================
-INSERT INTO poste (pst_mission, pst_fonction) VALUES
--- Direction Générale
-('Gestion stratégique de l''ARMP', 'Directeur Général'),
-('Assistance à la direction générale', 'Assistant DG'),
-
--- DAAF
-('Gestion administrative et financière', 'Directeur DAAF'),
-('Gestion financière', 'Chef Service Financier'),
-('Comptabilité', 'Agent comptable Comptable'),
-('Gestion du budget', 'Agent Budgétaire'),
-
--- DSI
-('Gestion des systèmes d''information', 'Directeur DSI'),
-('Supervision informatique', 'Chef Service Informatique'),
-('Développement applications', 'Développeur'),
-('Support technique', 'Technicien Support'),
-
--- DRH / SRH
-('Gestion des ressources humaines', 'Responsable RH'),
-('Administration du personnel', 'Chef Service RH'),
-('Gestion des congés et absences', 'Gestionnaire RH'),
-('Paie et avantages sociaux', 'Agent Paie'),
-
--- Direction Régulation
-('Régulation des marchés publics', 'Directeur Régulation'),
-('Analyse des dossiers', 'Chef Service Régulation'),
-('Instruction des recours', 'Analyste Régulation');
-
--- ============================================
--- 4. FONCTION_DIREC (Liaison Poste-Direction)
--- ============================================
--- Note: pst_code selon l'ordre d'insertion ci-dessus
-INSERT INTO fonction_direc (pst_code, dir_code) VALUES
--- DG (dir_code=1)
-(1, 1), (2, 1),
--- DAAF (dir_code=2)
-(3, 2), (4, 2), (5, 2), (6, 2),
--- DSI (dir_code=3)
-(7, 3), (8, 3), (9, 3), (10, 3),
--- DRH (dir_code=4)
-(11, 4), (12, 4), (13, 4), (14, 4),
--- DR (dir_code=5)
-(15, 5), (16, 5), (17, 5);
-
--- ============================================
--- 5. EMPLOYES
--- ============================================
--- emp_sexe: TRUE=Homme, FALSE=Femme
--- emp_disponibilite: TRUE=Disponible
--- sign_code: NULL si pas autorise a signer, sinon FK vers Signature
-
-INSERT INTO employee (emp_code, emp_nom, emp_prenom, emp_imarmp, emp_sexe, emp_date_embauche, emp_mail, emp_disponibilite, sign_code) VALUES
--- Direction Generale
-(1, 'ANDRIANAIVO', 'Hery', 'H100001', TRUE, '2010-01-15', 'hery.andrianaivo@armp.mg', TRUE, 4),
-(2, 'RASOANAIVO', 'Mirana', 'H100002', FALSE, '2015-03-20', 'mirana.rasoanaivo@armp.mg', TRUE, NULL),
--- DAAF
-(3, 'RAKOTOMALALA', 'Jean', 'H200001', TRUE, '2012-06-10', 'jean.rakotomalala@armp.mg', TRUE, 3),
-(4, 'RAZAFINDRAKOTO', 'Lalao', 'H200002', FALSE, '2016-09-01', 'lalao.razafindrakoto@armp.mg', TRUE, 1),
-(5, 'RABE', 'Njaka', 'H200003', TRUE, '2018-02-15', 'njaka.rabe@armp.mg', TRUE, NULL),
-(6, 'RANDRIA', 'Faly', 'H200004', TRUE, '2020-05-10', 'faly.randria@armp.mg', TRUE, NULL),
--- DSI
-(7, 'RAHARISON', 'Tiana', 'H300001', TRUE, '2013-04-05', 'tiana.raharison@armp.mg', TRUE, NULL),
-(8, 'ANDRIAMAHEFA', 'Lova', 'H300002', TRUE, '2017-08-20', 'lova.andriamahefa@armp.mg', TRUE, 1),
-(9, 'RANDRIANTSIANA', 'Valerio', 'H300698', TRUE, '2018-01-15', 'valerio.randriantsiana@armp.mg', TRUE, NULL),
-(10, 'RAKOTO', 'Miora', 'H300699', FALSE, '2022-06-10', 'miora.rakoto@armp.mg', TRUE, NULL),
--- DRH / SRH
-(11, 'RAZAFIMANDIMBY', 'Danielle', 'H400001', FALSE, '2011-11-01', 'danielle.razafimandimby@armp.mg', TRUE, 2),
-(12, 'RAMAROSON', 'Haja', 'H400002', TRUE, '2016-03-15', 'haja.ramaroson@armp.mg', TRUE, 1),
-(13, 'RATSIMBA', 'Nivo', 'H400003', FALSE, '2019-07-01', 'nivo.ratsimba@armp.mg', TRUE, NULL),
-(14, 'ANDRIA', 'Tojo', 'H400004', TRUE, '2021-01-20', 'tojo.andria@armp.mg', TRUE, NULL),
--- Direction Regulation
-(15, 'RABEMANANJARA', 'Solo', 'H500001', TRUE, '2014-02-10', 'solo.rabemananjara@armp.mg', TRUE, NULL),
-(16, 'RANDRIAMARO', 'Voahirana', 'H500002', FALSE, '2018-10-05', 'steffodin@gmail.com', TRUE, 1),
-(17, 'RASOAMANANA', 'Fara', 'H500003', FALSE, '2020-03-25', 'fara.rahirana.randriamaro@armp.mgsoamanana@armp.mg', TRUE, NULL);
-
--- ============================================
--- 5b. AFFECTATIONS (liaison employe-poste)
--- ============================================
-INSERT INTO affectation (emp_code, pst_code, affec_date_debut, affec_type_contrat) VALUES
-(1, 1, '2010-01-15', 'CDI'),
-(2, 2, '2015-03-20', 'CDI'),
-(3, 3, '2012-06-10', 'CDI'),
-(4, 4, '2016-09-01', 'CDI'),
-(5, 5, '2018-02-15', 'CDI'),
-(6, 6, '2020-05-10', 'CDD'),
-(7, 7, '2013-04-05', 'CDI'),
-(8, 8, '2017-08-20', 'CDI'),
-(9, 9, '2018-01-15', 'CDI'),
-(10, 10, '2022-06-10', 'CDD'),
-(11, 11, '2011-11-01', 'CDI'),
-(12, 12, '2016-03-15', 'CDI'),
-(13, 13, '2019-07-01', 'CDI'),
-(14, 14, '2021-01-20', 'CDD'),
-(15, 15, '2014-02-10', 'CDI'),
-(16, 16, '2018-10-05', 'CDI'),
-(17, 17, '2020-03-25', 'CDD');
-
--- ============================================
--- 6. RÉGIONS
--- ============================================
-INSERT INTO Region (reg_nom) VALUES
-('Analamanga'),
-('Vakinankaratra'),
-('Itasy'),
-('Bongolava'),
-('Haute Matsiatra'),
-('Amoron''i Mania'),
-('Vatovavy'),
-('Fitovinany'),
-('Ihorombe'),
-('Atsimo-Atsinanana'),
-('Atsinanana'),
-('Analanjirofo'),
-('Alaotra-Mangoro'),
-('Boeny'),
-('Sofia'),
-('Betsiboka'),
-('Melaky'),
-('Atsimo-Andrefana'),
-('Androy'),
-('Anosy'),
-('Menabe'),
-('Diana'),
-('Sava');
-
--- ============================================
--- 7. TYPES DE CONGÉ
--- ============================================
-INSERT INTO type_conge (typ_appelation, typ_ref) VALUES
-('Congé Annuel', 'CA'),
-('Congé Exceptionnel', 'CE'),
-('Congé de Paternité', 'CP'),
-('Repos Maladie', 'RM'),
-('Congé de Maternité', 'CM'),
-('Congé sans Solde', 'CSS');
-
--- ============================================
--- 8. DÉCISIONS (pour attribution des soldes)
--- Format: XXX/ARMP/DG-YY ou YY = annee de la decision
--- La decision de l annee N attribue les soldes de l annee N-1
--- ============================================
-INSERT INTO decision (dec_num) VALUES
-('044/ARMP/DG-22'),
-('055/ARMP/DG-23'),
-('066/ARMP/DG-24'),
-('077/ARMP/DG-25');
-
--- ============================================
--- 9. SOLDES CONGE (par employe/decision/annee)
--- sld_dispo = 1 (disponible)
--- sld_initial = 30 jours/an, sld_restant = solde actuel
--- ============================================
--- Employes Direction Generale (1,2)
-INSERT INTO solde_conge (sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, dec_code, emp_code) VALUES
-(1, 2023, 30, 20, NOW(), 3, 1),
-(1, 2024, 30, 30, NOW(), 4, 1),
-(1, 2023, 30, 18, NOW(), 3, 2),
-(1, 2024, 30, 30, NOW(), 4, 2);
-
--- Employes DAAF (3,4,5,6)
-INSERT INTO solde_conge (sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, dec_code, emp_code) VALUES
-(1, 2023, 30, 15, NOW(), 3, 3),
-(1, 2024, 30, 30, NOW(), 4, 3),
-(1, 2023, 30, 22, NOW(), 3, 4),
-(1, 2024, 30, 30, NOW(), 4, 4),
-(1, 2023, 30, 28, NOW(), 3, 5),
-(1, 2024, 30, 30, NOW(), 4, 5),
-(1, 2023, 30, 25, NOW(), 3, 6),
-(1, 2024, 30, 30, NOW(), 4, 6);
-
--- Employes DSI (7,8,9,10)
-INSERT INTO solde_conge (sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, dec_code, emp_code) VALUES
-(1, 2023, 30, 12, NOW(), 3, 7),
-(1, 2024, 30, 30, NOW(), 4, 7),
-(1, 2023, 30, 18, NOW(), 3, 8),
-(1, 2024, 30, 30, NOW(), 4, 8),
-(1, 2021, 30, 5, NOW(), 1, 9),
-(1, 2022, 30, 15, NOW(), 2, 9),
-(1, 2023, 30, 25, NOW(), 3, 9),
-(1, 2024, 30, 30, NOW(), 4, 9),
-(1, 2023, 30, 20, NOW(), 3, 10),
-(1, 2024, 30, 30, NOW(), 4, 10);
-
--- Employes DRH (11,12,13,14)
-INSERT INTO solde_conge (sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, dec_code, emp_code) VALUES
-(1, 2023, 30, 16, NOW(), 3, 11),
-(1, 2024, 30, 30, NOW(), 4, 11),
-(1, 2023, 30, 14, NOW(), 3, 12),
-(1, 2024, 30, 30, NOW(), 4, 12),
-(1, 2023, 30, 22, NOW(), 3, 13),
-(1, 2024, 30, 30, NOW(), 4, 13),
-(1, 2023, 30, 28, NOW(), 3, 14),
-(1, 2024, 30, 30, NOW(), 4, 14);
-
--- Employes Direction Regulation (15,16,17)
-INSERT INTO solde_conge (sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, dec_code, emp_code) VALUES
-(1, 2023, 30, 10, NOW(), 3, 15),
-(1, 2024, 30, 30, NOW(), 4, 15),
-(1, 2023, 30, 19, NOW(), 3, 16),
-(1, 2024, 30, 30, NOW(), 4, 16),
-(1, 2023, 30, 15, NOW(), 3, 17),
-(1, 2024, 30, 30, NOW(), 4, 17);
-
--- ============================================
--- 10. CONJOINTS
--- ============================================
-INSERT INTO conjointe (conj_nom, conj_sexe) VALUES
-('ANDRIANAIVO Voahangy', FALSE),   -- Conjoint de Hery (emp_code=1)
-('RASOANAIVO Patrick', TRUE),      -- Conjoint de Mirana (emp_code=2)
-('RAKOTOMALALA Marie', FALSE),     -- Conjoint de Jean (emp_code=3)
-('RANDRIANTSIANA Soa', FALSE),     -- Conjoint de Valério (emp_code=9)
-('RAZAFIMANDIMBY Andry', TRUE);    -- Conjoint de Danielle (emp_code=11)
-
--- Liaison employé-conjoint
-INSERT INTO emp_conj (emp_code, conj_code) VALUES
-(1, 1),
-(2, 2),
-(3, 3),
-(9, 4),
-(11, 5);
-
--- ============================================
--- 11. ENFANTS
--- ============================================
-INSERT INTO enfant (enf_nom, enf_num, date_naissance, emp_code) VALUES
--- Enfants de Hery (emp_code=1)
-('ANDRIANAIVO Kanto', '001', '2015-03-10', 1),
-('ANDRIANAIVO Tahina', '002', '2018-07-22', 1),
-
--- Enfants de Jean (emp_code=3)
-('RAKOTOMALALA Nomena', '001', '2010-11-05', 3),
-('RAKOTOMALALA Aina', '002', '2014-02-18', 3),
-('RAKOTOMALALA Rado', '003', '2019-09-30', 3),
-
--- Enfants de Valério (emp_code=9)
-('RANDRIANTSIANA Kely', '001', '2020-06-15', 9),
-('RANDRIANTSIANA Bodo', '002', '2023-01-08', 9),
-
--- Enfants de Danielle (emp_code=11)
-('RAZAFIMANDIMBY Tsiky', '001', '2012-08-20', 11),
-('RAZAFIMANDIMBY Mamy', '002', '2016-12-03', 11);
-
--- ============================================
--- 12. REMBOURSEMENT: Types, Conventions, Centres
--- ============================================
-INSERT INTO type_centre (tp_cen) VALUES
-('Hôpital Public'),
-('Clinique Privée'),
-('Cabinet Médical'),
-('Pharmacie'),
-('Laboratoire');
-
-INSERT INTO convention (cnv_taux_couver, cnv_date_debut, cnv_date_fin) VALUES
-(80.00, '2020-01-01', '2025-12-31'),
-(70.00, '2021-01-01', '2025-12-31'),
-(90.00, '2022-01-01', '2025-12-31');
-
-INSERT INTO centre_sante (cen_nom, cen_adresse, tp_cen_code, cnv_code) VALUES
-('HJRA Ampefiloha', 'Lot II A 45 Ampefiloha', 1, 1),
-('Clinique Sainte Fleur', 'Antaninarenina', 2, 2),
-('Cabinet Dr. Rabe', 'Analakely', 3, 2),
-('Pharmacie Centrale', 'Isoraka', 4, 3),
-('Laboratoire SALFA', 'Antanimena', 5, 1);
-
-INSERT INTO objet_remboursement (obj_article) VALUES
-('Consultation médicale'),
-('Achat médicaments'),
-('Analyses laboratoire'),
-('Hospitalisation'),
-('Radiologie/Imagerie'),
-('Soins dentaires'),
-('Montures et verres correcteurs');
-
--- ============================================
--- 13. SOLDES PERMISSION
--- ============================================
-INSERT INTO solde_permission (sld_prm_dispo, sld_prm_anne, emp_code) VALUES
-(10, 2024, 9),
-(10, 2024, 10),
-(10, 2024, 5),
-(10, 2024, 13),
-(10, 2024, 17);
-
--- ============================================
--- FIN DU SEED
+-- 1. TABLES RÉFÉRENTIELLES (sans FK)
 -- ============================================
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -344,4 +19,326 @@ VALUES (
   0
 );
 
-SELECT 'Seed complet exécuté avec succès!' AS message;
+-- Types de congé
+INSERT INTO type_conge (typ_code, typ_appelation, typ_ref) VALUES
+(1, 'Congé annuel', 'CA'),
+(2, 'Repos maladie', 'RM'),
+(3, 'Congé maternité', 'CM'),
+(4, 'Congé paternité', 'CP');
+
+-- Décisions administratives (règle: décision année YY pour solde année YY-1, 1 décision par employé)
+INSERT INTO decision (dec_code, dec_num) VALUES
+-- Décisions 2022 (pour soldes 2021) - Format: {emp_code}/ARMP/DG-22
+(1, '001/ARMP/DG-22'),  -- Employé 1
+(2, '002/ARMP/DG-22'),  -- Employé 2
+(3, '003/ARMP/DG-22'),  -- Employé 3
+(4, '004/ARMP/DG-22'),  -- Employé 4
+(5, '005/ARMP/DG-22'),  -- Employé 5
+-- Décisions 2023 (pour soldes 2022)
+(6, '001/ARMP/DG-23'),
+(7, '002/ARMP/DG-23'),
+(8, '003/ARMP/DG-23'),
+(9, '004/ARMP/DG-23'),
+(10, '005/ARMP/DG-23'),
+-- Décisions 2024 (pour soldes 2023)
+(11, '001/ARMP/DG-24'),
+(12, '002/ARMP/DG-24'),
+(13, '003/ARMP/DG-24'),
+(14, '004/ARMP/DG-24'),
+(15, '005/ARMP/DG-24'),
+-- Décisions 2025 (pour soldes 2024)
+(16, '001/ARMP/DG-25'),
+(17, '002/ARMP/DG-25'),
+(18, '003/ARMP/DG-25'),
+(19, '004/ARMP/DG-25'),
+(20, '005/ARMP/DG-25');
+-- NOTE: Pas de décision -26 car on est en 2025, elle sortira en 2026 pour débloquer soldes 2025
+
+
+
+-- Régions
+INSERT INTO Region (reg_nom) VALUES
+('Alaotra-Mangoro'),
+('Amoron''i Mania'),
+('Analamanga'),
+('Analanjirofo'),
+('Androy'),
+('Anosy'),
+('Atsimo-Andrefana'),
+('Atsimo-Atsinanana'),
+('Atsinanana'),
+('Bongolava'),
+('Boeny'),
+('Betsiboka'),
+('Diana'),
+('Haute Matsiatra'),
+('Ihorombe'),
+('Itasy'),
+('Melaky'),
+('Menabe'),
+('Sava'),
+('Vakinankaratra'),
+('Vatovavy'),
+('Fitovinany'),
+('Matsiatra Ambony');
+
+
+-- Types de centre de santé
+INSERT INTO type_centre (tp_cen_code, tp_cen) VALUES
+(1, 'Hôpital public'),
+(2, 'Clinique privée'),
+(3, 'Centre de santé de base'),
+(4, 'Pharmacie'),
+(5, 'Laboratoire');
+
+-- ============================================
+-- 2. POSTES (génériques)
+-- ============================================
+INSERT INTO poste (pst_code, pst_fonction, pst_max) VALUES
+(1, 'Directeur Général', 1),
+(2, 'Directeur', 5),
+(3, 'Chef de Service', 10),
+(4, 'Agent', 50),
+(5, 'Secrétaire', 10),
+(6, 'Comptable', 10),
+(7, 'Chauffeur', 5),
+(8, 'Gardien', 5);
+
+-- ============================================
+-- 3. DIRECTIONS
+-- ============================================
+INSERT INTO direction (dir_code, dir_nom, dir_abreviation) VALUES
+(1, 'Direction Générale', 'DG'),
+(2, 'Direction des Affaires Administratives et Financières', 'DAAF'),
+(3, 'Direction des Systèmes d''Information', 'DSI'),
+(4, 'Service Ressources Humaines', 'SRH'),
+(5, 'Service Comptabilité', 'COMPTA'),
+(6, 'Service Logistique', 'LOG');
+
+-- ============================================
+-- 4. FONCTION_DIREC (Poste → Direction)
+-- ============================================
+-- Relie un poste générique à une direction avec sa mission spécifique
+INSERT INTO fonction_direc (pst_code, dir_code, fonc_mission) VALUES
+(1, 1, 'Directeur Général de l''ARMP'),
+(2, 2, 'Directeur des Affaires Administratives et Financières'),
+(2, 3, 'Directeur des Systèmes d''Information'),
+(3, 3, 'Chef de Service DSI'),
+(3, 4, 'Chef du Service Ressources Humaines'),
+(3, 5, 'Chef du Service Comptabilité'),
+(3, 6, 'Chef du Service Logistique'),
+(4, 3, 'Agent DSI'),
+(4, 4, 'Agent Ressources Humaines'),
+(4, 5, 'Agent Comptable'),
+(4, 6, 'Agent Logistique'),
+(4, 2, 'Agent DAAF'),
+(5, 1, 'Secrétaire de Direction Générale'),
+(5, 2, 'Secrétaire DAAF'),
+(6, 5, 'Comptable principal'),
+(7, 6, 'Chauffeur'),
+(8, 6, 'Gardien');
+-- ============================================
+-- 5. OBJETS REMBOURSEMENT
+-- ============================================
+INSERT INTO objet_remboursement (obj_code, obj_article) VALUES
+(1, 'Consultation médicale'),
+(2, 'Médicaments'),
+(3, 'Analyses médicales'),
+(4, 'Radiographie'),
+(5, 'Hospitalisation'),
+(6, 'Montures et verres correcteurs'),
+(7, 'Soins dentaires'),
+(8, 'Kinésithérapie');
+
+-- ============================================
+-- 6. CENTRES DE SANTÉ
+-- ============================================
+INSERT INTO centre_sante (cen_code, cen_nom, cen_adresse, tp_cen_code) VALUES
+-- Hôpitaux et Centres médicaux
+(1, 'Pavillon Sainte Fleur', 'Antananarivo', 1),
+(2, 'Hôpital Mère-Enfant de Tsaralalana (HMET)', 'Tsaralalana, Antananarivo', 1),
+(3, 'Hôpital Joseph Ravoahangy Andrianavalona (HJRA)', 'Ampefiloha, Antananarivo', 1),
+(4, 'Hôpital Joseph Raseta Befelatanana (HJRB)', 'Befelatanana, Antananarivo', 1),
+(5, 'Centre Hospitalier de Soavinandriana (CENHOSOA)', 'Soavinandriana, Antananarivo', 1),
+(6, 'Centre de Stomatologie de Befelatanana', 'Befelatanana, Antananarivo', 1),
+(7, 'Service Gynécologie et Obstétrique de Befelatanana', 'Befelatanana, Antananarivo', 1),
+(8, 'Centre Médical Tsiazotafo (CMT)', 'Tsiazotafo, Antananarivo', 1),
+(9, 'Dispensaire du Ministère des Finances et du Budget (MFB)', 'Antaninarenina, Antananarivo', 1),
+(10, 'EUSSPA Analakely', 'Analakely, Antananarivo', 1),
+(11, 'Institut Malgache de Recherches Appliquées (IMRA)', 'Antananarivo', 1),
+(12, 'Centre Hospitalier Universitaire Andohotapenaka', 'Andohotapenaka, Antananarivo', 1),
+-- Laboratoires
+(13, 'Institut Pasteur de Madagascar (IPM)', 'Antananarivo', 5),
+(14, 'Laboratoire Pharmacie Hanitra Ankorahotra', 'Ankorahotra, Antananarivo', 5),
+(15, 'Laboratoire de Formation et de Recherche en Biologie Médicale (LBM)', 'Antananarivo', 5),
+(16, 'Institut Médical de Madagascar (IMM)', 'Antananarivo', 5),
+(17, 'EUSSPA Analakely - Labo', 'Analakely, Antananarivo', 5),
+(18, 'IMRA - Laboratoire', 'Antananarivo', 5),
+-- Pharmacies conventionnées
+(19, 'Pharmacie Unité I/HJRB', 'Befelatanana, Antananarivo', 4),
+(20, 'Pharmacie ANYMA/HJRA', 'Ampefiloha, Antananarivo', 4),
+(21, 'Pharmacie Payante/CENHOSOA', 'Soavinandriana, Antananarivo', 4),
+(22, 'Pharmacie Andohotapenaka', 'Andohotapenaka, Antananarivo', 4),
+(23, 'Pharmacie Pavillon Sainte Fleur', 'Antananarivo', 4);
+
+-- ============================================
+-- 7. EMPLOYÉS
+-- ============================================
+INSERT INTO employee (emp_code, emp_nom, emp_prenom, emp_imarmp, emp_sexe, emp_date_embauche, emp_mail, emp_disponibilite) VALUES
+-- Direction Généralede
+(1, 'IANJARAFANOMEZANTSOA', 'Jean', 'DG001', true, '2015-01-15', 'ianjarafanomezantsoa8@gmail.com', true),
+-- Directeurs
+(2, 'RANDRIA', 'Marie', 'DIR001', false, '2016-03-01', 'loiclooney7@gmail.com', true), -- Directeur DAAF
+(3, 'RASOA', 'Patrick', 'DIR002', true, '2017-06-15', 'steffodin@gmail.com', true), -- Directeur DSI
+-- Chefs de Service DSI
+(4, 'RABE', 'Hery', 'CS001', true, '2018-02-01', 'catykitkit@gmail.com', true), -- Chef SRH
+(5, 'RAVELO', 'Carol', 'CS002', false, '2018-05-10', 'ncarol506@gmail.com', true), -- Chef Sécurité IT
+(6, 'ANDRIA', 'Tiana', 'CS003', true, '2019-01-20', 'iomjik53@gmail.com', true), -- Chef Développement
+-- Agents DSI
+(7, 'RAKOTOSON', 'Niry', 'AG001', false, '2020-03-01', 'uilokan@gmail.com', true), -- Développeur
+(8, 'RASOANAIVO', 'Voahangy', 'AG002', false, '2020-06-15', 'jiljoul81@gmail.com', true), -- Admin Réseau
+(9, 'ANDRIANAIVO', 'Hery', 'AG003', true, '2021-01-10', 'sme27577@gmail.com', true), -- Développeur
+(10, 'RAMANANTSOA', 'Lova', 'AG004', true, '2021-04-01', 'willharingtonw99@gmail.com', true), -- Support IT
+-- Autres services
+(11, 'RAHARISOA', 'Mialy', 'SEC001', false, '2019-08-01', 'mialy.raharisoa@armp.mg', true),
+(12, 'RAZAFY', 'Tahina', 'SEC002', false, '2020-02-15', 'tahina.razafy@armp.mg', true),
+(13, 'RATSIMBA', 'Hasina', 'CPT001', true, '2018-09-01', 'hasina.ratsimba@armp.mg', true),
+(14, 'RAMAROSON', 'Fidy', 'CHF001', true, '2019-06-01', 'fidy.ramaroson@armp.mg', true),
+(15, 'RASENDRA', 'Solo', 'GAR001', true, '2020-01-01', 'solo.rasendra@armp.mg', true);
+
+-- Signatures (rôles signataires pour validation)
+INSERT INTO Signature (sign_code, sign_libele, sign_observation, emp_code) VALUES
+(1, 'Directeur Général', 'Signataire final', 1),
+(2, 'DAAF', 'Validation administrative', 2),
+(3, 'RRH', 'Responsable RH', 4),
+(4, 'Chef de Service', 'Supérieur hiérarchique', 6),
+(5, 'Directeur', 'Directeur de Direction', 3);
+
+-- ============================================
+-- 8. AFFECTATIONS (Employee → Poste)
+-- ============================================
+INSERT INTO affectation (emp_code, pst_code, dir_code, affec_code, affec_date_debut, affec_date_fin, affec_type_contrat) VALUES
+(1, 1, 1, 1, '2015-01-15', NULL, 'CDI'),       -- DG -> DG
+(2, 2, 2, 2, '2016-03-01', NULL, 'CDI'),       -- DAAF -> DAAF
+(3, 2, 3, 3, '2017-06-15', NULL, 'CDI'),       -- DSI -> DSI
+(4, 3, 4, 4, '2018-02-01', NULL, 'CDI'),       -- Chef SRH -> SRH
+(5, 3, 3, 5, '2018-05-10', NULL, 'CDI'),       -- Chef Secu -> DSI
+(6, 3, 3, 6, '2019-01-20', NULL, 'CDI'),       -- Chef Dev -> DSI
+(7, 4, 3, 7, '2020-03-01', NULL, 'CDI'),       -- Dev -> DSI
+(8, 4, 3, 8, '2020-06-15', NULL, 'CDI'),       -- Admin Sys -> DSI
+(9, 4, 3, 9, '2021-01-10', NULL, 'CDD'),       -- Dev -> DSI
+(10, 4, 3, 10, '2021-04-01', NULL, 'CDD'),     -- Support -> DSI
+(11, 5, 1, 11, '2019-08-01', NULL, 'CDI'),     -- Secrétaire -> DG
+(12, 5, 2, 12, '2020-02-15', NULL, 'CDI'),     -- Secrétaire -> DAAF
+(13, 6, 5, 13, '2018-09-01', NULL, 'CDI'),     -- Comptable -> Compta
+(14, 7, 2, 14, '2019-06-01', NULL, 'CDI'),     -- Chauffeur -> DAAF
+(15, 8, 6, 15, '2020-01-01', NULL, 'CDI');     -- Gardien -> Logistique
+
+-- ============================================
+-- 9. CONJOINTS
+-- ============================================
+INSERT INTO conjointe (conj_code, conj_nom, conj_sexe) VALUES
+(1, 'RAKO Lalao', false),
+(2, 'RANDRI Toky', true),
+(3, 'RABE Soa', false),
+(4, 'ANDRIA Vola', false),
+(5, 'RAKO Haja', true);
+
+-- Association Employé-Conjoint
+INSERT INTO emp_conj (emp_code, conj_code) VALUES
+(1, 1), -- DG marié à Lalao
+(2, 2), -- Marie mariée à Toky
+(4, 3), -- Hery marié à Soa
+(9, 4), -- Hery A. marié à Vola
+(11, 5); -- Mialy mariée à Haja
+
+-- ============================================
+-- 10. ENFANTS
+-- ============================================
+INSERT INTO enfant (enf_code, enf_nom, enf_num, date_naissance, emp_code) VALUES
+-- Enfants du DG
+(1, 'RAKOTO Miora', 'ENF001', '2010-05-15', 1),
+(2, 'RAKOTO Aina', 'ENF002', '2015-08-20', 1),
+-- Enfants de Marie
+(3, 'RANDRIA Fehizoro', 'ENF003', '2018-03-10', 2),
+-- Enfants de Hery Rabe
+(4, 'RABE Mahefa', 'ENF004', '2019-11-05', 4),
+(5, 'RABE Ony', 'ENF005', '2022-06-15', 4),
+-- Enfants de Voahangy
+(6, 'RASOANAIVO Tiavina', 'ENF006', '2020-01-20', 8),
+-- Enfants de Hery Andrianaivo
+(7, 'ANDRIANAIVO Kanto', 'ENF007', '2021-04-12', 9);
+
+-- ============================================
+-- 11. SOLDES DE CONGÉ FIFO (avec décision)
+-- ============================================
+-- Règle: On débite les soldes les plus anciens en premier (FIFO)
+-- Actuellement en 2025, on a soldes jusqu'à 2024 seulement (décision -25 débloque 2024)
+
+-- SOLDES 2021 (décision DG-22 sortie en 2022) - Presque épuisés
+INSERT INTO solde_conge (sld_code, sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, emp_code, dec_code) VALUES
+(1, 1, 2021, 30.0, 2.0, '2022-01-01 00:00:00', 1, 1),   -- DG: reste 2j
+(2, 1, 2021, 30.0, 0.0, '2022-01-01 00:00:00', 2, 2),   -- Marie: épuisé
+(3, 1, 2021, 30.0, 1.5, '2022-01-01 00:00:00', 3, 3),   -- Patrick: 1.5j
+(4, 1, 2021, 30.0, 0.0, '2022-01-01 00:00:00', 4, 4),   -- Hery: épuisé
+(5, 1, 2021, 30.0, 3.0, '2022-01-01 00:00:00', 5, 5);   -- Carol: 3j
+
+-- SOLDES 2022 (décision DG-23 sortie en 2023) - Partiellement utilisés
+INSERT INTO solde_conge (sld_code, sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, emp_code, dec_code) VALUES
+(6, 1, 2022, 30.0, 12.0, '2023-01-01 00:00:00', 1, 6),  -- DG: 12j
+(7, 1, 2022, 30.0, 8.0, '2023-01-01 00:00:00', 2, 7),   -- Marie: 8j
+(8, 1, 2022, 30.0, 15.0, '2023-01-01 00:00:00', 3, 8),  -- Patrick: 15j
+(9, 1, 2022, 30.0, 10.0, '2023-01-01 00:00:00', 4, 9),  -- Hery: 10j
+(10, 1, 2022, 30.0, 20.0, '2023-01-01 00:00:00', 5, 10); -- Carol: 20j
+
+-- SOLDES 2023 (décision DG-24 sortie en 2024) - Moins utilisés
+INSERT INTO solde_conge (sld_code, sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, emp_code, dec_code) VALUES
+(11, 1, 2023, 30.0, 25.0, '2024-01-01 00:00:00', 1, 11), -- DG: 25j
+(12, 1, 2023, 30.0, 22.0, '2024-01-01 00:00:00', 2, 12), -- Marie: 22j
+(13, 1, 2023, 30.0, 27.0, '2024-01-01 00:00:00', 3, 13), -- Patrick: 27j
+(14, 1, 2023, 30.0, 20.0, '2024-01-01 00:00:00', 4, 14), -- Hery: 20j
+(15, 1, 2023, 30.0, 28.0, '2024-01-01 00:00:00', 5, 15); -- Carol: 28j
+
+-- SOLDES 2024 (décision DG-25 sortie en 2025) - Récents, peu touchés
+INSERT INTO solde_conge (sld_code, sld_dispo, sld_anne, sld_initial, sld_restant, sld_maj, emp_code, dec_code) VALUES
+(16, 1, 2024, 30.0, 30.0, '2025-01-01 00:00:00', 1, 16), -- DG: intact
+(17, 1, 2024, 30.0, 29.0, '2025-01-01 00:00:00', 2, 17), -- Marie: 29j
+(18, 1, 2024, 30.0, 30.0, '2025-01-01 00:00:00', 3, 18), -- Patrick: intact
+(19, 1, 2024, 30.0, 28.0, '2025-01-01 00:00:00', 4, 19), -- Hery: 28j
+(20, 1, 2024, 30.0, 30.0, '2025-01-01 00:00:00', 5, 20); -- Carol: intact
+
+-- NOTE: Pas de soldes 2025 car décision -26 pas encore sortie!
+
+
+
+-- ============================================
+-- 13. FACTURES
+-- ============================================
+INSERT INTO facture (fac_code, fac_num, fac_date) VALUES
+(1, 'FAC-2025-001', '2025-02-01'),
+(2, 'FAC-2025-002', '2025-02-15');
+
+-- ============================================
+-- 14. USERS (système)
+-- ============================================
+
+-- ============================================
+-- RESET SEQUENCES (PostgreSQL)
+-- ============================================
+SELECT setval('type_conge_typ_code_seq', (SELECT MAX(typ_code) FROM type_conge));
+SELECT setval('decision_dec_code_seq', (SELECT MAX(dec_code) FROM decision));
+SELECT setval('signature_sign_code_seq', (SELECT MAX(sign_code) FROM Signature));
+SELECT setval('region_reg_code_seq', (SELECT MAX(reg_code) FROM Region));
+SELECT setval('type_centre_tp_cen_code_seq', (SELECT MAX(tp_cen_code) FROM type_centre));
+SELECT setval('poste_pst_code_seq', (SELECT MAX(pst_code) FROM poste));
+SELECT setval('direction_dir_code_seq', (SELECT MAX(dir_code) FROM direction));
+SELECT setval('objet_remboursement_obj_code_seq', (SELECT MAX(obj_code) FROM objet_remboursement));
+SELECT setval('centre_sante_cen_code_seq', (SELECT MAX(cen_code) FROM centre_sante));
+SELECT setval('conjointe_conj_code_seq', (SELECT MAX(conj_code) FROM conjointe));
+SELECT setval('enfant_enf_code_seq', (SELECT MAX(enf_code) FROM enfant));
+SELECT setval('solde_conge_sld_code_seq', (SELECT MAX(sld_code) FROM solde_conge));
+SELECT setval('facture_fac_code_seq', (SELECT MAX(fac_code) FROM facture));
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+SELECT setval('affectation_affec_code_seq', (SELECT MAX(affec_code) FROM affectation));
+
+SELECT 'Seed complet inséré avec succès!' AS status;

@@ -517,4 +517,37 @@ form {
       color: $dark;
     }
   }
+}// ========== MODE TOGGLE (Congé/Permission) ==========
+.mode-toggle {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+
+  button {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #dee2e6;
+    background: white;
+    color: #6c757d;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #04acc2;
+      color: #04acc2;
+    }
+
+    &.active {
+      background: #04acc2;
+      border-color: #04acc2;
+      color: white;
+      box-shadow: 0 2px 8px rgba(4, 172, 194, 0.3);
+    }
+  }
 }

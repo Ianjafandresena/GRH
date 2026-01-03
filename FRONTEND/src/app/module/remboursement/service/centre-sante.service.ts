@@ -1,18 +1,20 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { CentreSante, Convention } from '../model/centre-sante.model';
+import { CentreSante, TypeCentre } from '../model/centre-sante.model';
 
 @Injectable({ providedIn: 'root' })
 export class CentreSanteService {
     private readonly http = inject(HttpClient);
     private readonly centreUrl = environment.apiUrl + '/centre_sante';
-    private readonly conventionUrl = environment.apiUrl + '/convention';
 
     // Centres de santé
-    getCentres(): Observable<CentreSante[]> {
-        return this.http.get<CentreSante[]>(this.centreUrl, { withCredentials: true });
+    getCentres(typeCode?: number, search?: string): Observable<CentreSante[]> {
+        let params = new HttpParams();
+        if (typeCode) params = params.set('tp_cen_code', typeCode.toString());
+        if (search) params = params.set('search', search);
+        return this.http.get<CentreSante[]>(this.centreUrl, { params, withCredentials: true });
     }
 
     getCentre(id: number): Observable<CentreSante> {
@@ -31,16 +33,8 @@ export class CentreSanteService {
         return this.http.delete(`${this.centreUrl}/${id}`, { withCredentials: true });
     }
 
-    // Conventions
-    getConventions(): Observable<Convention[]> {
-        return this.http.get<Convention[]>(this.conventionUrl, { withCredentials: true });
-    }
-
-    createConvention(convention: Convention): Observable<Convention> {
-        return this.http.post<Convention>(this.conventionUrl, convention, { withCredentials: true });
-    }
-
-    updateConvention(id: number, convention: Partial<Convention>): Observable<Convention> {
-        return this.http.put<Convention>(`${this.conventionUrl}/${id}`, convention, { withCredentials: true });
+    // Types de centre
+    getTypes(): Observable<TypeCentre[]> {
+        return this.http.get<TypeCentre[]>(`${this.centreUrl}/types`, { withCredentials: true });
     }
 }

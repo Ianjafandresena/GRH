@@ -16,7 +16,7 @@ class EmployeeController extends ResourceController
         // 1. Récupérer tout trié par date croissante
         // 2. Écraser les doublons dans une map PHP (le dernier est le plus récent)
         $sql = "
-            SELECT 
+            SELECT DISTINCT ON (e.emp_code)
                 e.*,
                 p.pst_fonction,
                 d.dir_nom,
@@ -25,9 +25,9 @@ class EmployeeController extends ResourceController
             FROM employee e
             LEFT JOIN affectation a ON a.emp_code = e.emp_code
             LEFT JOIN poste p ON p.pst_code = a.pst_code
-            LEFT JOIN fonction_direc fd ON fd.pst_code = p.pst_code
+            LEFT JOIN fonction_direc fd ON fd.pst_code = a.pst_code
             LEFT JOIN direction d ON d.dir_code = fd.dir_code
-            ORDER BY e.emp_code, a.affec_date_debut ASC
+            ORDER BY e.emp_code, a.affec_date_debut DESC
         ";
 
         try {

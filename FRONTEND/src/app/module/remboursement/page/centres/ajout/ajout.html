@@ -9,38 +9,36 @@
         <mat-card-content>
             <form (ngSubmit)="submit()">
 
+                <!-- Type de centre (premier) -->
                 <div class="form-row">
-                    <!-- Nom -->
                     <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Nom du centre *</mat-label>
-                        <input matInput [(ngModel)]="centre.cen_nom" name="cen_nom" required>
-                    </mat-form-field>
-                </div>
-
-                <div class="form-row">
-                    <!-- Adresse -->
-                    <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Adresse</mat-label>
-                        <input matInput [(ngModel)]="centre.cen_adresse" name="cen_adresse">
-                        <mat-icon matSuffix>place</mat-icon>
-                    </mat-form-field>
-                </div>
-
-                <div class="form-row two-col">
-                    <!-- Ville -->
-                    <mat-form-field appearance="outline">
-                        <mat-label>Ville</mat-label>
-                        <input matInput [(ngModel)]="centre.cen_ville" name="cen_ville">
-                    </mat-form-field>
-
-                    <!-- Convention -->
-                    <mat-form-field appearance="outline">
-                        <mat-label>Convention *</mat-label>
-                        <mat-select [(ngModel)]="centre.cnv_code" name="cnv_code" required>
-                            <mat-option *ngFor="let c of conventions" [value]="c.cnv_code">
-                                {{ c.cnv_taux_couver }}% (Début: {{ c.cnv_date_debut }})
+                        <mat-label>Type de centre *</mat-label>
+                        <mat-select [(ngModel)]="centre.tp_cen_code" name="tp_cen_code" required>
+                            <mat-option *ngFor="let t of types" [value]="t.tp_cen_code">
+                                {{ t.tp_cen }}
                             </mat-option>
                         </mat-select>
+                        <mat-icon matSuffix>local_hospital</mat-icon>
+                    </mat-form-field>
+                </div>
+
+                <!-- Nom -->
+                <div class="form-row">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Nom de l'établissement *</mat-label>
+                        <input matInput [(ngModel)]="centre.cen_nom" name="cen_nom" required
+                            placeholder="Ex: HJRA Ampefiloha">
+                        <mat-icon matSuffix>business</mat-icon>
+                    </mat-form-field>
+                </div>
+
+                <!-- Adresse -->
+                <div class="form-row">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Adresse</mat-label>
+                        <input matInput [(ngModel)]="centre.cen_adresse" name="cen_adresse"
+                            placeholder="Ex: Ampefiloha, Antananarivo">
+                        <mat-icon matSuffix>place</mat-icon>
                     </mat-form-field>
                 </div>
 

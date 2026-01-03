@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RemboursementService } from '../../../service/remboursement.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
 import { DemandeRemb } from '../../../model/demande-remb.model';
+import { EmployeeService } from '../../../../employee/service/employee.service';
+import { Employee } from '../../../../employee/model/employee.model';
 
 @Component({
     selector: 'app-demandes-index',
@@ -17,26 +19,73 @@ export class DemandesIndexComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly rembService = inject(RemboursementService);
+    private readonly employeeService = inject(EmployeeService);
     private readonly layoutService = inject(LayoutService);
 
     demandes: DemandeRemb[] = [];
+    employees: Employee[] = [];
     loading = false;
     errorMsg = '';
 
     // Filtres
     filter = {
-        emp_code: '',
+        emp_code: null as number | null,
+        traitement: 'all' as 'all' | 'traite' | 'non_traite',
+        type: 'all' as 'all' | 'agent' | 'centre',
         mois: new Date().getMonth() + 1,
         annee: new Date().getFullYear()
     };
 
+    // Employee dropdown control
+    employeeSearch = '';
+    employeeDropdownOpen = false;
+    selectedEmployee: Employee | null = null;
+
+    get filteredEmployees(): Employee[] {
+        if (!this.employeeSearch) return this.employees.slice(0, 50);
+        const query = this.employeeSearch.toLowerCase();
+        return this.employees.filter(e =>
+            e.emp_nom?.toLowerCase().includes(query) ||
+            e.emp_prenom?.toLowerCase().includes(query) ||
+            e.emp_imarmp?.toLowerCase().includes(query)
+        ).slice(0, 50);
+    }
+
+    get filteredDemandes(): DemandeRemb[] {
+        let result = this.demandes;
+
+        // Filtre type
+        if (this.filter.type !== 'all') {
+            result = result.filter(d =>
+                this.filter.type === 'centre' ? d.rem_is_centre === true : d.rem_is_centre !== true
+            );
+        }
+
+        // Filtre traitement
+        if (this.filter.traitement !== 'all') {
+            result = result.filter(d =>
+                this.filter.traitement === 'traite' ? d.rem_status === true : d.rem_status !== true
+            );
+        }
+
+        return result;
+    }
+
     ngOnInit() {
         this.layoutService.setTitle('Demandes de Remboursement');
+        this.loadEmployees();
         this.route.data.subscribe(data => {
             this.demandes = data['demandes'] || [];
             if (!this.demandes.length) {
                 this.loadDemandes();
             }
+        });
+    }
+
+    loadEmployees() {
+        this.employeeService.getEmployees().subscribe({
+            next: (list: Employee[]) => this.employees = list || [],
+            error: () => console.error('Erreur chargement employes')
         });
     }
 
@@ -56,6 +105,19 @@ export class DemandesIndexComponent implements OnInit {
                 this.loading = false;
             }
         });
+    }
+
+    selectEmployee(emp: Employee) {
+        this.selectedEmployee = emp;
+        this.filter.emp_code = emp.emp_code;
+        this.employeeSearch = `${emp.emp_nom} ${emp.emp_prenom} (${emp.emp_imarmp})`;
+        this.employeeDropdownOpen = false;
+    }
+
+    clearEmployee() {
+        this.selectedEmployee = null;
+        this.filter.emp_code = null;
+        this.employeeSearch = '';
     }
 
     goToCreate() {
@@ -78,9 +140,9 @@ export class DemandesIndexComponent implements OnInit {
     }
 
     downloadEtatAgent() {
-        const emp = parseInt(this.filter.emp_code, 10);
+        const emp = this.filter.emp_code;
         if (!emp) {
-            alert('Veuillez saisir le code employé (emp_code) pour générer l’état.');
+            alert('Veuillez selectionner un employe pour generer etat.');
             return;
         }
         this.rembService.downloadEtatAgentPdf(emp, this.filter.annee, this.filter.mois).subscribe(blob => {
@@ -91,7 +153,7 @@ export class DemandesIndexComponent implements OnInit {
             a.click();
             window.URL.revokeObjectURL(url);
         }, () => {
-            this.errorMsg = 'Erreur lors du téléchargement de l’état';
+            this.errorMsg = 'Erreur lors du telechargement';
         });
     }
 

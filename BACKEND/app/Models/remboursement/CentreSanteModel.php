@@ -10,7 +10,8 @@ class CentreSanteModel extends Model
 
     protected $allowedFields = [
         'cen_nom',
-        'cnv_code'
+        'cen_adresse',
+        'tp_cen_code'
     ];
 
     protected $useAutoIncrement = true;

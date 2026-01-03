@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';  // ➕ AJOUTÉ import Router
 import { EmployeeService } from '../../../employee/service/employee.service';
 import { Employee } from '../../../employee/model/employee.model';
 import { CongeService } from '../../service/conge.service';
@@ -8,17 +9,25 @@ import { Conge, TypeConge } from '../../model/conge.model';
 import { InterimConge } from '../../model/interimconge.model';
 import { Region } from '../../model/region.model';
 import { LayoutService } from '../../../../shared/layout/service/layout.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { PreviewCongeDialogComponent } from './preview-dialog/preview-dialog';
 
 @Component({
   selector: 'app-ajout-conge',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule],
   templateUrl: './ajout.html',
   styleUrls: ['./ajout.scss']
 })
 export class AjoutCongeComponent implements OnInit {
   private readonly layoutService = inject(LayoutService);
+  private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);  // ➕ AJOUTÉ
 
+  // ============ TYPE D'ABSENCE (Fusion Congé/Permission) ============
+  absenceType: 'conge' | 'permission' = 'conge';
+
+  // ============ CONGÉ (existant - NE PAS MODIFIER) ============
   congeForm: FormGroup;
   employees: Employee[] = [];
   filteredEmployees: Employee[] = [];
@@ -32,7 +41,7 @@ export class AjoutCongeComponent implements OnInit {
   errorMsg: string = '';
   filteredInterims: Employee[][] = [];
 
-  showRecap: boolean = false;
+  // showRecap: boolean = false; // Removed
   lastCongeDraft: any = null;
   motifLibelle: string = '';
 
@@ -45,11 +54,22 @@ export class AjoutCongeComponent implements OnInit {
   showRegionDropdown = false;
   showInterimDropdowns: boolean[] = [];
 
+  // ============ PERMISSION (nouveau) ============
+  permissionForm: FormGroup;
+  permissionCalculatedHours: number | null = null;
+  permissionCalculatedDays: number | null = null;
+  permissionSelectedEmployee: Employee | null = null;
+  permissionFilteredEmployees: Employee[] = [];
+  permissionShowEmpDropdown = false;
+  permissionLoading = false;
+  permissionErrorMsg = '';
+
   constructor(
     private fb: FormBuilder,
     private employeeService: EmployeeService,
     private congeService: CongeService
   ) {
+    // Formulaire Congé (existant)
     this.congeForm = this.fb.group({
       emp_search: ['', Validators.required],
       typ_code: [null, Validators.required],
@@ -61,6 +81,13 @@ export class AjoutCongeComponent implements OnInit {
         interim_search: [''],
         selectedInterim: [null]
       })])
+    });
+
+    // Formulaire Permission (nouveau)
+    this.permissionForm = this.fb.group({
+      emp_search: ['', Validators.required],
+      prm_debut: [null, Validators.required],
+      prm_fin: [null, Validators.required]
     });
   }
 
@@ -269,7 +296,50 @@ export class AjoutCongeComponent implements OnInit {
       anneeSolde: this.anneeSolde,
       joursRestants: this.joursRestants
     };
-    this.showRecap = true;
+    this.prepareDraft();
+
+    // Open Dialog
+    const dialogRef = this.dialog.open(PreviewCongeDialogComponent, {
+      width: '600px',
+      maxHeight: '90vh',
+      data: {
+        draft: this.lastCongeDraft,
+        motif: this.motifLibelle
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.confirmEnvoi();
+      }
+    });
+  }
+
+  prepareDraft() {
+    if (this.congeForm.invalid) return; // double check
+
+    const interimsData = this.interims.controls
+      .map(ctrl => ctrl.get('selectedInterim')?.value)
+      .filter(interim => !!interim);
+
+    const typ = this.typesConge.find(t => t.typ_code === this.congeForm.value.typ_code);
+    this.motifLibelle = typ ? typ.typ_appelation : '';
+    this.lastCongeDraft = {
+      typ_code: this.congeForm.value.typ_code,
+      emp_code: this.selectedEmployee?.emp_code,
+      nom_emp: this.selectedEmployee?.emp_nom + ' ' + this.selectedEmployee?.emp_prenom,
+      matricule: this.selectedEmployee?.emp_imarmp,
+      id_region: this.selectedRegion?.reg_code,
+      nom_region: this.selectedRegion?.reg_nom,
+      cng_debut: this.congeForm.value.cng_debut,
+      cng_fin: this.congeForm.value.cng_fin,
+      cng_nb_jour: this.calculatedNbJours,
+      interims: interimsData,
+      numeroDecision: this.numeroDecision,
+      anneeSolde: this.anneeSolde,
+      joursRestants: this.joursRestants
+    };
+    // this.showRecap = true; // Removed
   }
 
   confirmEnvoi() {
@@ -299,8 +369,10 @@ export class AjoutCongeComponent implements OnInit {
           }
         });
         this.loading = false;
-        alert('Congé et interims enregistrés !');
-        this.resetAll();
+
+        // 🔄 MODIFIÉ: Navigation au lieu d'alert
+        this.layoutService.showSuccessMessage('Congé et intérimaires enregistrés avec succès !');
+        this.router.navigate(['/conge/index']);
       },
       error: (errRes) => {
         this.loading = false;
@@ -312,15 +384,127 @@ export class AjoutCongeComponent implements OnInit {
     });
   }
 
-  annulerRecap() {
-    this.showRecap = false;
-  }
+
 
   resetAll() {
-    this.showRecap = false;
+    // this.showRecap = false;
     this.congeForm.reset();
     this.selectedEmployee = null;
     this.selectedRegion = null;
     this.calculatedNbJours = null;
+  }
+
+  // ========== MÉTHODES PERMISSION (nouveau) ==========
+
+  /**
+   * Changement de type d'absence (Congé/Permission)
+   */
+  onTypeChange() {
+    // Réinitialiser les formulaires lors du switch
+    if (this.absenceType === 'conge') {
+      this.permissionForm.reset();
+      this.permissionSelectedEmployee = null;
+      this.permissionCalculatedHours = null;
+      this.permissionCalculatedDays = null;
+      this.permissionErrorMsg = '';
+    } else {
+      // Reset congé si switch vers permission
+      this.errorMsg = '';
+    }
+  }
+
+  /**
+   * Filtrer employés pour permission
+   */
+  filterPermissionEmployees(value: string) {
+    const filterVal = value ? value.toLowerCase() : '';
+    this.permissionFilteredEmployees = this.employees.filter(emp =>
+    (`${emp.emp_nom} ${emp.emp_prenom}`.toLowerCase().includes(filterVal) ||
+      emp.emp_imarmp.toLowerCase().includes(filterVal))
+    );
+    this.permissionShowEmpDropdown = true;
+  }
+
+  onPermissionEmpFocus() {
+    this.permissionShowEmpDropdown = true;
+    if (!this.permissionForm.get('emp_search')?.value) {
+      this.permissionFilteredEmployees = this.employees;
+    }
+  }
+
+  onPermissionEmpBlur() {
+    setTimeout(() => { this.permissionShowEmpDropdown = false; }, 200);
+  }
+
+  selectPermissionEmployee(emp: Employee) {
+    this.permissionSelectedEmployee = emp;
+    this.permissionForm.patchValue({ emp_search: `${emp.emp_nom} ${emp.emp_prenom}` }, { emitEvent: false });
+    this.permissionShowEmpDropdown = false;
+  }
+
+  /**
+   * Calculer durée permission en heures/jours
+   */
+  updatePermissionDurations() {
+    const debut = this.permissionForm.get('prm_debut')?.value;
+    const fin = this.permissionForm.get('prm_fin')?.value;
+
+    if (!debut || !fin) {
+      this.permissionCalculatedHours = null;
+      this.permissionCalculatedDays = null;
+      return;
+    }
+
+    const d1 = new Date(debut).getTime();
+    const d2 = new Date(fin).getTime();
+    const diffMs = Math.max(0, d2 - d1);
+    const diffH = diffMs / (1000 * 60 * 60);
+
+    this.permissionCalculatedHours = parseFloat(diffH.toFixed(2));
+    this.permissionCalculatedDays = parseFloat((diffH / 8).toFixed(2));
+  }
+
+  /**
+   * Soumettre permission
+   */
+  submitPermission() {
+    this.permissionErrorMsg = '';
+
+    if (this.permissionForm.invalid || !this.permissionSelectedEmployee) {
+      this.permissionErrorMsg = 'Veuillez remplir tous les champs';
+      return;
+    }
+
+    this.updatePermissionDurations();
+
+    const payload = {
+      emp_code: this.permissionSelectedEmployee.emp_code,
+      prm_debut: this.permissionForm.value.prm_debut,
+      prm_fin: this.permissionForm.value.prm_fin
+    };
+
+    this.permissionLoading = true;
+
+    this.congeService.createPermission(payload).subscribe({
+      next: () => {
+        this.permissionLoading = false;
+
+        // 🔄 MODIFIÉ: Navigation au lieu d'alert
+        this.layoutService.showSuccessMessage('Permission enregistrée avec succès !');
+        this.router.navigate(['/conge/index']);
+      },
+      error: (err) => {
+        this.permissionLoading = false;
+        this.permissionErrorMsg = err?.error?.messages?.error || 'Erreur lors de l\'enregistrement';
+      }
+    });
+  }
+
+  resetPermission() {
+    this.permissionForm.reset();
+    this.permissionSelectedEmployee = null;
+    this.permissionCalculatedHours = null;
+    this.permissionCalculatedDays = null;
+    this.permissionErrorMsg = '';
   }
 }

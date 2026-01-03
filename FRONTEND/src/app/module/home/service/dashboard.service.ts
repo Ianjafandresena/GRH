@@ -149,4 +149,21 @@ export class DashboardService {
             permissions: permissionCounts
         };
     }
+
+    // New methods for dashboard widgets
+    getEmployeesOnLeave(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/employees-on-leave`, { withCredentials: true });
+    }
+
+    getPendingReimbursements(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/dashboard/pending-reimbursements`, { withCredentials: true });
+    }
+
+    getRecentActivity(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/recent-activity`, { withCredentials: true });
+    }
+
+    getReimbursementDistribution(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/dashboard/reimbursement-distribution`, { withCredentials: true });
+    }
 }

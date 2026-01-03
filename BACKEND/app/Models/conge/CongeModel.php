@@ -16,7 +16,8 @@ class CongeModel extends Model
         'reg_code',
         'emp_code',
         'val_code',
-        'typ_code'
+        'typ_code',
+        'cng_status'
     ];
 
     protected $useAutoIncrement = true;

@@ -9,10 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 
 import { CentreSanteService } from '../../../service/centre-sante.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
-import { CentreSante } from '../../../model/centre-sante.model';
+import { CentreSante, TypeCentre } from '../../../model/centre-sante.model';
 
 @Component({
     selector: 'app-centres-index',
@@ -26,7 +27,8 @@ import { CentreSante } from '../../../model/centre-sante.model';
         MatButtonModule,
         MatIconModule,
         MatInputModule,
-        MatFormFieldModule
+        MatFormFieldModule,
+        MatSelectModule
     ],
     templateUrl: './index.html',
     styleUrls: ['./index.scss']
@@ -38,7 +40,12 @@ export class CentresIndexComponent implements OnInit, AfterViewInit {
     private readonly layoutService = inject(LayoutService);
 
     dataSource = new MatTableDataSource<CentreSante>([]);
-    displayedColumns: string[] = ['cen_code', 'cen_nom', 'cen_adresse', 'convention', 'actions'];
+    displayedColumns: string[] = ['cen_code', 'cen_nom', 'cen_adresse', 'tp_cen', 'actions'];
+
+    // Types de centre for filter
+    types: TypeCentre[] = [];
+    selectedType: number | null = null;
+    searchText = '';
 
     @ViewChild(MatPaginator) paginator!: MatPaginator;
     @ViewChild(MatSort) sort!: MatSort;
@@ -48,6 +55,7 @@ export class CentresIndexComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
         this.layoutService.setTitle('Centres de Santé');
+        this.loadTypes();
         this.loadCentres();
     }
 
@@ -56,18 +64,33 @@ export class CentresIndexComponent implements OnInit, AfterViewInit {
         this.dataSource.sort = this.sort;
     }
 
+    loadTypes() {
+        this.centreService.getTypes().subscribe({
+            next: (list) => this.types = list || [],
+            error: () => console.error('Erreur chargement types')
+        });
+    }
+
     loadCentres() {
         this.loading = true;
-        this.centreService.getCentres().subscribe({
+        this.centreService.getCentres(this.selectedType || undefined, this.searchText || undefined).subscribe({
             next: (list) => {
                 this.dataSource.data = list || [];
                 this.loading = false;
             },
             error: (err) => {
-                this.errorMsg = 'Erreur lors du chargement des centres';
+                this.errorMsg = err?.error?.message || 'Erreur lors du chargement des centres';
                 this.loading = false;
             }
         });
+    }
+
+    onTypeChange() {
+        this.loadCentres();
+    }
+
+    onSearch() {
+        this.loadCentres();
     }
 
     applyFilter(event: Event) {
@@ -90,7 +113,9 @@ export class CentresIndexComponent implements OnInit, AfterViewInit {
         if (confirm('Voulez-vous vraiment supprimer ce centre ?')) {
             this.centreService.deleteCentre(id).subscribe({
                 next: () => this.loadCentres(),
-                error: (err) => this.errorMsg = 'Erreur lors de la suppression'
+                error: (err) => {
+                    this.errorMsg = err?.error?.message || 'Erreur lors de la suppression';
+                }
             });
         }
     }

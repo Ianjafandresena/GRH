@@ -1,13 +1,23 @@
 <div class="page-container">
+  <!-- ➕ NOUVEAU: Notification de succès -->
+  <div class="success-notification" *ngIf="successMsg">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ successMsg }}</span>
+    <button class="close-btn" (click)="successMsg = null">×</button>
+  </div>
+
   <div class="card filter-card">
     <div class="card-header-internal">
       <div class="title-group">
-        <h1>Historique des Congés</h1>
-        <p class="subtitle">Suivi et historique des demandes de congés</p>
+        <h1>Historique des Absences</h1> <!-- 🔄 MODIFIÉ -->
+        <p class="subtitle">Suivi et historique des demandes de congés et permissions</p> <!-- 🔄 MODIFIÉ -->
       </div>
       <div class="header-actions">
         <button class="btn btn-outline" routerLink="/conge/validation">
           <i class="fas fa-clipboard-check"></i> Validations
+        </button>
+        <button class="btn btn-outline" routerLink="/conge/etat">
+          <i class="fas fa-chart-bar"></i> État de Congé
         </button>
         <button class="btn btn-primary" (click)="create()">
           <i class="fas fa-plus"></i> Nouveau congé
@@ -37,6 +47,17 @@
           </ul>
         </div>
       </div>
+
+      <!-- ➕ NOUVEAU: Filtre Type d'absence -->
+      <div class="form-group">
+        <label>Type d'absence</label>
+        <select class="form-control" [(ngModel)]="absenceTypeFilter" (change)="applyFilter()">
+          <option value="">Tous les types</option>
+          <option value="conge">Congés uniquement</option>
+          <option value="permission">Permissions uniquement</option>
+        </select>
+      </div>
+
       <div class="actions-group">
         <button class="btn btn-primary" (click)="applyFilter()" [disabled]="loading">
           <i class="fas fa-filter"></i> Filtrer
@@ -71,38 +92,44 @@
         <thead>
           <tr>
             <th>Employé</th>
+            <th class="text-center">Type</th>
             <th class="text-center">Date début</th>
             <th class="text-center">Date fin</th>
             <th class="text-center">Durée</th>
-            <th>Type</th>
-            <th>Référence</th>
-            <th>Région</th>
+            <th>Motif</th>
             <th class="text-center">Statut</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of conges">
+          <!-- 🔄 MODIFIÉ: Boucle sur absences au lieu de conges -->
+          <tr *ngFor="let item of absences">
             <td>
               <div class="employee-cell">
-                <span class="emp-name">{{ c.nom_emp }} {{ c.prenom_emp }}</span>
+                <span class="emp-name">{{ item.nom_emp }} {{ item.prenom_emp }}</span>
               </div>
             </td>
-            <td class="text-center">{{ c.cng_debut | date:'dd/MM/yyyy' }}</td>
-            <td class="text-center">{{ c.cng_fin | date:'dd/MM/yyyy' }}</td>
+            <!-- ➕ NOUVEAU: Colonne Type avec badge -->
             <td class="text-center">
-              <span class="badge badge-info">{{ c.cng_nb_jour }} j</span>
+              <span class="badge" [ngClass]="getAbsenceTypeClass(item)">
+                {{ getAbsenceType(item) }}
+              </span>
             </td>
-            <td>{{ c.typ_appelation }}</td>
-            <td><span class="ref-code">{{ c.typ_ref }}</span></td>
-            <td>{{ c.nom_region }}</td>
+            <td class="text-center">{{ (item.cng_debut || item.prm_debut) | date:'dd/MM/yyyy' }}</td>
+            <td class="text-center">{{ (item.cng_fin || item.prm_fin) | date:'dd/MM/yyyy' }}</td>
             <td class="text-center">
-              <span class="status-badge" [ngClass]="getStatusClass(c.cng_status)">
-                {{ getStatusLabel(c.cng_status) }}
+              <span class="badge badge-info">
+                {{ item.cng_nb_jour || (item.prm_duree ? (item.prm_duree / 8).toFixed(1) : '-') }} j
+              </span>
+            </td>
+            <td>{{ item.typ_appelation || 'Permission' }}</td>
+            <td class="text-center">
+              <span class="status-badge" [ngClass]="getStatusClass(item.cng_status || item.prm_status)">
+                {{ getStatusLabel(item.cng_status || item.prm_status) }}
               </span>
             </td>
             <td class="text-end">
-              <button class="btn-icon" (click)="openDetail(c.cng_code)" title="Voir détails">
+              <button class="btn-icon" (click)="openDetail(item.cng_code || item.prm_code)" title="Voir détails">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                   <path
                     d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
@@ -110,10 +137,10 @@
               </button>
             </td>
           </tr>
-          <tr *ngIf="!loading && conges.length === 0">
+          <tr *ngIf="!loading && absences.length === 0">
             <td colspan="8" class="empty-state">
               <i class="fas fa-calendar-times"></i>
-              <p>Aucun congé trouvé pour cette période</p>
+              <p>Aucune absence trouvée pour cette période</p>
             </td>
           </tr>
         </tbody>

@@ -57,7 +57,7 @@ class CongeController extends ResourceController
         // Créer le congé avec status = false (en attente de validation)
         // La date de demande peut être fournie par le formulaire ou auto-générée
         $data['cng_demande'] = $data['cng_demande'] ?? date('Y-m-d H:i:s');
-        $data['cng_status'] = false; // En attente de validation
+        $data['cng_status'] = null; // null = en attente, true = validé, false = rejeté
 
         $congeModel = new CongeModel();
         $id = $congeModel->insert($data);
@@ -66,15 +66,85 @@ class CongeController extends ResourceController
             return $this->fail('Impossible de créer le congé');
         }
 
+        // Envoyer email au premier validateur selon hiérarchie
+        $validationService = new \App\Services\CongeValidationService();
+        $congeDetails = $this->getCongeDetailsForEmail($id);
+        
+        log_message('info', "[DEBUG createConge] Congé créé id=$id, emp_code=$emp_code");
+        log_message('info', "[DEBUG createConge] CongeDetails: " . json_encode($congeDetails));
+        
+        $emailStatus = 'Non envoyé';
+
+        if ($congeDetails) {
+            // Utiliser le service pour déterminer les étapes
+            $steps = $validationService->getValidationSteps($emp_code);
+            
+            log_message('info', "[DEBUG createConge] Steps: " . json_encode($steps));
+            
+            if (!empty($steps)) {
+                $firstStep = $steps[0]; // Object with 'step' and 'code'
+                $firstStepName = $firstStep['step'];
+                $firstStepCode = $firstStep['code'];
+                
+                log_message('info', "[DEBUG createConge] First step: $firstStepName (code=$firstStepCode)");
+                
+                // Envoyer la notif pour la première étape avec le CODE
+                $emailSent = $validationService->sendValidationNotification($congeDetails, $firstStepCode);
+                
+                log_message('info', "[DEBUG createConge] Email sent result: " . ($emailSent ? 'TRUE' : 'FALSE'));
+                
+                $emailStatus = $emailSent ? 'Email envoyé' : 'Email non envoyé (config SMTP)';
+            } else {
+                // Pas d'étapes (ex: DG), validation automatique
+                $congeModel->update($id, ['cng_status' => true]);
+                $emailStatus = 'Validation automatique (DG)';
+                log_message('info', "[DEBUG createConge] Pas d'étapes - validation auto");
+            }
+        } else {
+            log_message('error', "[DEBUG createConge] getCongeDetailsForEmail returned NULL!");
+        }
+
         // Note: Le débit du solde se fera uniquement après validation complète
         // (CHEF → RRH → DAAF → DG) via ValidationCongeController::finalizeValidation()
 
         $createdConge = $congeModel->find($id);
         return $this->respondCreated([
             'conge' => $createdConge,
-            'message' => 'Demande de congé créée. En attente de validation par le chef hiérarchique.',
-            'next_step' => 'CHEF'
+            'message' => 'Demande de congé créée. En attente de validation.',
+            'next_step' => $firstStepName ?? 'Aucun',
+            'email_status' => $emailStatus ?? 'N/A'
         ]);
+    }
+
+    /**
+     * Récupérer détails congé pour email
+     */
+    private function getCongeDetailsForEmail(int $cngCode): ?array
+    {
+        $db = \Config\Database::connect();
+        return $db->table('conge c')
+            ->select('c.*, e.emp_nom as nom_emp, e.emp_prenom as prenom_emp, e.emp_mail, e.emp_imarmp as matricule, t.typ_appelation, r.reg_nom as nom_region')
+            ->join('employee e', 'e.emp_code = c.emp_code')
+            ->join('type_conge t', 't.typ_code = c.typ_code')
+            ->join('region r', 'r.reg_code = c.reg_code')
+            ->where('c.cng_code', $cngCode)
+            ->get()->getRowArray();
+    }
+
+    /**
+     * Récupérer poste de l'employé
+     */
+    private function getEmployeePoste(int $empCode): string
+    {
+        $db = \Config\Database::connect();
+        $result = $db->table('employee e')
+            ->select('p.pst_fonction')
+            ->join('affectation a', 'a.emp_code = e.emp_code')
+            ->join('poste p', 'p.pst_code = a.pst_code')
+            ->where('e.emp_code', $empCode)
+            ->get()->getRowArray();
+
+        return $result['pst_fonction'] ?? 'EMPLOYE';
     }
 
     public function getAllConges()

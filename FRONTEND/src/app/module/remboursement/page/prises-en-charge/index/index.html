@@ -23,6 +23,7 @@
                         <th>N° PEC</th>
                         <th>Employé</th>
                         <th>Centre</th>
+                        <th>Statut</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -34,7 +35,14 @@
                                 <span class="emp-name">{{ p.nom_emp }} {{ p.prenom_emp }}</span>
                             </div>
                         </td>
-                        <td>{{ p.cen_nom || 'N/A' }}</td>
+                        <td>{{ p.cen_nom || 'Non assigné' }}</td>
+                        <td>
+                            <span class="status-badge"
+                                [class.valid]="p.pec_approuver === true || p.pec_approuver === 't'"
+                                [class.pending]="p.pec_approuver === false || p.pec_approuver === 'f' || !p.pec_approuver">
+                                {{ (p.pec_approuver === true || p.pec_approuver === 't') ? 'Valide' : 'Non valide' }}
+                            </span>
+                        </td>
                         <td class="text-end">
                             <button class="btn-icon" (click)="goToDetail(p.pec_code!)" title="Voir détails">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
@@ -46,7 +54,7 @@
                         </td>
                     </tr>
                     <tr *ngIf="!prises.length">
-                        <td colspan="4" class="empty-state">
+                        <td colspan="5" class="empty-state">
                             <i class="fas fa-file-medical-alt"></i>
                             <p>Aucune prise en charge trouvée</p>
                         </td>

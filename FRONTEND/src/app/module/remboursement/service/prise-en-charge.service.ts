@@ -27,6 +27,10 @@ export class PrisEnChargeService {
         return this.http.post(`${this.baseUrl}/${id}/valider`, { decision, validateur_emp_code }, { withCredentials: true });
     }
 
+    approuver(id: number, data: { pec_date_arrive: string; pec_date_depart?: string; cen_code: number }): Observable<any> {
+        return this.http.post(`${this.baseUrl}/${id}/approuver`, data, { withCredentials: true });
+    }
+
     downloadBulletin(id: number): Observable<Blob> {
         return this.http.get(`${this.baseUrl}/${id}/bulletin`, { responseType: 'blob', withCredentials: true });
     }

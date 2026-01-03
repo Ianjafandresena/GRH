@@ -74,4 +74,11 @@ export class ValidationCongeService {
     getPendingForSigner(signCode: number): Observable<any[]> {
         return this.http.get<any[]>(`${this.baseUrl}/pending/${signCode}`);
     }
+
+    /**
+     * Get applicable validation steps for an employee based on their position
+     */
+    getStepsForEmployee(empCode: number): Observable<{ emp_code: number, poste: string, steps: string[] }> {
+        return this.http.get<{ emp_code: number, poste: string, steps: string[] }>(`${this.baseUrl}/steps/${empCode}`);
+    }
 }

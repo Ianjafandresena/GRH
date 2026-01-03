@@ -1,29 +1,85 @@
 <div class="page-container">
     <div class="page-header">
         <h1>Demandes de Remboursement</h1>
-        <div class="header-actions">
-            <div class="filters">
-                <label>
-                    Code employé :
-                    <input type="number" [(ngModel)]="filter.emp_code" placeholder="emp_code">
-                </label>
-                <label>
-                    Mois :
-                    <input type="number" min="1" max="12" [(ngModel)]="filter.mois">
-                </label>
-                <label>
-                    Année :
-                    <input type="number" [(ngModel)]="filter.annee">
-                </label>
-                <button class="btn btn-secondary" (click)="loadDemandes()">Filtrer</button>
-                <button class="btn btn-outline" (click)="downloadEtatAgent()">
-                    <span class="material-icons">picture_as_pdf</span>
-                    Etat Agent
-                </button>
+        <button class="btn btn-primary" (click)="goToCreate()">
+            <span class="material-icons">add</span>
+            Nouvelle Demande
+        </button>
+    </div>
+
+    <!-- FILTRES HORIZONTAUX -->
+    <div class="filters-row">
+        <!-- Employé (Custom Select with Search) -->
+        <div class="filter-group">
+            <label>Employé :</label>
+            <div class="custom-select-wrapper">
+                <input type="text" [(ngModel)]="employeeSearch" (focus)="employeeDropdownOpen = true"
+                    (blur)="employeeDropdownOpen = false" placeholder="Rechercher nom, prénom ou matricule..."
+                    class="custom-select-input" />
+                <button *ngIf="selectedEmployee" (click)="clearEmployee()" class="clear-btn" type="button">×</button>
+
+                <div class="custom-dropdown" *ngIf="employeeDropdownOpen && filteredEmployees.length > 0">
+                    <div *ngFor="let emp of filteredEmployees" class="dropdown-item" (mousedown)="selectEmployee(emp)">
+                        {{ emp.emp_nom }} {{ emp.emp_prenom }} <span class="matricule">({{ emp.emp_imarmp }})</span>
+                    </div>
+                </div>
             </div>
-            <button class="btn btn-primary" (click)="goToCreate()">
-                <span class="material-icons">add</span>
-                Nouvelle Demande
+        </div>
+
+        <!-- Traitement -->
+        <div class="filter-group">
+            <label>Traitement :</label>
+            <select [(ngModel)]="filter.traitement" class="filter-select">
+                <option value="all">Tous</option>
+                <option value="traite">Traités</option>
+                <option value="non_traite">Non traités</option>
+            </select>
+        </div>
+
+        <!-- Type -->
+        <div class="filter-group">
+            <label>Type :</label>
+            <select [(ngModel)]="filter.type" class="filter-select">
+                <option value="all">Tous</option>
+                <option value="agent"><i class="fas fa-user"></i> Agent</option>
+                <option value="centre"><i class="fas fa-hospital"></i> Centre</option>
+            </select>
+        </div>
+
+        <!-- Mois -->
+        <div class="filter-group">
+            <label>Mois :</label>
+            <select [(ngModel)]="filter.mois" class="filter-select">
+                <option [value]="1">Janvier</option>
+                <option [value]="2">Février</option>
+                <option [value]="3">Mars</option>
+                <option [value]="4">Avril</option>
+                <option [value]="5">Mai</option>
+                <option [value]="6">Juin</option>
+                <option [value]="7">Juillet</option>
+                <option [value]="8">Août</option>
+                <option [value]="9">Septembre</option>
+                <option [value]="10">Octobre</option>
+                <option [value]="11">Novembre</option>
+                <option [value]="12">Décembre</option>
+            </select>
+        </div>
+
+        <!-- Année -->
+        <div class="filter-group">
+            <label>Année :</label>
+            <input type="number" [(ngModel)]="filter.annee" class="filter-input" />
+        </div>
+
+        <!-- Boutons -->
+        <div class="filter-actions">
+            <button class="btn btn-secondary" (click)="loadDemandes()">
+                <span class="material-icons">search</span>
+                Filtrer
+            </button>
+            <button class="btn btn-outline" (click)="downloadEtatAgent()">
+                <span class="material-icons">picture_as_pdf</span>
+                État Agent
             </button>
         </div>
     </div>
@@ -36,37 +92,54 @@
             <thead>
                 <tr>
                     <th>N°</th>
+                    <th>Type</th>
                     <th>Employé</th>
                     <th>Objet</th>
                     <th>Date</th>
                     <th>Montant</th>
+                    <th>Traitement</th>
                     <th>Statut</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let d of demandes">
+                <tr *ngFor="let d of filteredDemandes">
                     <td>{{ d.rem_code }}</td>
+                    <td>
+                        <span class="badge" [style.background]="d.rem_is_centre ? '#17a2b8' : '#6c757d'"
+                            style="color: #fff; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+                            <i [class]="d.rem_is_centre ? 'fas fa-hospital' : 'fas fa-user'"></i>
+                            {{ d.rem_is_centre ? 'Centre' : 'Agent' }}
+                        </span>
+                    </td>
                     <td>{{ d.nom_emp }} {{ d.prenom_emp }}</td>
                     <td>{{ d.rem_objet }}</td>
                     <td>{{ d.rem_date }}</td>
                     <td class="amount">{{ d.rem_montant | number:'1.2-2' }} Ar</td>
                     <td>
-                        <span class="badge" [ngClass]="getStatutClass(d.eta_libelle || '')">
-                            {{ d.eta_libelle || 'N/A' }}
+                        <span class="badge" [class.badge-success]="d.rem_status === true"
+                            [class.badge-warning]="d.rem_status !== true">
+                            {{ d.rem_status === true ? 'Traite' : 'Non traite' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge badge-secondary">
+                            {{ d.eta_libelle || d.etat_num || 'N/A' }}
                         </span>
                     </td>
                     <td class="actions">
-                        <button class="btn btn-sm btn-secondary" (click)="viewDetail(d.rem_code!)" title="Détails">
+                        <button class="btn btn-sm btn-secondary" (click)="d.rem_code && viewDetail(d.rem_code)"
+                            title="Details">
                             <span class="material-icons">visibility</span>
                         </button>
-                        <button class="btn btn-sm btn-primary" (click)="downloadPdf(d.rem_code!)" title="PDF">
+                        <button class="btn btn-sm btn-primary" (click)="d.rem_code && downloadPdf(d.rem_code)"
+                            title="Telecharger PDF">
                             <span class="material-icons">picture_as_pdf</span>
                         </button>
                     </td>
                 </tr>
-                <tr *ngIf="!demandes.length">
-                    <td colspan="7" class="empty">Aucune demande enregistrée</td>
+                <tr *ngIf="!filteredDemandes.length">
+                    <td colspan="9" class="empty">Aucune demande trouvee</td>
                 </tr>
             </tbody>
         </table>

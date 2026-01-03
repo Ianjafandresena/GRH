@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
 import { centresListResolver } from './resolvers/centres-list.resolver';
 import { demandesListResolver } from './resolvers/demandes-list.resolver';
+import { EtatRembService } from './service/etat-remb.service';
 
 export const remboursementRoutes: Routes = [
     // Centres de santé
@@ -31,6 +33,17 @@ export const remboursementRoutes: Routes = [
     {
         path: 'demandes/:id',
         loadComponent: () => import('./page/demandes/detail/detail').then(m => m.DetailDemandeComponent)
+    },
+
+    // États de Remboursement
+    {
+        path: 'etats',
+        loadComponent: () => import('./page/etats/index/index').then(m => m.EtatsIndexComponent),
+        resolve: { etats: () => inject(EtatRembService).getAll() }
+    },
+    {
+        path: 'etats/:id',
+        loadComponent: () => import('./page/etats/detail/detail').then(m => m.DetailEtatComponent)
     },
 
     // Prises en charge

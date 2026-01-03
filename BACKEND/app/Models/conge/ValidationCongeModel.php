@@ -14,7 +14,8 @@ class ValidationCongeModel extends Model
         'sign_code',
         'val_date',
         'val_status',
-        'val_observation'
+        'val_observation',
+        'val_by_emp'
     ];
 
     protected $useAutoIncrement = true;

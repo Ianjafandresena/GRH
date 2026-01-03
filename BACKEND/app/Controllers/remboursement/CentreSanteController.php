@@ -5,24 +5,48 @@ namespace App\Controllers\remboursement;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\remboursement\CentreSanteModel;
-use App\Models\remboursement\ConventionModel;
+use App\Models\remboursement\TypeCentreModel;
 
 class CentreSanteController extends ResourceController
 {
     use ResponseTrait;
 
     /**
-     * Liste tous les centres de santé avec leur convention
+     * Liste tous les centres de santé avec leur type
+     * Supports filtering by tp_cen_code and search by cen_nom
      */
     public function index()
     {
         $model = new CentreSanteModel();
-        $centres = $model->select('centre_sante.*, convention.cnv_taux_couver, convention.cnv_date_debut, convention.cnv_date_fin')
-            ->join('convention', 'convention.cnv_code = centre_sante.cnv_code', 'left')
-            ->findAll();
+        $builder = $model->select('centre_sante.*, type_centre.tp_cen')
+            ->join('type_centre', 'type_centre.tp_cen_code = centre_sante.tp_cen_code', 'left');
+
+        // Filter by type if provided
+        $typeCode = $this->request->getGet('tp_cen_code');
+        if ($typeCode) {
+            $builder->where('centre_sante.tp_cen_code', $typeCode);
+        }
+
+        // Search by name if provided
+        $search = $this->request->getGet('search');
+        if ($search) {
+            $builder->like('centre_sante.cen_nom', $search, 'both');
+        }
+
+        $centres = $builder->orderBy('centre_sante.cen_nom', 'ASC')->findAll();
 
         $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
         return $this->respond($centres);
+    }
+
+    /**
+     * Liste tous les types de centre
+     */
+    public function getTypes()
+    {
+        $model = new TypeCentreModel();
+        $types = $model->findAll();
+        return $this->respond($types);
     }
 
     /**
@@ -31,8 +55,8 @@ class CentreSanteController extends ResourceController
     public function show($id = null)
     {
         $model = new CentreSanteModel();
-        $centre = $model->select('centre_sante.*, convention.cnv_taux_couver, convention.cnv_date_debut, convention.cnv_date_fin')
-            ->join('convention', 'convention.cnv_code = centre_sante.cnv_code', 'left')
+        $centre = $model->select('centre_sante.*, type_centre.tp_cen')
+            ->join('type_centre', 'type_centre.tp_cen_code = centre_sante.tp_cen_code', 'left')
             ->where('centre_sante.cen_code', $id)
             ->first();
 
@@ -50,25 +74,33 @@ class CentreSanteController extends ResourceController
     {
         $data = $this->request->getJSON(true);
 
-        if (!isset($data['cen_nom'], $data['cnv_code'])) {
-            return $this->fail('Données obligatoires manquantes (cen_nom, cnv_code)');
+        if (!isset($data['cen_nom']) || !isset($data['tp_cen_code'])) {
+            return $this->fail('Données obligatoires manquantes (cen_nom, tp_cen_code)');
         }
 
-        // Vérifier que la convention existe
-        $conventionModel = new ConventionModel();
-        $convention = $conventionModel->find($data['cnv_code']);
-        if (!$convention) {
-            return $this->failValidationErrors('Convention non trouvée');
+        // Vérifier que le type existe
+        $typeModel = new TypeCentreModel();
+        $type = $typeModel->find($data['tp_cen_code']);
+        if (!$type) {
+            return $this->failValidationErrors('Type de centre non trouvé');
         }
 
         $model = new CentreSanteModel();
-        $id = $model->insert($data);
+        $insertData = [
+            'cen_nom' => $data['cen_nom'],
+            'cen_adresse' => $data['cen_adresse'] ?? null,
+            'tp_cen_code' => $data['tp_cen_code']
+        ];
+
+        $id = $model->insert($insertData);
 
         if ($id === false) {
             return $this->fail('Impossible de créer le centre de santé');
         }
 
-        $created = $model->find($id);
+        $created = $model->select('centre_sante.*, type_centre.tp_cen')
+            ->join('type_centre', 'type_centre.tp_cen_code = centre_sante.tp_cen_code', 'left')
+            ->find($id);
         return $this->respondCreated($created);
     }
 
@@ -86,16 +118,18 @@ class CentreSanteController extends ResourceController
 
         $data = $this->request->getJSON(true);
 
-        // Vérifier convention si modifiée
-        if (isset($data['cnv_code'])) {
-            $conventionModel = new ConventionModel();
-            if (!$conventionModel->find($data['cnv_code'])) {
-                return $this->failValidationErrors('Convention non trouvée');
+        // Vérifier type si modifié
+        if (isset($data['tp_cen_code'])) {
+            $typeModel = new TypeCentreModel();
+            if (!$typeModel->find($data['tp_cen_code'])) {
+                return $this->failValidationErrors('Type de centre non trouvé');
             }
         }
 
         $model->update($id, $data);
-        $updated = $model->find($id);
+        $updated = $model->select('centre_sante.*, type_centre.tp_cen')
+            ->join('type_centre', 'type_centre.tp_cen_code = centre_sante.tp_cen_code', 'left')
+            ->find($id);
 
         return $this->respond($updated);
     }
@@ -110,6 +144,16 @@ class CentreSanteController extends ResourceController
 
         if (!$existing) {
             return $this->failNotFound('Centre de santé non trouvé');
+        }
+
+        // Check if center is used in PEC or demande_remb
+        $db = \Config\Database::connect();
+        
+        $pecUsage = $db->table('pris_en_charge')->where('cen_code', $id)->countAllResults();
+        $rembUsage = $db->table('demande_remb')->where('cen_code', $id)->countAllResults();
+        
+        if ($pecUsage > 0 || $rembUsage > 0) {
+            return $this->fail('Impossible de supprimer: ce centre est utilisé dans des prises en charge ou demandes');
         }
 
         $model->delete($id);
