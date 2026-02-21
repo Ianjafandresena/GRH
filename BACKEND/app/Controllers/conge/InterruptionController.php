@@ -26,10 +26,7 @@ class InterruptionController extends ResourceController
         $model = new InterruptionModel();
         $interruption = $model->where('cng_code', $cngCode)->first();
 
-        if (!$interruption) {
-            return $this->respond(null);
-        }
-
+        // Retourner null proprement (pas d'interruption trouvée)
         return $this->respond($interruption);
     }
 

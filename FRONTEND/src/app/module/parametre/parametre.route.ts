@@ -4,7 +4,8 @@ import { ParametreIndexComponent } from './page/index/index';
 export const parametreRoutes: Routes = [
     {
         path: 'index',
-        component: ParametreIndexComponent
+        component: ParametreIndexComponent,
+        data: { breadcrumb: 'Paramètres' }
     },
     {
         path: '',

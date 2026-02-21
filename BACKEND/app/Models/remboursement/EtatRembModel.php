@@ -12,6 +12,7 @@ class EtatRembModel extends Model
         'eta_date',
         'eta_total',
         'etat_num',
+        'eta_libelle',
         'emp_code'
     ];
 

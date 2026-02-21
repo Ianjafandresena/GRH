@@ -193,6 +193,86 @@ HTML;
     }
 
     /**
+     * Notifier l'employé que son état est envoyé à l'agent comptable
+     */
+    public function sendEtatComptableNotice(
+        string $toEmail,
+        string $toName,
+        array $etat,
+        array $demandes
+    ): bool {
+        try {
+            if (!isset($this->mailer)) return false;
+
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($toEmail, $toName);
+            $this->mailer->Subject = "Suivi de Remboursement : État envoyé à l'Agent Comptable";
+
+            $body = $this->getEtatEmailTemplate($etat, $demandes);
+            
+            $this->mailer->Body = $body;
+            return $this->mailer->send();
+        } catch (\Throwable $e) {
+            log_message('error', "[Email-Etat] Erreur: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function getEtatEmailTemplate(array $etat, array $demandes): string
+    {
+        $etatNum = htmlspecialchars($etat['etat_num']);
+        $total = number_format($etat['eta_total'], 2, ',', ' ') . ' Ar';
+        
+        $rows = "";
+        foreach ($demandes as $d) {
+            $article = htmlspecialchars($d['obj_article'] ?? 'N/A');
+            $montant = number_format($d['rem_montant'], 2, ',', ' ') . ' Ar';
+            $date = date('d/m/Y', strtotime($d['rem_date']));
+            $rows .= "<tr>
+                        <td style='padding:10px; border-bottom:1px solid #eee;'>$article</td>
+                        <td style='padding:10px; border-bottom:1px solid #eee;'>$date</td>
+                        <td style='padding:10px; border-bottom:1px solid #eee; text-align:right;'>$montant</td>
+                      </tr>";
+        }
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #2c3e50;">Bonjour,</h2>
+        <p>Nous vous informons que votre état de remboursement numéro <strong>$etatNum</strong> a été transmis à <strong>l'Agent Comptable</strong> pour traitement.</p>
+        
+        <h4 style="border-bottom: 2px solid #2c3e50; padding-bottom: 5px;">Détails des demandes incluses :</h4>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding:10px; text-align:left;">Article</th>
+                    <th style="padding:10px; text-align:left;">Date</th>
+                    <th style="padding:10px; text-align:right;">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                $rows
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="padding:10px; text-align:right; font-weight:bold;">T O T A L</td>
+                    <td style="padding:10px; text-align:right; font-weight:bold; color: #27ae60;">$total</td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <p style="margin-top: 25px;">Cordialement,<br><strong>Le Service des Ressources Humaines</strong></p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 11px; color: #999; text-align: center;">Ceci est un message automatique, merci de ne pas y répondre.</p>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Générer un token unique sécurisé
      */
     public static function generateToken(): string

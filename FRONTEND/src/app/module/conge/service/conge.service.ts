@@ -80,6 +80,13 @@ export class CongeService {
     return this.http.get(this.exportExcelUrl, { responseType: 'blob' });
   }
 
+  /**
+   * Récupère les congés dans une plage de dates (pour vue calendrier)
+   */
+  getByDateRange(params: { start_date: string; end_date: string; direction?: string; service?: string }): Observable<any[]> {
+    return this.http.get<any[]>(this.congeUrl + 'by-date-range', { params });
+  }
+
   // État de Congé
   getEtatConge(params?: Record<string, any>): Observable<any[]> {
     return this.http.get<any[]>(environment.apiUrl + '/etat_conge', { params });

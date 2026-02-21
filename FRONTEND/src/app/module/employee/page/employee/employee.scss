@@ -1,0 +1,190 @@
+@use '../../../../../styles/shared-styles.scss' as *;
+
+.page-container {
+    @include transition-standard;
+}
+
+.filter-card {
+    margin-bottom: $spacing-lg;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr auto;
+    gap: $spacing-md;
+    align-items: end;
+    padding: $spacing-lg;
+    border-top: 1px solid $border-section;
+
+    @media (max-width: 1200px) {
+        grid-template-columns: 1fr 1fr;
+
+        .actions-group {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+
+        .actions-group {
+            grid-column: 1;
+        }
+    }
+}
+
+.actions-group {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+}
+
+// Table Styling logic consistent with other modules
+.table-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.table-container {
+    background: transparent;
+    overflow: hidden;
+}
+
+table[mat-table] {
+    width: 100%;
+    background: transparent;
+
+    .mat-mdc-header-row {
+        background-color: #f8fafc;
+        height: 56px;
+    }
+
+    .mat-mdc-header-cell {
+        padding: 0 1rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid $border-section;
+    }
+
+    .mat-mdc-row {
+        height: 64px;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid $border-section;
+        cursor: pointer;
+
+        &:hover {
+            background-color: #f8fafc;
+        }
+    }
+
+    .mat-mdc-cell {
+        padding: 0 1rem;
+        font-size: 0.95rem;
+        color: $dark;
+        vertical-align: middle;
+    }
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+
+    .status-icon {
+        font-size: 0.9rem;
+    }
+
+    &.status-available {
+        background: rgba($success, 0.1);
+        color: $success;
+    }
+
+    &.status-unavailable {
+        background: rgba($danger, 0.1);
+        color: $danger;
+    }
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    font-weight: 600;
+
+    &.badge-secondary {
+        background: $bg-page;
+        color: $secondary;
+    }
+
+    &.badge-info {
+        background: rgba($primary-blue, 0.1);
+        color: $primary-blue;
+    }
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 50%;
+    color: $secondary;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    @include transition-standard;
+
+    i {
+        font-size: 1.1rem;
+    }
+
+    &:hover {
+        background: rgba($primary-blue, 0.1);
+        color: $primary-blue;
+    }
+}
+
+.empty-state {
+    padding: $spacing-xl 0;
+    text-align: center;
+    color: $secondary;
+
+    i {
+        font-size: 3rem;
+        opacity: 0.3;
+        margin-bottom: $spacing-md;
+    }
+
+    p {
+        margin: 0;
+        font-size: $font-size-base;
+    }
+}
+
+.loading {
+    padding: $spacing-xl;
+    text-align: center;
+    color: $secondary;
+}
+
+.mat-mdc-paginator {
+    background: transparent;
+    border-top: 1px solid $border-section;
+}
+// Utilities
+.text-center {
+    text-align: center;
+}
+
+.text-end {
+    text-align: right;
+}

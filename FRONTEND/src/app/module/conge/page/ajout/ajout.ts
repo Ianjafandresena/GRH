@@ -38,7 +38,6 @@ export class AjoutCongeComponent implements OnInit {
   typesConge: TypeConge[] = [];
   calculatedNbJours: number | null = null;
   loading = false;
-  errorMsg: string = '';
   filteredInterims: Employee[][] = [];
 
   // showRecap: boolean = false; // Removed
@@ -62,7 +61,6 @@ export class AjoutCongeComponent implements OnInit {
   permissionFilteredEmployees: Employee[] = [];
   permissionShowEmpDropdown = false;
   permissionLoading = false;
-  permissionErrorMsg = '';
 
   constructor(
     private fb: FormBuilder,
@@ -96,7 +94,7 @@ export class AjoutCongeComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.layoutService.setTitle('Gestion des Congés');
+    this.layoutService.setTitle('Gestion des Absences');
     this.employeeService.getEmployees().subscribe((employees: Employee[]) => {
       this.employees = employees ?? [];
       this.filteredEmployees = employees ?? [];
@@ -264,7 +262,6 @@ export class AjoutCongeComponent implements OnInit {
   }
 
   submit() {
-    this.errorMsg = '';
     if (
       this.congeForm.invalid ||
       !this.selectedEmployee ||
@@ -272,7 +269,7 @@ export class AjoutCongeComponent implements OnInit {
       this.calculatedNbJours == null ||
       this.calculatedNbJours < 1
     ) {
-      this.errorMsg = "Veuillez remplir tous les champs";
+      this.layoutService.showErrorMessage("Veuillez remplir tous les champs");
       return;
     }
     const interimsData = this.interims.controls
@@ -377,9 +374,8 @@ export class AjoutCongeComponent implements OnInit {
       error: (errRes) => {
         this.loading = false;
         console.error('Erreur backend:', errRes);
-        this.errorMsg = errRes?.error?.messages?.error || "Erreur lors de l'enregistrement du congé.";
-        // Affiche l'erreur complète en debug
-        alert("Erreur API : " + JSON.stringify(errRes));
+        const msg = errRes?.error?.messages?.error || "Erreur lors de l'enregistrement du congé.";
+        this.layoutService.showErrorMessage(msg);
       }
     });
   }
@@ -406,10 +402,8 @@ export class AjoutCongeComponent implements OnInit {
       this.permissionSelectedEmployee = null;
       this.permissionCalculatedHours = null;
       this.permissionCalculatedDays = null;
-      this.permissionErrorMsg = '';
     } else {
-      // Reset congé si switch vers permission
-      this.errorMsg = '';
+      // Reset conge logic if switch to permission
     }
   }
 
@@ -468,10 +462,8 @@ export class AjoutCongeComponent implements OnInit {
    * Soumettre permission
    */
   submitPermission() {
-    this.permissionErrorMsg = '';
-
     if (this.permissionForm.invalid || !this.permissionSelectedEmployee) {
-      this.permissionErrorMsg = 'Veuillez remplir tous les champs';
+      this.layoutService.showErrorMessage('Veuillez remplir tous les champs');
       return;
     }
 
@@ -495,7 +487,8 @@ export class AjoutCongeComponent implements OnInit {
       },
       error: (err) => {
         this.permissionLoading = false;
-        this.permissionErrorMsg = err?.error?.messages?.error || 'Erreur lors de l\'enregistrement';
+        const msg = err?.error?.messages?.error || 'Erreur lors de l\'enregistrement';
+        this.layoutService.showErrorMessage(msg);
       }
     });
   }
@@ -505,6 +498,5 @@ export class AjoutCongeComponent implements OnInit {
     this.permissionSelectedEmployee = null;
     this.permissionCalculatedHours = null;
     this.permissionCalculatedDays = null;
-    this.permissionErrorMsg = '';
   }
 }

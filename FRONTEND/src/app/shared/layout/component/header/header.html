@@ -1,5 +1,15 @@
 <header class="dashboard-header">
     <div class="header-left">
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumb-nav">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item" *ngFor="let item of breadcrumbs; let last = last" [class.active]="last">
+                    <a *ngIf="!last" [routerLink]="item.url">{{ item.label }}</a>
+                    <span *ngIf="last">{{ item.label }}</span>
+                </li>
+            </ol>
+        </nav>
+
         <h1>{{ pageTitle }}</h1>
         <p class="subtitle">Bienvenue dans le système de gestion RH de l'ARMP</p>
     </div>
@@ -8,10 +18,52 @@
             <mat-icon class="search-icon">search</mat-icon>
             <input type="text" placeholder="Rechercher..." />
         </div>
-        <div class="notification-bell">
-            <mat-icon>notifications</mat-icon>
-            <span class="badge">3</span>
+
+        <!-- Notifications avec badge dynamique -->
+        <div class="notification-container">
+            <div class="notification-bell" (click)="toggleNotifications(); $event.stopPropagation()">
+                <mat-icon>notifications</mat-icon>
+                @if (notificationService.hasNotifications()) {
+                <span class="badge">{{ notificationService.count() }}</span>
+                }
+            </div>
+
+            <!-- Dropdown des notifications -->
+            @if (notificationService.showDropdown()) {
+            <div class="notification-dropdown" (click)="$event.stopPropagation()">
+                <div class="dropdown-header">
+                    <span>Notifications</span>
+                    <span class="count-label">{{ notificationService.count() }} nouvelle(s)</span>
+                </div>
+
+                <div class="dropdown-body">
+                    @if (notificationService.isLoading()) {
+                    <div class="loading">
+                        <mat-icon>hourglass_empty</mat-icon>
+                        <span>Chargement...</span>
+                    </div>
+                    } @else if (notificationService.notifications().length === 0) {
+                    <div class="empty">
+                        <mat-icon>notifications_none</mat-icon>
+                        <span>Aucune notification</span>
+                    </div>
+                    } @else {
+                    @for (notif of notificationService.notifications(); track notif.id) {
+                    <a class="notification-item {{ notificationService.getColorClass(notif.color) }}"
+                        [routerLink]="notif.link" (click)="notificationService.closeDropdown()">
+                        <mat-icon class="notif-icon">{{ notif.icon }}</mat-icon>
+                        <div class="notif-content">
+                            <span class="notif-title">{{ notif.titre }}</span>
+                            <span class="notif-message">{{ notif.message }}</span>
+                        </div>
+                    </a>
+                    }
+                    }
+                </div>
+            </div>
+            }
         </div>
+
         <!-- User Menu -->
         <div class="user-menu" *ngIf="admin">
             <div class="avatar">
@@ -24,3 +76,20 @@
         </div>
     </div>
 </header>
+
+<!-- Floating Notifications Area -->
+<div class="toast-container">
+    @if (successMsg) {
+    <div class="toast success animate-toast">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{ successMsg }}</span>
+    </div>
+    }
+
+    @if (errorMsg) {
+    <div class="toast error animate-toast">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMsg }}</span>
+    </div>
+    }
+</div>

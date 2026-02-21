@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EtatRembService, EtatRemb } from '../../../service/etat-remb.service';
 import { RemboursementService } from '../../../service/remboursement.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
@@ -24,49 +25,111 @@ export class DetailEtatComponent {
     loading = signal(true);
     errorMsg = signal('');
 
+    // Workflow state
+    processing = signal(false);
+    showConfirmModal = signal(false);
+    confirmAction: 'mandater' | 'agentComptable' | null = null;
+    confirmTitle = '';
+    confirmMessage = '';
+
+    constructor() {
+        this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
+            const id = params.get('id');
+            if (id) this.loadDetail(+id);
+        });
+    }
+
     ngOnInit() {
         this.layoutService.setTitle('Détail État de Remboursement');
-        const id = this.route.snapshot.params['id'];
-        this.loadDetail(+id);
     }
 
     loadDetail(etaCode: number) {
         this.loading.set(true);
 
-        console.log('[DEBUG] Loading état details for eta_code:', etaCode, typeof etaCode);
-
-        // Load état details and associated demands
-        this.rembService.getDemandes().subscribe({
-            next: (allDemandes: any[]) => {
-                console.log('[DEBUG] All demandes:', allDemandes);
-                console.log('[DEBUG] First demande eta_code:', allDemandes[0]?.eta_code, typeof allDemandes[0]?.eta_code);
-
-                // Filter demands for this état (loose comparison to handle string/number mismatch)
-                const demandesForEtat = allDemandes.filter(d => d.eta_code == etaCode);
-                console.log('[DEBUG] Filtered demandes for état', etaCode, ':', demandesForEtat);
-
-                this.demandes.set(demandesForEtat);
-
-                // Calculate état summary
-                const total = demandesForEtat.reduce((sum, d) => sum + (d.rem_montant || 0), 0);
-
+        this.etatService.getById(etaCode).subscribe({
+            next: (etat) => {
                 this.etat.set({
-                    eta_code: etaCode,
-                    etat_num: demandesForEtat[0]?.etat_num || `État #${etaCode}`,
-                    eta_total: total,
-                    count: demandesForEtat.length,
-                    emp_nom: demandesForEtat[0]?.nom_emp,
-                    emp_prenom: demandesForEtat[0]?.prenom_emp
+                    ...etat,
+                    count: etat.nb_demandes || 0
                 });
 
-                this.loading.set(false);
+                // Fetch associated demands
+                this.rembService.getDemandes().subscribe({
+                    next: (allDemandes: any[]) => {
+                        this.demandes.set(allDemandes.filter(d => d.eta_code == etaCode));
+                        this.loading.set(false);
+                    },
+                    error: () => {
+                        this.errorMsg.set('Erreur chargement des demandes');
+                        this.loading.set(false);
+                    }
+                });
             },
-            error: (err) => {
-                console.error('[DEBUG] Error loading demandes:', err);
-                this.errorMsg.set('Erreur chargement des détails');
+            error: () => {
+                this.errorMsg.set('Erreur chargement de l\'état');
                 this.loading.set(false);
             }
         });
+    }
+
+    openConfirm(action: 'mandater' | 'agentComptable') {
+        this.confirmAction = action;
+        if (action === 'mandater') {
+            this.confirmTitle = 'Mandater l\'État';
+            this.confirmMessage = 'Confirmez-vous le mandatement de cet état ?';
+        } else {
+            this.confirmTitle = 'Agent Comptable';
+            this.confirmMessage = 'Envoyer cet état à l\'agent comptable ?';
+        }
+        this.showConfirmModal.set(true);
+    }
+
+    closeConfirm() {
+        this.showConfirmModal.set(false);
+        this.confirmAction = null;
+    }
+
+    onConfirm() {
+        const action = this.confirmAction;
+        const id = this.etat().eta_code;
+        if (!action) return;
+
+        this.processing.set(true);
+        this.closeConfirm();
+
+        const request = action === 'mandater'
+            ? this.etatService.mandater(id)
+            : this.etatService.agentComptable(id);
+
+        request.subscribe({
+            next: (res) => {
+                this.etat.update(e => ({ ...e, eta_libelle: res.status }));
+                this.processing.set(false);
+                this.layoutService.showSuccessMessage(res.message || 'Action réussie');
+            },
+            error: (err) => {
+                this.processing.set(false);
+                const msg = err.error?.message || 'Erreur lors de l\'action';
+                this.layoutService.showErrorMessage(msg);
+            }
+        });
+    }
+
+    getStepStatus(step: number): 'completed' | 'current' | 'pending' {
+        const status = this.etat()?.eta_libelle;
+
+        if (step === 1) { // Mandater
+            if (status === 'MANDATE' || status === 'AGENT_COMPTABLE') return 'completed';
+            return 'current';
+        }
+
+        if (step === 2) { // Agent Comptable
+            if (status === 'AGENT_COMPTABLE') return 'completed';
+            if (status === 'MANDATE') return 'current';
+            return 'pending';
+        }
+
+        return 'pending';
     }
 
     downloadPdf() {

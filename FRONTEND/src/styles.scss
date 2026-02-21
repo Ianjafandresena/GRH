@@ -8,13 +8,14 @@
   --sidebar-text: #E0E7ED;
 
   /* Background Colors */
-  --bg-main: #F3F4F6;
+  --bg-main: #F4F7FA;
   --bg-white: #FFFFFF;
   --bg-card: #FFFFFF;
+  --bg-input: #FFFFFF;
 
   /* Text Colors */
-  --text-primary: #111827;
-  --text-secondary: #6B7280;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
   --text-muted: #9CA3AF;
   --text-white: #FFFFFF;
 
@@ -34,15 +35,9 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
+  /* Spacing & Radius */
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-
-  /* Border Radius */
-  --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
@@ -51,47 +46,538 @@
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Dark Theme Variables - Premium (GitHub/Facebook inspired) */
+/* Dark Theme Variables - GitHub/Premium Style */
 body.dark-theme {
-  --sidebar-bg: #161b22;
-  /* GitHub Sidebar Dark */
-  --sidebar-hover: #1f2937;
+  /* Keep original sidebar color */
+  --sidebar-bg: #0F2942;
+  --sidebar-hover: #1A3E5F;
   --sidebar-active: #3B82F6;
-  --sidebar-text: #f0f6fc;
+  --sidebar-text: #E0E7ED;
 
-  --bg-main: #0d1117;
-  /* GitHub Main Background (Very Dark) */
-  --bg-white: #161b22;
-  /* GitHub Panel/Card Background */
-  --bg-card: #161b22;
-  --bg-input: #0d1117;
-  /* Input background matching main bg */
+  --bg-main: #010409;
+  --bg-white: #0d1117;
+  --bg-card: #0d1117;
+  --bg-input: #161b22;
 
   --text-primary: #f0f6fc;
-  /* GitHub Primary Text (High Contrast) */
   --text-secondary: #8b949e;
-  /* GitHub Secondary Text */
   --text-muted: #6e7681;
   --text-white: #ffffff;
 
   --border-light: #30363d;
-  /* GitHub Borders */
-  --border-medium: #30363d;
+  --border-medium: #484f58;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
+
+  /* Global Container Overrides */
+  html,
+  body,
+  .layout,
+  .page-container,
+  .content,
+  .main-content {
+    background: var(--bg-main) !important;
+    background-color: var(--bg-main) !important;
+  }
+
+  /* Components & Cards */
+  .card,
+  .table-card,
+  .filter-card,
+  .filters-card,
+  .stat-card,
+  .form-card,
+  .recap-card,
+  .dashboard-header,
+  .page-header,
+  .sticky-header,
+  .mat-mdc-card,
+  .mdc-card,
+  .header-internal,
+  .card-header-internal,
+  .summary-box,
+  .mode-toggle,
+  .table-container,
+  .filters-container,
+  .filters-section,
+  .filters-row,
+  .calendar-wrapper,
+  .calendar-grid {
+    background: var(--bg-card) !important;
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  /* Calendar Specifics */
+  .calendar-day {
+    background: var(--bg-card) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-primary) !important;
+
+    &.other-month {
+      background: rgba(255, 255, 255, 0.02) !important;
+      opacity: 0.3 !important;
+    }
+
+    .day-number {
+      color: var(--text-primary) !important;
+    }
+  }
+
+  .weekday-header {
+    background: var(--bg-input) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-light) !important;
+  }
+
+  .btn-nav,
+  .btn-today {
+    background: var(--bg-input) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Prise en charge / Toggle Buttons specifics */
+  .beneficiary-options .radio-card,
+  .mode-toggle button {
+    background: var(--bg-input) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-secondary) !important;
+
+    &:not(.active):hover {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+    }
+
+    &.active {
+      background: var(--sidebar-active) !important;
+      color: white !important;
+      border-color: var(--sidebar-active) !important;
+    }
+  }
+
+  /* Force labels and basic text elements (excluding specifically colored text, headers, and badges) */
+  span:not([class*="text-"]):not(.subtitle):not(.badge):not(.status-badge):not(.type-badge):not(.tag),
+  p:not([class*="text-"]):not(.subtitle):not(.badge):not(.status-badge):not(.type-badge):not(.tag),
+  label,
+  .stat-value,
+  .stat-label,
+  .value,
+  .label,
+  .lbl,
+  .val {
+    color: var(--text-primary) !important;
+  }
+
+  /* Keep original header colors (often blue/branded) or provide a dark-compatible blue */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .section-title,
+  .title {
+    color: inherit;
+
+    /* Let component styles win, they are often blue */
+    &.text-primary,
+    &.text-blue,
+    &.text-info {
+      color: #3B82F6 !important;
+    }
+  }
+
+  /* Keep icons original color or thematic color */
+  i,
+  .fas,
+  .far,
+  .fab,
+  mat-icon {
+    color: inherit;
+  }
+
+  /* Preserve common color utilities */
+  .text-primary,
+  .text-info,
+  .text-cyan {
+    color: #3B82F6 !important;
+  }
+
+  .text-success {
+    color: #10B981 !important;
+  }
+
+  .text-warning {
+    color: #F59E0B !important;
+  }
+
+  .text-danger {
+    color: #EF4444 !important;
+  }
+
+  .text-secondary,
+  .subtitle,
+  .user-role,
+  .hint,
+  .suggestion-sub,
+  .suggestion-main {
+    color: var(--text-secondary) !important;
+  }
+
+  /* Table Overrides */
+  table,
+  tr,
+  td,
+  th,
+  thead,
+  tbody,
+  .mat-mdc-header-row,
+  .mat-mdc-header-cell,
+  .mat-mdc-row,
+  .mat-mdc-cell {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .data-table,
+  .table,
+  .table-container {
+    background: var(--bg-card) !important;
+  }
+
+  thead th,
+  .table-header,
+  .mat-mdc-header-row {
+    background: var(--bg-input) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  .mat-mdc-header-cell {
+    color: var(--text-secondary) !important;
+
+    .mat-sort-header-arrow {
+      color: inherit !important;
+    }
+  }
+
+  /* Form Elements - Base Dark Skinning */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .form-control,
+  .custom-select-input,
+  .search-box,
+  .filter-select,
+  .filter-input {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-light) !important;
+    color: var(--text-primary) !important;
+    padding: 0.4rem 0.75rem !important;
+    border-radius: 6px !important;
+    height: 36px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+
+    &:focus {
+      border-color: #00A3FF !important;
+      background-color: var(--bg-card) !important;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 163, 255, 0.1) !important;
+    }
+
+    &::placeholder {
+      color: var(--text-muted) !important;
+    }
+
+    /* Prevent transparent select options on some browsers */
+    option {
+      background-color: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  textarea {
+    height: auto !important;
+    min-height: 80px;
+  }
+
+  /* Specific overrides for containers that shouldn't have form-control look */
+  .input-with-icon,
+  .input-wrapper,
+  .search-input-wrapper,
+  .search-container {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  /* Checkboxes & Radios */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: #00A3FF !important;
+    cursor: pointer;
+  }
+
+  /* Badges & Status Readability Improvements */
+  .status-badge,
+  .badge,
+  .type-badge,
+  .tag {
+    font-weight: 700 !important;
+    letter-spacing: 0.02em !important;
+    border: 1px solid transparent !important;
+    padding: 2px 10px !important;
+    border-radius: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.75rem !important;
+    min-width: 80px;
+
+    /* Green Statuses (Validé, Traité, Success) */
+    &.traite,
+    &.agent,
+    &.success,
+    &.badge-success,
+    &.valid,
+    &.valide,
+    &.validated,
+    &.accepte,
+    &.approved {
+      background: rgba(16, 185, 129, 0.2) !important;
+      color: #34d399 !important;
+      border-color: rgba(16, 185, 129, 0.4) !important;
+    }
+
+    /* Orange/Yellow Statuses (En attente, Non traité, Warning) */
+    &.non-traite,
+    &.warning,
+    &.badge-warning,
+    &.pending,
+    &.encours,
+    &.attente {
+      background: rgba(245, 158, 11, 0.15) !important;
+      color: #fbbf24 !important;
+      border-color: rgba(245, 158, 11, 0.3) !important;
+    }
+
+    /* Red Statuses (Rejeté, Erreur, Danger) */
+    &.invalid,
+    &.danger,
+    &.badge-danger,
+    &.rejet,
+    &.rejete,
+    &.rejected,
+    &.refuse,
+    &.error {
+      background: rgba(239, 68, 68, 0.2) !important;
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.4) !important;
+    }
+
+    /* Blue/Info Statuses */
+    &.info,
+    &.blue,
+    &.centre,
+    &.badge-info,
+    &.processing {
+      background: rgba(59, 130, 246, 0.2) !important;
+      color: #60a5fa !important;
+      border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+  }
+
+  /* Dropdowns */
+  .custom-dropdown,
+  .suggestions,
+  ul.suggestions,
+  .dropdown-menu {
+    background: var(--bg-card) !important;
+    border-color: var(--border-medium) !important;
+    box-shadow: var(--shadow-lg) !important;
+
+    li,
+    .dropdown-item {
+      color: var(--text-primary) !important;
+
+      &:hover {
+        background: var(--bg-input) !important;
+      }
+    }
+  }
+
+  /* Material Dialogs & Menus */
+  .mat-mdc-dialog-container .mdc-dialog__surface,
+  .mat-mdc-dialog-content,
+  .mat-mdc-dialog-actions,
+  .mat-mdc-dialog-title,
+  .mat-mdc-menu-panel,
+  .mdc-menu-surface {
+    background: var(--bg-card) !important;
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-medium) !important;
+    box-shadow: var(--shadow-lg) !important;
+
+    li,
+    .dropdown-item,
+    .mat-mdc-menu-item {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+      border-color: var(--border-light) !important;
+
+      &:hover {
+        background: var(--bg-input) !important;
+      }
+    }
+  }
+
+  /* Mode Toggle Dark Overrides */
+  .mode-toggle {
+    border-color: var(--border-medium) !important;
+    background: transparent !important;
+
+    button {
+      background: var(--bg-card) !important;
+      color: var(--text-secondary) !important;
+      border-right: 1px solid var(--border-medium) !important;
+
+      &:last-child {
+        border-right: none !important;
+      }
+
+      &:hover {
+        background: var(--bg-main) !important;
+      }
+
+      &.active {
+        background: #04acc2 !important;
+        /* Cyan Toggle */
+        color: white !important;
+      }
+    }
+  }
+
+  /* Form Sections & Info Boxes */
+  .form-section {
+    border-bottom: 1px solid var(--border-light) !important;
+  }
+
+  .pec-info-box {
+    background: rgba(0, 163, 255, 0.1) !important;
+    border-color: #00A3FF !important;
+    color: var(--text-primary) !important;
+  }
+
+  .employee-info,
+  .montant-lettres {
+    background: var(--bg-main) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-secondary) !important;
+  }
+
+  /* Buttons Outlined Overrides */
+  .btn-outline,
+  .btn-secondary {
+    border: 1px solid var(--border-light) !important;
+    background: var(--bg-input) !important;
+    color: var(--text-secondary) !important;
+
+    &:hover {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border-medium) !important;
+    }
+  }
+
+  /* Chatbot Skinning */
+  .chatbot-container,
+  .chat-input,
+  .settings-dropdown,
+  .typing-indicator {
+    background: var(--bg-card) !important;
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .chat-messages {
+    background: var(--bg-main) !important;
+  }
+
+  .message.bot .message-bubble {
+    background: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+    box-shadow: none !important;
+  }
+
+  .message.user .message-bubble {
+    background: var(--sidebar-active) !important;
+    color: white !important;
+  }
+
+  .chat-input input {
+    background: var(--bg-input) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .suggestion-chip,
+  .action-btn {
+    background: var(--bg-input) !important;
+    border-color: var(--border-light) !important;
+    color: var(--text-secondary) !important;
+
+    &:hover {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border-medium) !important;
+    }
+  }
+
+  /* List reference codes (N° PEC) and Subtitles as labels */
+  .ref-code,
+  .subtitle {
+    background: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-light) !important;
+    display: inline-block !important;
+  }
+
+  /* Miscellaneous fix */
+  .text-dark,
+  .text-black,
+  .alert-error {
+    color: var(--text-primary) !important;
+  }
+
+  .alert-error {
+    background: rgba(239, 68, 68, 0.1) !important;
+  }
+
+  hr,
+  .border-bottom,
+  .border-top,
+  .divider {
+    border-color: var(--border-light) !important;
+    opacity: 0.15;
+  }
 }
 
+/* Base Styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
 }
 
 body {
@@ -100,6 +586,7 @@ body {
   background: var(--bg-main);
   color: var(--text-primary);
   line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -125,11 +612,11 @@ a:hover {
   color: #2563EB;
 }
 
-/* Utility Classes */
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
+/* Common Layout Elements */
+.page-container {
+  padding: 1.5rem;
+  background: var(--bg-main);
+  min-height: calc(100vh - 64px);
 }
 
 .card {
@@ -138,108 +625,16 @@ a:hover {
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-light);
+  margin-bottom: 1.5rem;
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: var(--stat-blue);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #2563EB;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-success {
-  background: var(--stat-green);
-  color: white;
-}
-
-.btn-warning {
-  background: var(--stat-yellow);
-  color: white;
-}
-
-.btn-danger {
-  background: var(--stat-red);
-  color: white;
-}
-
-/* Form Elements */
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-input,
-select,
-textarea {
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-medium);
-  background: var(--bg-white);
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--stat-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  background: var(--bg-white);
-}
-
-input[disabled],
-select[disabled],
-textarea[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: var(--bg-main);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.form-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-}
-
-/* Tables */
+/* Common Table Styles */
 table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--bg-white);
+  background: var(--bg-card);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
 thead th {
@@ -249,7 +644,7 @@ thead th {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0.875rem 1rem;
+  padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border-light);
 }
@@ -260,55 +655,74 @@ tbody td {
   color: var(--text-primary);
 }
 
-tbody tr:last-child td {
-  border-bottom: none;
-}
-
-tbody tr:hover {
-  background: rgba(59, 130, 246, 0.02);
-}
-
-.table-toolbar {
-  display: flex;
-  gap: var(--spacing-md);
+/* Common Button Classes */
+.btn {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-/* Error Messages */
-.errorMsg {
-  display: block;
-  margin-top: var(--spacing-md);
-  padding: 0.75rem 1rem;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: var(--radius-md);
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
-  color: #B91C1C;
   font-size: 0.875rem;
-}
-
-/* Suggestions List */
-ul.suggestions {
-  list-style: none;
-  padding: 0.5rem;
-  margin: 0.5rem 0 0 0;
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  background: var(--bg-white);
-  box-shadow: var(--shadow-md);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-ul.suggestions li {
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-sm);
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease;
-  color: var(--text-primary);
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
-ul.suggestions li:hover {
-  background: var(--bg-main);
+.btn-primary {
+  background: var(--stat-blue);
+  color: white;
+
+  &:hover {
+    background: #2563EB;
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--bg-main);
+    border-color: var(--border-medium);
+  }
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+}
+
+/* Form Controls */
+.form-control {
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--stat-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Material Overrides */
+.mat-mdc-card {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-light) !important;
 }

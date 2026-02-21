@@ -30,10 +30,8 @@ export class DashboardService {
         const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
         // --- CONGES STATS ---
-        // Filter only validated leaves (cng_status = true)
         const validatedConges = conges.filter(c => c.cng_status === true || c.cng_status === 't');
 
-        // 1. Congés en cours (Active leaves)
         const activeLeaves = validatedConges.filter(c => {
             if (!c.cng_debut || !c.cng_fin) return false;
             const start = new Date(c.cng_debut);
@@ -41,7 +39,6 @@ export class DashboardService {
             return now >= start && now <= end;
         }).length;
 
-        // 2. Congés stats for evolution
         let currentMonthLeaves = 0;
         let lastMonthLeaves = 0;
 
@@ -65,11 +62,8 @@ export class DashboardService {
 
         // --- EMPLOYEES STATS ---
         const totalEmployees = employees.length;
-
-        // Active employees (assuming is_actif is 1 or true)
         const activeEmployees = employees.filter(e => e.is_actif == 1 || e.is_actif === true || e.is_actif === '1').length;
 
-        // Employee evolution (based on date_embauche)
         let currentMonthHires = 0;
         let lastMonthHires = 0;
 
@@ -101,7 +95,6 @@ export class DashboardService {
     }
 
     getEvolutionStats(): Observable<any> {
-        // Utilisation des APIs existantes
         const conges$ = this.http.get<any[]>(`${this.apiUrl}/conge`, { withCredentials: true });
         const permissions$ = this.http.get<any[]>(`${this.apiUrl}/permission`, { withCredentials: true });
 
@@ -118,10 +111,8 @@ export class DashboardService {
         const congeCounts = new Array(12).fill(0);
         const permissionCounts = new Array(12).fill(0);
 
-        // Traitement des Congés (only validated ones - cng_status = true)
         if (Array.isArray(conges)) {
             conges.forEach(c => {
-                // Only count validated leaves
                 if ((c.cng_status === true || c.cng_status === 't') && c.cng_debut) {
                     const date = new Date(c.cng_debut);
                     if (date.getFullYear() === currentYear) {
@@ -131,7 +122,6 @@ export class DashboardService {
             });
         }
 
-        // Traitement des Permissions
         if (Array.isArray(permissions)) {
             permissions.forEach(p => {
                 if (p.prm_debut) {
@@ -150,7 +140,6 @@ export class DashboardService {
         };
     }
 
-    // New methods for dashboard widgets
     getEmployeesOnLeave(): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/dashboard/employees-on-leave`, { withCredentials: true });
     }

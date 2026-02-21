@@ -16,9 +16,8 @@ use App\Models\employee\EmployeeModel;
 class ChatbotService
 {
     protected $congeModel;
-    protected $soldeCongeModel;
-    protected $permissionModel;
     protected $employeeModel;
+    protected $knowledgeService;
     
     public function __construct()
     {
@@ -28,6 +27,7 @@ class ChatbotService
             $this->soldeCongeModel = new SoldeCongeModel();
             $this->permissionModel = new PermissionModel();
             $this->employeeModel = new EmployeeModel();
+            $this->knowledgeService = new KnowledgeService();
             
             log_message('info', '[Chatbot] Service initialized successfully');
         } catch (\Exception $e) {
@@ -48,12 +48,20 @@ class ChatbotService
             $normalized = $this->normalizeText($message);
             log_message('info', "[Chatbot] Normalized: '{$normalized}'");
             
-            // Détecter intention
+            // 1. Récupérer le contexte via RAG (KnowledgeBase)
+            $context = $this->knowledgeService->getContext($message);
+            log_message('info', "[Chatbot-RAG] Context retrieved: " . strlen($context) . " bytes");
+            
+            // 2. Détecter l'intention
             $intent = $this->detectIntent($normalized);
             log_message('info', "[Chatbot] Detected intent: '{$intent}'");
             
-            // Exécuter action correspondante
+            // 3. Exécuter l'action correspondante
             $result = $this->executeIntent($intent, $empCode, $normalized);
+            
+            // Ajouter le contexte technique pour le débogage (optionnel, caché en prod)
+            $result['rag_context'] = $context;
+            
             log_message('info', "[Chatbot] Intent executed successfully");
             
             return $result;
@@ -111,6 +119,11 @@ class ChatbotService
             // Guide système
             'help_create' => ['comment', 'creer', 'faire', 'demande'],
             'help_navigation' => ['ou', 'trouver', 'aller', 'page'],
+            
+            // Connaissances projet (RAG)
+            'about_project' => ['projet', 'c quoi', 'qu’est-ce', 'qui es tu', 'systeme', 'logiciel'],
+            'about_rules' => ['regle', 'loi', 'politique', 'calcul', 'fonctionnement'],
+            'about_user' => ['manuel', 'utilisateur', 'comment utiliser', 'aidez moi', 'tuto', 'etape'],
             
             // Social
             'greeting' => ['bonjour', 'salut', 'hello', 'hey'],
@@ -176,6 +189,15 @@ class ChatbotService
                 
             case 'help_navigation':
                 return $this->guideNavigation($message);
+                
+            case 'about_project':
+                return $this->knowledgeResponse('project_overview.md');
+                
+            case 'about_rules':
+                return $this->knowledgeResponse('rules'); // cherchera par mot clé
+                
+            case 'about_user':
+                return $this->knowledgeResponse('user_manual.md');
                 
             case 'greeting':
                 return $this->greetingResponse();
@@ -664,5 +686,18 @@ class ChatbotService
         // Mélanger et prendre 5 suggestions aléatoires
         shuffle($allSuggestions);
         return array_slice($allSuggestions, 0, 5);
+    }
+
+    /**
+     * Réponse basée sur la base de connaissances (RAG)
+     */
+    private function knowledgeResponse(string $hint): array
+    {
+        $context = $this->knowledgeService->getContext($hint);
+        
+        return [
+            'text' => "📚 **D'après mon manuel utilisateur :**\n\n" . $context,
+            'suggestions' => ['Guide des congés', 'Règles de remboursement', 'Comment utiliser l\'app ?']
+        ];
     }
 }

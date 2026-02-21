@@ -1,27 +1,58 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, AfterViewInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CongeService } from '../../service/conge.service';
 import { LayoutService } from '../../../../shared/layout/service/layout.service';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 
 @Component({
   selector: 'app-conge-index',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule
+  ],
   templateUrl: './index.html',
   styleUrls: ['./index.scss']
 })
-export class CongeIndexComponent implements OnInit {
+export class CongeIndexComponent implements OnInit, AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly congeService = inject(CongeService);
   private readonly layoutService = inject(LayoutService);
 
-  conges: any[] = [];  // Conservé pour compatibilité
-  absences: any[] = [];  // ➕ NOUVEAU: Liste unifiée congés + permissions
-  displayMode: 'unified' | 'conge-only' = 'unified';  // ➕ Mode d'affichage
-  absenceTypeFilter: string = '';  // ➕ '' = tous, 'conge' = congés, 'permission' = permissions
+  conges: any[] = [];
+  absences: any[] = [];
+  dataSource = new MatTableDataSource<any>([]);
+  displayedColumns: string[] = ['employee', 'type', 'start', 'end', 'duration', 'reason', 'status', 'actions'];
+
+  private _paginator!: MatPaginator;
+  private _sort!: MatSort;
+
+  @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+    this._paginator = mp;
+    this.updateDataSourceLinks();
+  }
+
+  @ViewChild(MatSort) set matSort(ms: MatSort) {
+    this._sort = ms;
+    this.updateDataSourceLinks();
+  }
+
+  private updateDataSourceLinks() {
+    this.dataSource.paginator = this._paginator;
+    this.dataSource.sort = this._sort;
+  }
+
+  displayMode: 'unified' | 'conge-only' = 'unified';
+  absenceTypeFilter: string = '';
 
   start: string | null = null;
   end: string | null = null;
@@ -29,48 +60,43 @@ export class CongeIndexComponent implements OnInit {
   lieu: string | null = null;
   loading = false;
   errorMsg = '';
-  successMsg: string | null = null;  // ➕ AJOUTÉ pour notification
 
   regions: any[] = [];
   filteredRegions: any[] = [];
   showRegionDropdown = false;
 
   // Helper for status display
-  getStatusLabel(cng_status: any): string {
-    if (cng_status === true || cng_status === 't' || cng_status === 1) return 'Validé';
-    if (cng_status === false || cng_status === 'f' || cng_status === 0) return 'En cours';
-    return 'Rejeté';
+  getStatusLabel(status: any): string {
+    if (status === true || status === 't' || status === 1) return 'Validé';
+    if (status === false || status === 'f' || status === 0) return 'Rejeté';
+    return 'En attente';
   }
 
-  getStatusClass(cng_status: any): string {
-    if (cng_status === true || cng_status === 't' || cng_status === 1) return 'validated';
-    if (cng_status === false || cng_status === 'f' || cng_status === 0) return 'pending';
-    return 'rejected';
+  getStatusClass(status: any): string {
+    if (status === true || status === 't' || status === 1) return 'validated';
+    if (status === false || status === 'f' || status === 0) return 'rejected';
+    return 'pending';
   }
 
   ngOnInit() {
-    this.layoutService.setTitle('Gestion des Absences');  // 🔄 MODIFIÉ: Titre unifié
+    this.layoutService.setTitle('Gestion des Absences');
     this.route.data.subscribe(data => {
-      // Charger données initiales (resolver peut retourner congés)
       this.conges = data['conges'] || [];
       if (!this.conges.length) {
         this.applyFilter();
       } else {
-        // Si données du resolver, mapper en absences
         this.absences = this.conges.map(c => ({ ...c, absence_type: 'conge' }));
+        this.dataSource.data = this.absences;
       }
     });
 
-    // Charger les régions
     this.congeService.getRegions().subscribe((regions: any[]) => {
       this.regions = regions;
       this.filteredRegions = regions;
     });
+  }
 
-    // ➕ NOUVEAU: Écouter les messages de succès
-    this.layoutService.successMessage$.subscribe(msg => {
-      this.successMsg = msg;
-    });
+  ngAfterViewInit() {
   }
 
   // Region Filter Logic
@@ -128,13 +154,11 @@ export class CongeIndexComponent implements OnInit {
     this.loading = true;
     this.errorMsg = '';
 
-    // ➕ NOUVEAU: Charger absences unifiées (congés + permissions)
     this.congeService.getAbsences(params).subscribe({
       next: (absences) => {
         this.absences = absences || [];
-        // Conserver aussi dans conges pour compatibilité
         this.conges = this.absences.filter(a => a.absence_type === 'conge');
-        this.applyClientSideFilter();  // Appliquer filtre type côté client
+        this.applyClientSideFilter();
       },
       error: (err) => {
         this.errorMsg = err?.message || 'Erreur lors du chargement';
@@ -145,22 +169,14 @@ export class CongeIndexComponent implements OnInit {
     });
   }
 
-  /**
-   * ➕ NOUVEAU: Filtrage côté client par type d'absence
-   */
   applyClientSideFilter() {
-    if (!this.absenceTypeFilter) {
-      // Aucun filtre type → afficher tout
-      return;
+    let result = [...this.absences];
+    if (this.absenceTypeFilter) {
+      result = result.filter(a => a.absence_type === this.absenceTypeFilter);
     }
-
-    // Filtrer par type
-    this.absences = this.absences.filter(a => a.absence_type === this.absenceTypeFilter);
+    this.dataSource.data = result;
   }
 
-  /**
-   * ➕ NOUVEAU: Helper pour déterminer le type d'absence
-   */
   getAbsenceType(item: any): string {
     return item.absence_type === 'permission' ? 'Permission' : 'Congé';
   }
@@ -191,5 +207,4 @@ export class CongeIndexComponent implements OnInit {
   create() {
     this.router.navigate(['/conge/create']);
   }
-
 }

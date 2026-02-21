@@ -129,13 +129,24 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
     }
 
     &.btn-outline {
-        background-color: transparent;
-        border-color: #e2e8f0;
+        background: transparent;
+        border: 1.5px solid #e2e8f0;
         color: $dark;
 
+        i {
+            color: $secondary;
+            transition: color 0.2s;
+        }
+
         &:hover {
-            background-color: $light;
-            border-color: $dark;
+            background: rgba($primary, 0.05);
+            border-color: $primary;
+            color: $primary;
+            transform: translateY(-1px);
+
+            i {
+                color: $primary;
+            }
         }
     }
 
@@ -174,45 +185,68 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
 }
 
 // Table Styling
-.table-responsive {
-    overflow-x: auto;
+.table-container {
+    background: $white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
+    margin: 0 1.5rem 1.5rem 1.5rem;
 }
 
-table {
+table[mat-table] {
     width: 100%;
-    border-collapse: collapse;
+    background: transparent;
 
-    thead {
-        background-color: #f8fafc;
+    .mat-mdc-header-row {
+        background: #f8fafc !important;
+        height: 56px;
+    }
 
-        th {
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid #e2e8f0;
+    .mat-mdc-header-cell {
+        padding: 0 1.5rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #64748b !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0;
+
+        &::ng-deep .mat-sort-header-arrow {
+            color: #64748b !important;
         }
     }
 
-    tbody {
-        tr {
-            border-bottom: 1px solid #f1f5f9;
-            transition: background-color 0.2s;
+    .mat-mdc-row {
+        height: 64px;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid #f1f5f9;
 
-            &:hover {
-                background-color: #f8fafc;
-            }
+        &:hover {
+            background-color: #f8fafc;
+        }
 
-            td {
-                padding: 1rem 1.5rem;
-                font-size: 0.95rem;
-                color: $dark;
-                vertical-align: middle;
-            }
+        &:last-child {
+            border-bottom: none;
         }
     }
+
+    .mat-mdc-cell {
+        padding: 0 1.5rem;
+        font-size: 0.95rem;
+        color: $dark;
+        vertical-align: middle;
+
+        &.actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+    }
+}
+
+.mat-mdc-paginator {
+    background: transparent;
+    border-top: 1px solid #f1f5f9;
 }
 
 // Cells

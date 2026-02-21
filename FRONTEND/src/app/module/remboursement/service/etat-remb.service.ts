@@ -14,6 +14,9 @@ export interface EtatRemb {
     prenom_emp?: string;
     matricule?: string;
     nb_demandes?: number;  // Count of linked demandes
+    cen_code?: number;
+    cen_nom?: string;
+    eta_libelle?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,7 +32,19 @@ export class EtatRembService {
         return this.http.get<EtatRemb[]>(`${this.baseUrl}/agent/${empCode}`, { withCredentials: true });
     }
 
+    getById(id: number): Observable<EtatRemb> {
+        return this.http.get<EtatRemb>(`${this.baseUrl}/${id}`, { withCredentials: true });
+    }
+
     create(data: Partial<EtatRemb>): Observable<any> {
         return this.http.post(this.baseUrl, data, { withCredentials: true });
+    }
+
+    mandater(id: number): Observable<any> {
+        return this.http.post(`${this.baseUrl}/${id}/mandater`, {}, { withCredentials: true });
+    }
+
+    agentComptable(id: number): Observable<any> {
+        return this.http.post(`${this.baseUrl}/${id}/agent-comptable`, {}, { withCredentials: true });
     }
 }

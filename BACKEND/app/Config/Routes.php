@@ -35,6 +35,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
     $routes->group('conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
         $routes->post('/', 'CongeController::createConge');
         $routes->get('/', 'CongeController::getAllConges');
+        $routes->get('by-date-range', 'CongeController::getByDateRange');
         $routes->get('(:num)', 'CongeController::getConge/$1');
         $routes->get('detail/(:num)', 'CongeController::getCongeDetail/$1');
         $routes->get('attestation/(:num)', 'CongeController::exportAttestationPdf/$1');
@@ -183,8 +184,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
     // États de Remboursement
     $routes->group('etat_remb', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
         $routes->get('/', 'EtatRembController::index');
+        $routes->get('(:num)', 'EtatRembController::show/$1');
         $routes->get('agent/(:num)', 'EtatRembController::getByAgent/$1');
         $routes->post('/', 'EtatRembController::create');
+        $routes->post('(:num)/mandater', 'EtatRembController::mandater/$1');
+        $routes->post('(:num)/agent-comptable', 'EtatRembController::agentComptable/$1');
         $routes->get('(:num)/pdf', 'EtatPdfController::generateEtatPdf/$1');  // PDF
     });
 
@@ -237,11 +241,18 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->delete('(:num)', 'FactureController::delete/$1');
     });
     
+    
     // ========== CHATBOT routes (MODULE BONUS - ISOLÉ) ==========
     $routes->group('chatbot', ['namespace' => 'App\Controllers\chatbot', 'filter' => 'jwtauth'], function($routes) {
         $routes->post('message', 'ChatbotController::sendMessage');
         $routes->get('suggestions', 'ChatbotController::getSuggestions');
         $routes->get('health', 'ChatbotController::health');
+    });
+
+    // ========== NOTIFICATIONS ==========
+    $routes->group('notifications', ['namespace' => 'App\Controllers\notification', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('/', 'NotificationController::getAll');
+        $routes->get('count', 'NotificationController::count');
     });
 
 });

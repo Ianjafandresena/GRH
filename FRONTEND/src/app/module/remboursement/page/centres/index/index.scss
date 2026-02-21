@@ -1,130 +1,134 @@
+// Modern Sass syntax - clean build
+@use '../../../../../../styles/shared-styles.scss' as *;
+
+// Override page-container for table pages - full width
 .page-container {
-  padding: 1.5rem;
+  padding: $spacing-xl;
+  background-color: $bg-page;
+  min-height: 100vh;
+  max-width: none !important; // Full width for table pages
 }
 
-.page-header {
+// Page header for list pages
+.page-header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: $spacing-lg;
+  padding-bottom: $spacing-md;
+  border-bottom: 2px solid $border-light;
 
-  h1 {
-    margin: 0;
-    color: var(--text-color);
+  .title-group {
+    h1 {
+      font-size: $font-size-xl;
+      font-weight: 700;
+      color: $dark;
+      margin: 0;
+    }
   }
 }
 
-.error-message {
-  background: var(--error-bg, #fee);
-  color: var(--error-color, #c00);
-  padding: 0.75rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-secondary);
-}
-
+// Filters row
 .filters-row {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-lg;
+  background: white;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
 
-  .filter-type {
-    min-width: 200px;
-  }
-
-  .filter-search {
+  mat-form-field {
     flex: 1;
     min-width: 250px;
   }
 }
 
-.type-badge {
-  background: var(--primary-color);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-
+// Table container
 .table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--card-bg);
-  border-radius: 8px;
+  background: white;
+  border-radius: $radius-md;
   overflow: hidden;
+}
 
-  th,
-  td {
-    padding: 0.75rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-  }
+.type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: $font-size-xs;
+  font-weight: 600;
+  background: #e0f2fe;
+  color: #0369a1;
+}
 
-  th {
-    background: var(--header-bg);
-    font-weight: 600;
-    color: var(--text-color);
-  }
+.mat-mdc-header-row {
+  background: #f8fafc !important;
+  height: 56px;
+}
 
-  td {
-    color: var(--text-secondary);
-  }
+.mat-mdc-header-cell {
+  padding: 0 1.5rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #64748b !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e2e8f0;
 
-  .empty {
-    text-align: center;
-    font-style: italic;
-  }
-
-  .actions {
-    display: flex;
-    gap: 0.5rem;
+  &::ng-deep .mat-sort-header-arrow {
+    color: #64748b !important;
   }
 }
 
-.btn {
+.btn-icon {
+  padding: 0.5rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 0.25rem;
 
-  &.btn-primary {
-    background: var(--primary-color);
-    color: white;
-
-    &:hover {
-      background: var(--primary-hover);
-    }
+  i {
+    font-size: 1rem;
+    color: $primary-blue;
   }
 
-  &.btn-danger {
-    background: var(--danger-color, #dc3545);
-    color: white;
-
-    &:hover {
-      background: var(--danger-hover, #c82333);
-    }
+  &:hover {
+    background: rgba($primary-blue, 0.1);
   }
 
-  &.btn-sm {
-    padding: 0.25rem 0.5rem;
-
-    .material-icons {
-      font-size: 18px;
+  &.danger {
+    i {
+      color: $danger;
     }
+
+    &:hover {
+      background: rgba($danger, 0.1);
+    }
+  }
+}
+
+// Empty state
+.empty-state {
+  text-align: center !important;
+  padding: $spacing-xl * 2 !important;
+  color: $secondary;
+
+  i {
+    font-size: 3rem;
+    margin-bottom: $spacing-md;
+    opacity: 0.3;
+    display: block;
+  }
+
+  p {
+    margin: 0;
+    font-size: $font-size-base;
   }
 }
