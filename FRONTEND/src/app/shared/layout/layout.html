@@ -40,9 +40,6 @@
         </div>
       </div>
 
-
-      <!-- ❌ SUPPRIMÉ: Menu Permissions fusionné dans Gestion des Absences -->
-
       <!-- Remboursements -->
       <div>
         <a (click)="toggleRemb()" [class.active]="showRemb" style="cursor:pointer;" title="Remboursements">
@@ -86,7 +83,7 @@
           </a>
         </div>
       </div>
-      <a style="opacity:0.7; cursor: not-allowed;" title="Employés">
+      <a routerLink="/employee" routerLinkActive="active" title="Employés">
         <mat-icon>people_outline</mat-icon>
         <span *ngIf="!isCollapsed">Employés</span>
       </a>

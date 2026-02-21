@@ -43,7 +43,7 @@ class PrisEnChargeController extends ResourceController
     {
         $db = \Config\Database::connect();
         $row = $db->table('affectation a')
-            ->select('pst.pst_fonction, pst.pst_mission, dir.dir_nom, dir.dir_abreviation')
+            ->select('pst.pst_fonction, dir.dir_nom, dir.dir_abreviation')
             ->join('poste pst', 'pst.pst_code = a.pst_code', 'left')
             ->join('fonction_direc fd', 'fd.pst_code = pst.pst_code', 'left')
             ->join('direction dir', 'dir.dir_code = fd.dir_code', 'left')
@@ -331,12 +331,14 @@ class PrisEnChargeController extends ResourceController
 
     /**
      * Générer le bulletin PDF d'une prise en charge
+     * Format EXACT conforme au document officiel - Utilise DomPDF
      */
     public function genererBulletin($id = null)
     {
         try {
             $model = new PrisEnChargeModel();
-            $prise = $model->select('pris_en_charge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom')
+            
+            $prise = $model->select('pris_en_charge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom, enfant.enf_num')
                 ->join('employee', 'employee.emp_code = pris_en_charge.emp_code', 'left')
                 ->join('centre_sante', 'centre_sante.cen_code = pris_en_charge.cen_code', 'left')
                 ->join('conjointe', 'conjointe.conj_code = pris_en_charge.conj_code', 'left')
@@ -348,112 +350,226 @@ class PrisEnChargeController extends ResourceController
                 return $this->failNotFound('Prise en charge non trouvee');
             }
 
-            // Determiner le beneficiaire
-            $benefNom = ($prise['nom_emp'] ?? '') . ' ' . ($prise['prenom_emp'] ?? '');
-            $lien = 'AGENT';
-
-            if (!empty($prise['conj_code'])) {
+            // Determiner si le malade est l'agent lui-même
+            $maladeEstAgent = empty($prise['conj_code']) && empty($prise['enf_code']);
+            
+            // Determiner le beneficiaire (malade)
+            $benefNom = '';
+            $lien = '';
+            
+            if ($maladeEstAgent) {
+                $benefNom = ($prise['nom_emp'] ?? '') . ' ' . ($prise['prenom_emp'] ?? '');
+                $lien = 'Agent';
+            } elseif (!empty($prise['conj_code'])) {
                 $benefNom = $prise['conj_nom'] ?? '';
                 $lien = 'Conjoint(e)';
             } elseif (!empty($prise['enf_code'])) {
                 $benefNom = $prise['enf_nom'] ?? '';
-                $lien = 'ENFANT';
+                $lien = 'Enfant' . (!empty($prise['enf_num']) ? ' ' . $prise['enf_num'] : '');
             }
 
             $fd = $this->getFonctionDirection((int)$prise['emp_code']);
-            $fonction = $fd['fonction'] ?: 'Chauffeur';
-            $direction = $fd['direction'] ?: 'Direction des Affaires Administratives et Financieres';
-
-
-            $pdf = new \FPDF('P', 'mm', 'A4');
-            $pdf->AddPage();
-            $pdf->SetMargins(15, 15, 15);
-            $pdf->SetAutoPageBreak(false);
-
-            // === LOGO ET HEADER ===
-            // Try multiple logo paths
-            $logoPaths = [
-                FCPATH . '../public/assets/logo.png',
-                FCPATH . 'assets/logo.png',
-                FCPATH . '../FRONTEND/public/assets/logo.png',
-            ];
+            $fonction = $fd['fonction'] ?: '';
+            $direction = $fd['direction'] ?: '';
             
-            $logoAdded = false;
-            foreach ($logoPaths as $logoPath) {
-                if (file_exists($logoPath)) {
-                    try {
-                        $pdf->Image($logoPath, 18, 18, 25);
-                        $logoAdded = true;
-                        break;
-                    } catch (\Exception $e) {
-                        log_message('error', 'Failed to add logo: ' . $e->getMessage());
-                    }
-                }
+            $nomComplet = ($prise['nom_emp'] ?? '') . ' ' . ($prise['prenom_emp'] ?? '');
+
+            // Logo en base64
+            $logoPath = FCPATH . 'logo.png';
+            $logoBase64 = '';
+            if (extension_loaded('gd') && file_exists($logoPath)) {
+                $logoData = file_get_contents($logoPath);
+                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
             }
 
-            // Titre principal centre
-            $pdf->SetY(18);
-            $pdf->SetFont('Arial', 'B', 14);
-            $pdf->Cell(0, 8, utf8_decode('BULLETIN DE PRISE EN CHARGE'), 0, 1, 'C');
-            $pdf->Ln(10);
+            // Construire le HTML - Format EXACT du document officiel
+            $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 12mm; }
+        body { 
+            font-family: DejaVu Sans, Arial, sans-serif; 
+            font-size: 10px;
+            line-height: 1.3;
+            color: #000;
+        }
+        
+        /* Header avec logo à gauche */
+        .header-row {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .logo-section {
+            float: left;
+            width: 180px;
+        }
+        .logo-section img {
+            width: 45px;
+            height: auto;
+            float: left;
+            margin-right: 8px;
+        }
+        .org-name {
+            font-size: 8px;
+            line-height: 1.2;
+            padding-top: 5px;
+        }
+        .title-section {
+            text-align: center;
+            padding-top: 10px;
+        }
+        .main-title {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+        
+        /* Cadre principal */
+        .content-box {
+            border: 1px solid #000;
+            padding: 8px 12px;
+            margin-top: 8px;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+            font-size: 10px;
+            margin: 8px 0 6px 0;
+        }
+        
+        .info-row {
+            margin: 4px 0;
+        }
+        .info-row::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+        .info-left {
+            float: left;
+            width: 55%;
+        }
+        .info-right {
+            float: right;
+            text-align: right;
+            width: 45%;
+        }
+        
+        /* Cases NON / OUI - Style exact du document officiel */
+        .checkbox-container {
+            display: inline;
+        }
+        .checkbox-box {
+            display: inline-block;
+            border: 1px solid #000;
+            padding: 1px 4px;
+            margin: 0 3px;
+            font-size: 9px;
+            min-width: 25px;
+            text-align: center;
+        }
+        
+        .footer-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 9px;
+            margin-top: 12px;
+            text-decoration: underline;
+        }
+        
+        .signature-name {
+            font-weight: bold;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER : Logo + Org à gauche, Titre centré -->
+    <div class="header-row clearfix">
+        <div class="logo-section">';
+            
+            if ($logoBase64) {
+                $html .= '
+            <img src="' . $logoBase64 . '" alt="Logo">
+            <div class="org-name">AUTORITE DE REGULATION<br>DES MARCHES PUBLICS</div>';
+            }
+            
+            $html .= '
+        </div>
+        <div class="title-section">
+            <div class="main-title">BULLETIN DE PRISE EN CHARGE</div>
+        </div>
+    </div>
+    
+    <!-- CONTENU PRINCIPAL -->
+    <div class="content-box">
+        <!-- SECTION AGENT -->
+        <div class="section-title">RENSEIGNEMENTS CONCERNANT L\'AGENT</div>
+        
+        <div class="info-row">
+            <span class="info-left">Nom et Prénoms : ' . htmlspecialchars($nomComplet) . '</span>
+            <span class="info-right">Matricule : ' . htmlspecialchars($prise['matricule'] ?? '') . '</span>
+        </div>
+        <div class="info-row">Fonction : ' . htmlspecialchars($fonction) . '</div>
+        <div class="info-row">Direction / Service : ' . htmlspecialchars($direction) . '</div>
+        
+        <!-- SECTION MALADE -->
+        <div class="section-title">RENSEIGNEMENTS CONCERNANT LE MALADE</div>
+        
+        <div class="info-row">
+            Le malade est l\'agent : 
+            <span class="checkbox-box">' . ($maladeEstAgent ? '' : 'X') . ' NON</span>
+            <span class="checkbox-box">' . ($maladeEstAgent ? 'X' : '') . ' OUI</span>
+        </div>
+        <div class="info-row">Noms et prénoms du malade : ' . htmlspecialchars($benefNom) . '</div>
+        <div class="info-row">Lien: ' . htmlspecialchars($lien) . '</div>
+        <div class="info-row">
+            <span class="info-left">Ref. n° : ' . htmlspecialchars($prise['pec_num'] ?? '') . '</span>
+            <span class="info-right">Antananarivo, le</span>
+        </div>
+        <div class="info-row">Date et heure d\'arrivée :</div>
+        <div class="info-row">
+            <span class="info-left">Date et heure de départ :</span>
+            <span class="info-right">Personnel d\'Appui Administratif et Financier</span>
+        </div>
+        <div class="info-row">
+            <span class="info-left">Signature et tampon du Médecin</span>
+            <span class="info-right"></span>
+        </div>
+        <div class="info-row" style="margin-top: 15px;">
+            <span class="info-right signature-name">RAZAFIMANDIMBY Danielle Tolisoa</span>
+        </div>
+    </div>
+    
+    <div class="footer-title">BULLETIN DE PRISE EN CHARGE</div>
+</body>
+</html>';
 
-            // === SECTION 1: RENSEIGNEMENTS CONCERNANT L'AGENT ===
-            $pdf->SetFillColor(255, 255, 255);
-            $pdf->SetDrawColor(0, 0, 0);
-            $pdf->SetLineWidth(0.3);
-
-            // Titre section
-            $pdf->SetFont('Arial', 'BU', 11);
-            $pdf->Cell(0, 7, utf8_decode("RENSEIGNEMENTS CONCERNANT L'AGENT"), 0, 1, 'L');
-            $pdf->Ln(2);
-
-            // Nom et Matricule sur la meme ligne
-            $pdf->SetFont('Arial', '', 10);
-            $pdf->Cell(90, 6, utf8_decode('Nom et Prenoms : ' . ($prise['nom_emp'] ?? '') . ' ' . ($prise['prenom_emp'] ?? '')), 0, 0);
-            $pdf->Cell(0, 6, utf8_decode('Matricule : ' . ($prise['matricule'] ?? '')), 0, 1, 'R');
-
-            // Fonction
-            $pdf->Cell(0, 6, utf8_decode('Fonction : ' . $fonction), 0, 1);
-
-            // Direction
-            $pdf->Cell(0, 6, utf8_decode('Direction / Service : ' . $direction), 0, 1);
-            $pdf->Ln(5);
-
-            // === SECTION 2: RENSEIGNEMENTS CONCERNANT LE MALADE ===
-            $pdf->SetFont('Arial', 'BU', 11);
-            $pdf->Cell(0, 7, utf8_decode('RENSEIGNEMENTS CONCERNANT LE MALADE'), 0, 1, 'L');
-            $pdf->Ln(2);
-
-            $pdf->SetFont('Arial', '', 10);
-            $pdf->Cell(0, 6, utf8_decode('Le malade est l\'agent : '), 0, 1);
-            $pdf->Cell(0, 6, utf8_decode('Noms et prenoms du malade : ' . trim($benefNom)), 0, 1);
-            $pdf->Cell(0, 6, utf8_decode('Lien : ' . $lien), 0, 1);
-            $pdf->Cell(0, 6, utf8_decode('Ref n° : ' . ($prise['pec_num'] ?? '')), 0, 1);
-            $pdf->Cell(0, 6, utf8_decode('Date et heure d\'arrivee : ' . ($prise['pec_date_arrive'] ?? '')), 0, 1);
-            $pdf->Cell(0, 6, utf8_decode('Date et heure de depart : ' . ($prise['pec_date_depart'] ?? '')), 0, 1);
-            $pdf->Ln(15);
-
-            // === SIGNATURE MEDECIN ===
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->Cell(0, 5, utf8_decode('Signature et tampon du Medecin'), 0, 1);
-            $pdf->Ln(20);
-
-            // === FOOTER ===
-            $pdf->SetY(-35);
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->Cell(0, 5, utf8_decode('Antananarivo, le'), 0, 1, 'R');
-            $pdf->Ln(3);
-            $pdf->SetFont('Arial', 'B', 9);
-            $pdf->Cell(0, 5, utf8_decode('Personnel d\'Appui Administratif et Financier'), 0, 1, 'R');
-            $pdf->Ln(10);
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->Cell(0, 5, utf8_decode('RAZAFIMANDIMBY Danielle Tolisoa'), 0, 1, 'R');
-
-            $content = $pdf->Output('S');
+            // Générer le PDF avec DomPDF
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('isHtml5ParserEnabled', true);
+            
+            $dompdf = new \Dompdf\Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            
+            $output = $dompdf->output();
+            
             return $this->response
                 ->setHeader('Content-Type', 'application/pdf')
-                ->setHeader('Content-Disposition', 'inline; filename="prise_en_charge_' . $id . '.pdf"')
-                ->setBody($content);
+                ->setHeader('Content-Disposition', 'inline; filename="bulletin_pec_' . $id . '.pdf"')
+                ->setBody($output);
                 
         } catch (\Exception $e) {
             log_message('error', 'PDF generation error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());

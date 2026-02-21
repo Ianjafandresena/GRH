@@ -2,7 +2,9 @@
     <div class="header">
         <button class="btn-back" (click)="goBack()">← Retour</button>
         <h1>{{ etat()?.etat_num || 'État de Remboursement' }}</h1>
-        <button class="btn-pdf" (click)="downloadPdf()">📄 Télécharger PDF</button>
+        <button class="btn btn-outline-primary" (click)="downloadPdf()">
+            <i class="fas fa-file-pdf"></i> Télécharger PDF
+        </button>
     </div>
 
     @if (loading()) {
@@ -14,7 +16,6 @@
     }
 
     @if (!loading() && etat()) {
-    <!-- État Summary Card -->
     <div class="summary-card">
         <div class="summary-row">
             <div class="summary-item">
@@ -22,13 +23,61 @@
                 <span class="value">{{ etat()?.emp_nom }} {{ etat()?.emp_prenom }}</span>
             </div>
             <div class="summary-item">
-                <span class="label">Nombre de demandes :</span>
-                <span class="value">{{ etat()?.count }}</span>
+                <span class="label">Montant total :</span>
+                <span class="value total">{{ (etat()?.eta_total ?? 0) | number:'1.2-2' }} Ar</span>
             </div>
             <div class="summary-item">
-                <span class="label">Montant total :</span>
-                <span class="value total">{{ etat()?.eta_total | number:'1.2-2' }} Ar</span>
+                <span class="label">Statut :</span>
+                <span class="value">
+                    <span [ngClass]="['status-badge', (etat()?.eta_libelle || 'EN_ATTENTE')]">
+                        {{ etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle ? 'En attente' :
+                        etat()?.eta_libelle === 'MANDATE' ? 'Mandaté' :
+                        etat()?.eta_libelle === 'AGENT_COMPTABLE' ? 'Agent Comptable' : 'Inconnu' }}
+                    </span>
+                </span>
             </div>
+        </div>
+    </div>
+
+    <!-- Workflow Stepper Section -->
+    <div class="workflow-section section">
+        <h3>Suivi de l'État</h3>
+
+        <div class="stepper-container">
+            <div class="step" [ngClass]="getStepStatus(1)">
+                <div class="step-circle">
+                    @if (getStepStatus(1) === 'completed') { <i class="fas fa-check"></i> }
+                    @else { 1 }
+                </div>
+                <span class="step-label">Mandater</span>
+            </div>
+            <div class="step-line" [ngClass]="{'active': getStepStatus(2) !== 'pending'}"></div>
+            <div class="step" [ngClass]="getStepStatus(2)">
+                <div class="step-circle">
+                    @if (getStepStatus(2) === 'completed') { <i class="fas fa-check"></i> }
+                    @else { 2 }
+                </div>
+                <span class="step-label">Agent Comptable</span>
+            </div>
+        </div>
+
+        <div class="workflow-actions">
+            @if (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle) {
+            <button class="btn btn-primary" (click)="openConfirm('mandater')" [disabled]="processing()">
+                <i class="fas fa-file-signature"></i> Mandater l'État
+            </button>
+            }
+            @if (etat()?.eta_libelle === 'MANDATE') {
+            <button class="btn btn-primary compta-btn" (click)="openConfirm('agentComptable')"
+                [disabled]="processing()">
+                <i class="fas fa-user-check"></i> Envoyer à l'Agent Comptable
+            </button>
+            }
+            @if (etat()?.eta_libelle === 'AGENT_COMPTABLE') {
+            <div class="final-status">
+                <i class="fas fa-check-circle"></i> État entièrement traité par l'Agent Comptable
+            </div>
+            }
         </div>
     </div>
 
@@ -68,8 +117,9 @@
                             </span>
                         </td>
                         <td>
-                            <button class="btn-icon" (click)="viewDemande(demande.rem_code)" title="Voir détails">
-                                👁️
+                            <button class="btn btn-sm btn-outline" (click)="viewDemande(demande.rem_code)"
+                                title="Voir détails">
+                                <i class="fas fa-eye"></i>
                             </button>
                         </td>
                     </tr>
@@ -78,6 +128,27 @@
             </table>
         </div>
         }
+    </div>
+    }
+
+    <!-- Confirmation Modal -->
+    @if (showConfirmModal()) {
+    <div class="modal-overlay" (click)="closeConfirm()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>{{ confirmTitle }}</h3>
+                <button class="modal-close" (click)="closeConfirm()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>{{ confirmMessage }}</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="closeConfirm()">Annuler</button>
+                <button class="btn btn-primary" (click)="onConfirm()">
+                    Confirmer
+                </button>
+            </div>
+        </div>
     </div>
     }
 </div>

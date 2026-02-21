@@ -1,4 +1,4 @@
-// Variables
+﻿// Variables
 $primary: #00A3FF;
 $secondary: #6c757d;
 $success: #28a745;
@@ -139,13 +139,15 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
     }
 
     &.btn-outline {
-        background-color: transparent;
-        border-color: #e2e8f0;
+        background: transparent;
+        border: 1.5px solid #e2e8f0;
         color: $dark;
 
         &:hover {
-            background-color: $light;
-            border-color: $dark;
+            background: rgba(#00A3FF, 0.05);
+            border-color: #00A3FF;
+            color: #00A3FF;
+            transform: translateY(-1px);
         }
     }
 
@@ -165,6 +167,12 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
         svg {
             fill: $secondary;
             transition: fill 0.2s;
+        }
+
+        i {
+            color: $primary;
+            transition: color 0.2s;
+            font-size: 1.1rem;
         }
 
         &:hover {
@@ -190,49 +198,52 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
 
 
 // Table Styling
-.table-responsive {
-    overflow-x: auto;
+.table-container {
+    background: $white;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-table {
+table[mat-table] {
     width: 100%;
-    border-collapse: collapse;
+    background: transparent;
 
-    thead {
+    .mat-mdc-header-row {
         background-color: #f8fafc;
+        height: 56px;
+    }
 
-        th {
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid #e2e8f0;
+    .mat-mdc-header-cell {
+        padding: 0 1.5rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .mat-mdc-row {
+        height: 64px;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid #f1f5f9;
+
+        &:hover {
+            background-color: #f8fafc;
         }
     }
 
-    tbody {
-        tr {
-            border-bottom: 1px solid #f1f5f9;
-            transition: background-color 0.2s;
-
-            &:hover {
-                background-color: #f8fafc;
-            }
-
-            &.clickable-row {
-                cursor: pointer;
-            }
-
-            td {
-                padding: 1rem 1.5rem;
-                font-size: 0.95rem;
-                color: $dark;
-                vertical-align: middle;
-            }
-        }
+    .mat-mdc-cell {
+        padding: 0 1.5rem;
+        font-size: 0.95rem;
+        color: $dark;
+        vertical-align: middle;
     }
+}
+
+.mat-mdc-paginator {
+    background: transparent;
+    border-top: 1px solid #f1f5f9;
 }
 
 // Cells
@@ -365,74 +376,78 @@ table {
             }
         }
     }
-}// ========== BADGES TYPE D'ABSENCE ==========
+}
+
+// ========== BADGES TYPE D'ABSENCE ==========
 .badge-conge {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  font-weight: 600;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
 }
 
 .badge-permission {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  font-weight: 600;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-}
-// ========== NOTIFICATION DE SUCCÈS (VERT) ==========
-.success-notification {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  animation: slideDown 0.3s ease-out;
-  min-width: 400px;
-
-  i {
-    font-size: 1.5rem;
-  }
-
-  span {
-    flex: 1;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
-  .close-btn {
-    background: transparent;
-    border: none;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+}
 
-    &:hover {
-      opacity: 1;
+// ========== NOTIFICATION DE SUCCÃˆS (VERT) ==========
+.success-notification {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: slideDown 0.3s ease-out;
+    min-width: 400px;
+
+    i {
+        font-size: 1.5rem;
     }
-  }
+
+    span {
+        flex: 1;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .close-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -20px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
 }

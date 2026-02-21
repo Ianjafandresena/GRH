@@ -1,111 +1,163 @@
 <div class="page-container">
-    <div class="page-header">
-        <button class="btn btn-secondary" (click)="goBack()">← Retour</button>
-        <h1>Demande #{{ demande?.rem_code }}</h1>
-    </div>
-
-    <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
-    <div class="loading" *ngIf="loading">Chargement...</div>
-
-    <div class="detail-card" *ngIf="demande && !loading">
-        <!-- En-tête -->
-        <div class="header-info">
-            <div class="num-demande">{{ demande.rem_num || 'N°---' }}</div>
-            <span class="badge badge-type" *ngIf="demande.rem_is_centre" style="background: #17a2b8;">🏥 Centre</span>
-            <span class="badge badge-type" *ngIf="!demande.rem_is_centre" style="background: #6c757d;">👤 Agent</span>
-            <span class="badge" [class]="'badge-' + (demande.eta_libelle || 'default')">
-                {{ demande.eta_libelle || 'N/A' }}
-            </span>
-        </div>
-
-        <!-- Infos Agent -->
-        <div class="section">
-            <h3>Agent demandeur</h3>
-            <div class="info-row"><span class="label">Nom:</span><span>{{ demande.nom_emp }} {{ demande.prenom_emp
-                    }}</span></div>
-            <div class="info-row"><span class="label">Matricule:</span><span>{{ demande.matricule }}</span></div>
-            <div class="info-row"><span class="label">Direction:</span><span>{{ demande.direction }}</span></div>
-            <div class="info-row"><span class="label">Fonction:</span><span>{{ demande.fonction }}</span></div>
-        </div>
-
-        <!-- Infos Bénéficiaire/Malade -->
-        <div class="section">
-            <h3>Bénéficiaire</h3>
-            <div class="info-row"><span class="label">N° PEC:</span><span>{{ demande.pec_num || '-' }}</span></div>
-            <div class="info-row"><span class="label">Nom:</span><span>{{ demande.beneficiaire_nom || demande.nom_malade
-                    || '-' }}</span></div>
-            <div class="info-row"><span class="label">Lien:</span><span>{{ demande.beneficiaire_lien ||
-                    demande.lien_malade || '-' }}</span></div>
-            <div class="info-row"><span class="label">Centre de santé:</span><span>{{ demande.cen_nom || '-' }}</span>
+    <div class="card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>Détail Demande</h1>
+                <p class="subtitle">{{ demande?.rem_num || 'N°---' }}</p>
             </div>
+            <button class="btn btn-outline btn-sm" (click)="goBack()">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
         </div>
 
-        <!-- Montant -->
-        <div class="section">
-            <h3>Montant</h3>
-            <div class="info-row">
-                <span class="label">Demandé:</span>
-                <span class="amount">{{ demande.rem_montant | number:'1.2-2' }} Ar</span>
+        <div class="alert alert-danger" *ngIf="errorMsg">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ errorMsg }}
+        </div>
+        <div class="loading" *ngIf="loading">Chargement...</div>
+
+        <div class="detail-content" *ngIf="demande && !loading">
+            <!-- En-tête info -->
+            <div class="header-badges">
+                <span class="type-badge" [class.agent]="!demande.rem_is_centre" [class.centre]="demande.rem_is_centre">
+                    <i [class]="demande.rem_is_centre ? 'fas fa-hospital' : 'fas fa-user'"></i>
+                    {{ demande.rem_is_centre ? 'Centre' : 'Agent' }}
+                </span>
+                <span class="status-badge" [class]="'status-' + (demande.eta_libelle || 'default')">
+                    {{ demande.eta_libelle || 'N/A' }}
+                </span>
             </div>
-            <div class="info-row" *ngIf="demande.montant_valide">
-                <span class="label">Validé:</span>
-                <span class="amount">{{ demande.montant_valide | number:'1.2-2' }} Ar</span>
+
+            <!-- Infos Agent -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-user"></i> Agent demandeur</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Nom:</span>
+                        <span class="value">{{ demande.nom_emp }} {{ demande.prenom_emp }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Matricule:</span>
+                        <span class="value">{{ demande.matricule }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Direction:</span>
+                        <span class="value">{{ demande.direction }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Fonction:</span>
+                        <span class="value">{{ demande.fonction }}</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Pièces fournies -->
-        <div class="section">
-            <h3>Pièces fournies</h3>
-            <div class="pieces-list">
-                <span class="piece" [class.checked]="demande.has_ordonnance">☐ Ordonnance</span>
-                <span class="piece" [class.checked]="demande.has_facture">☐ Facture(s)</span>
-                <span class="piece" [class.checked]="demande.has_prise_en_charge">☐ Prise en charge</span>
+            <!-- Infos Bénéficiaire/Malade -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-user-injured"></i> Bénéficiaire</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">N° PEC:</span>
+                        <span class="value">{{ demande.pec_num || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Nom:</span>
+                        <span class="value">{{ demande.beneficiaire_nom || demande.nom_malade || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Lien:</span>
+                        <span class="value">{{ demande.beneficiaire_lien || demande.lien_malade || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Centre de santé:</span>
+                        <span class="value">{{ demande.cen_nom || '-' }}</span>
+                    </div>
+                </div>
             </div>
-            <div class="info-row" *ngIf="demande.pec_reference">
-                <span class="label">Réf PEC:</span><span>{{ demande.pec_reference }}</span>
+
+            <!-- Montant -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-money-bill-wave"></i> Montant</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Demandé:</span>
+                        <span class="value amount">{{ demande.rem_montant | number:'1.2-2' }} Ar</span>
+                    </div>
+                    <div class="info-item" *ngIf="demande.montant_valide">
+                        <span class="label">Validé:</span>
+                        <span class="value amount">{{ demande.montant_valide | number:'1.2-2' }} Ar</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Historique -->
-        <div class="section" *ngIf="historique.length">
-            <h3>Historique des validations</h3>
-            <ul class="history-list">
-                <li *ngFor="let h of historique">{{ h.sin_dem_code }} - {{ h.date_ }}</li>
-            </ul>
-        </div>
+            <!-- Pièces fournies -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-paperclip"></i> Pièces fournies</h3>
+                <div class="pieces-list">
+                    <span class="piece-item" [class.checked]="demande.has_ordonnance">
+                        <i [class]="demande.has_ordonnance ? 'fas fa-check-square' : 'far fa-square'"></i>
+                        Ordonnance
+                    </span>
+                    <span class="piece-item" [class.checked]="demande.has_facture">
+                        <i [class]="demande.has_facture ? 'fas fa-check-square' : 'far fa-square'"></i>
+                        Facture(s)
+                    </span>
+                    <span class="piece-item" [class.checked]="demande.has_prise_en_charge">
+                        <i [class]="demande.has_prise_en_charge ? 'fas fa-check-square' : 'far fa-square'"></i>
+                        Prise en charge
+                    </span>
+                </div>
+                <div class="info-item" *ngIf="demande.pec_reference">
+                    <span class="label">Réf PEC:</span>
+                    <span class="value">{{ demande.pec_reference }}</span>
+                </div>
+            </div>
 
-        <!-- Rejet -->
-        <div class="section rejet" *ngIf="demande.motif_rejet">
-            <h3>Motif de rejet</h3>
-            <p>{{ demande.motif_rejet }}</p>
-        </div>
+            <!-- Historique -->
+            <div class="info-section" *ngIf="historique.length">
+                <h3 class="section-title"><i class="fas fa-history"></i> Historique des validations</h3>
+                <ul class="history-list">
+                    <li *ngFor="let h of historique">{{ h.sin_dem_code }} - {{ h.date_ }}</li>
+                </ul>
+            </div>
 
-        <!-- Actions selon état -->
-        <div class="actions">
-            <button class="btn btn-success" *ngIf="demande.eta_libelle === 'SOUMIS'" (click)="validerRRH()">
-                ✓ Valider RRH
-            </button>
-            <button class="btn btn-success" *ngIf="demande.eta_libelle === 'VALIDE_RRH'" (click)="validerDAAF()">
-                ✓ Valider DAAF
-            </button>
-            <button class="btn btn-primary" *ngIf="demande.eta_libelle === 'VALIDE_DAAF'" (click)="engager()">
-                📋 Engager
-            </button>
-            <button class="btn btn-success" *ngIf="demande.eta_libelle === 'ENGAGE'" (click)="payer()">
-                💰 Payer
-            </button>
+            <!-- Rejet -->
+            <div class="info-section rejet-section" *ngIf="demande.motif_rejet">
+                <h3 class="section-title"><i class="fas fa-times-circle"></i> Motif de rejet</h3>
+                <p>{{ demande.motif_rejet }}</p>
+            </div>
 
-            <button class="btn btn-danger" *ngIf="['SOUMIS','VALIDE_RRH','VALIDE_DAAF'].includes(demande.eta_libelle)"
-                (click)="rejeter()">
-                ✗ Rejeter
-            </button>
+            <!-- Actions selon état -->
+            <div class="form-footer">
+                <div class="actions">
+                    <button class="btn btn-success" *ngIf="demande.eta_libelle === 'SOUMIS'" (click)="validerRRH()">
+                        <i class="fas fa-check"></i> Valider RRH
+                    </button>
+                    <button class="btn btn-success" *ngIf="demande.eta_libelle === 'VALIDE_RRH'"
+                        (click)="validerDAAF()">
+                        <i class="fas fa-check"></i> Valider DAAF
+                    </button>
+                    <button class="btn btn-primary" *ngIf="demande.eta_libelle === 'VALIDE_DAAF'" (click)="engager()">
+                        <i class="fas fa-file-contract"></i> Engager
+                    </button>
+                    <button class="btn btn-success" *ngIf="demande.eta_libelle === 'ENGAGE'" (click)="payer()">
+                        <i class="fas fa-money-check-alt"></i> Payer
+                    </button>
 
-            <button class="btn btn-primary" *ngIf="demande.rem_status !== true && demande.rem_status !== 't'"
-                (click)="traiter()">
-                📋 Traiter
-            </button>
+                    <button class="btn btn-danger"
+                        *ngIf="['SOUMIS','VALIDE_RRH','VALIDE_DAAF'].includes(demande.eta_libelle)" (click)="rejeter()">
+                        <i class="fas fa-times"></i> Rejeter
+                    </button>
 
-            <button class="btn btn-secondary" (click)="downloadPdf()">📄 PDF</button>
+                    <button class="btn btn-primary" *ngIf="demande.rem_status !== true && demande.rem_status !== 't'"
+                        (click)="traiter()">
+                        <i class="fas fa-tasks"></i> Traiter
+                    </button>
+
+                    <button class="btn btn-secondary" (click)="downloadPdf()">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

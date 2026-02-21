@@ -12,4 +12,7 @@ export interface Employee {
   dir_nom?: string;
   dir_abreviation?: string;
   affec_date_debut?: string;
+  is_available?: boolean;
+  absence_type?: 'conge' | 'permission';
+  absence_end?: string;
 }

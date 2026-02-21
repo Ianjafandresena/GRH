@@ -71,7 +71,7 @@ export class LayoutComponent implements OnInit {
   toggleSidebar() { this.isCollapsed = !this.isCollapsed; }
 
   ngOnInit() {
-    // ➕ Initialiser chatbot avec emp_code de l'utilisateur connecté
+    // Initialiser chatbot avec emp_code de l'utilisateur connecté
     const empCode = localStorage.getItem('emp_code');
     if (empCode) {
       this.chatbotService.setEmployee(parseInt(empCode));

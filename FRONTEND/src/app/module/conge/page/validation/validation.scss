@@ -91,41 +91,52 @@ $dark: #1f2937;
     }
 }
 
-.table-responsive {
-    overflow-x: auto;
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-table {
+table[mat-table] {
     width: 100%;
-    border-collapse: collapse;
+    background: transparent;
 
-    th,
-    td {
-        padding: 0.75rem 1rem;
-        text-align: left;
+    .mat-mdc-header-row {
+        background-color: #f8fafc;
+        height: 56px;
     }
 
-    thead {
-        background: #f8fafc;
-
-        th {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: $secondary;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 2px solid #e5e7eb;
-        }
+    .mat-mdc-header-cell {
+        padding: 0 1rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: $secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #e5e7eb;
     }
 
-    tbody tr {
+    .mat-mdc-row {
+        height: 64px;
+        transition: background-color 0.2s;
         border-bottom: 1px solid #f1f5f9;
-        transition: background 0.2s;
 
         &:hover {
-            background: #f8fafc;
+            background-color: #f8fafc;
         }
     }
+
+    .mat-mdc-cell {
+        padding: 0 1rem;
+        font-size: 0.875rem;
+        color: $dark;
+        vertical-align: middle;
+    }
+}
+
+.mat-mdc-paginator {
+    background: transparent;
+    border-top: 1px solid #f1f5f9;
 }
 
 .emp-name {

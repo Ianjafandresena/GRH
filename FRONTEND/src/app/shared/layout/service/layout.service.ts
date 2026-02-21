@@ -13,6 +13,9 @@ export class LayoutService {
     private successMessageSubject = new BehaviorSubject<string | null>(null);
     public successMessage$ = this.successMessageSubject.asObservable();
 
+    private errorMessageSubject = new BehaviorSubject<string | null>(null);
+    public errorMessage$ = this.errorMessageSubject.asObservable();
+
     constructor() { }
 
     setTitle(title: string) {
@@ -22,14 +25,17 @@ export class LayoutService {
     // ➕ NOUVEAU: Afficher message de succès
     showSuccessMessage(message: string) {
         this.successMessageSubject.next(message);
-        // Auto-clear après 5 secondes
-        setTimeout(() => {
-            this.successMessageSubject.next(null);
-        }, 5000);
+        setTimeout(() => this.successMessageSubject.next(null), 5000);
+    }
+
+    showErrorMessage(message: string) {
+        this.errorMessageSubject.next(message);
+        setTimeout(() => this.errorMessageSubject.next(null), 5000);
     }
 
     // Effacer manuellement
-    clearSuccessMessage() {
+    clearMessages() {
         this.successMessageSubject.next(null);
+        this.errorMessageSubject.next(null);
     }
 }

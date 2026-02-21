@@ -2,7 +2,7 @@
   <div class="card form-card">
     <div class="card-header-internal">
       <div class="title-group">
-        <h1>Nouvelle Demande de Congé</h1>
+        <h1>{{ absenceType === 'conge' ? 'Nouvelle Demande de Congé' : 'Nouvelle Demande de Permission' }}</h1>
         <!-- <p class="subtitle">Remplissez le formulaire</p> -->
       </div>
       <button class="btn btn-outline btn-sm" routerLink="/conge">
@@ -13,11 +13,11 @@
     <!-- ========== TOGGLE TYPE D'ABSENCE (Congé/Permission) ========== -->
     <div class="mode-toggle">
       <button type="button" [class.active]="absenceType === 'conge'" (click)="absenceType = 'conge'; onTypeChange()">
-        📅 Congé
+        <i class="fas fa-calendar-alt"></i> Congé
       </button>
       <button type="button" [class.active]="absenceType === 'permission'"
         (click)="absenceType = 'permission'; onTypeChange()">
-        ⏰ Permission
+        <i class="fas fa-clock"></i> Permission
       </button>
     </div>
 
@@ -161,9 +161,6 @@
       </div>
 
       <div class="form-footer">
-        <div *ngIf="errorMsg" class="alert-error">
-          <i class="fas fa-exclamation-circle"></i> {{ errorMsg }}
-        </div>
         <div class="actions">
           <button type="button" class="btn btn-secondary" routerLink="/conge">Annuler</button>
           <button type="submit" class="btn btn-primary" [disabled]="loading || congeForm.invalid">
@@ -234,9 +231,6 @@
 
       <!-- Actions -->
       <div class="form-footer">
-        <div *ngIf="permissionErrorMsg" class="alert-error">
-          <i class="fas fa-exclamation-circle"></i> {{ permissionErrorMsg }}
-        </div>
         <div class="actions">
           <button type="button" class="btn btn-secondary" routerLink="/conge">Annuler</button>
           <button type="submit" class="btn btn-primary" [disabled]="permissionLoading || permissionForm.invalid">

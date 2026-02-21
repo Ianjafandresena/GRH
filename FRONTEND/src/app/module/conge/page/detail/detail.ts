@@ -43,7 +43,7 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
   // Map removed - dynamic lookup now
 
   ngOnInit() {
-    this.layoutService.setTitle('Gestion des Congés');
+    this.layoutService.setTitle('Gestion des Absences');
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
       this.errorMsg = 'Identifiant invalide';
@@ -114,10 +114,19 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
    * A leave can be interrupted if:
    * - It is fully validated (cng_status = true)
    * - It is not already interrupted
+   * - The leave end date has not passed
    */
   canInterrupt(): boolean {
     if (!this.data?.conge || this.interruptionData) return false;
-    return this.isValidated();
+    if (!this.isValidated()) return false;
+
+    // Vérifier que le congé n'est pas terminé
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(this.data.conge.cng_fin);
+    if (endDate < today) return false;
+
+    return true;
   }
 
   goToInterruption() {

@@ -182,6 +182,63 @@ class CongeController extends ResourceController
         return $this->respond($allConges);
     }
 
+    /**
+     * GET /api/conge/by-date-range
+     * Récupère les congés dans une plage de dates (pour vue calendrier)
+     * Query params: start_date, end_date, direction (optionnel), service (optionnel)
+     */
+    public function getByDateRange()
+    {
+        try {
+            $startDate = $this->request->getGet('start_date');
+            $endDate = $this->request->getGet('end_date');
+            $direction = $this->request->getGet('direction');
+            $service = $this->request->getGet('service');
+
+            if (!$startDate || !$endDate) {
+                return $this->fail('start_date et end_date sont requis');
+            }
+
+            log_message('info', "[CALENDAR API] Fetching congés from $startDate to $endDate");
+
+            $db = \Config\Database::connect();
+
+            $builder = $db->table('conge')
+                ->select('conge.*, 
+                          employee.emp_nom, 
+                          employee.emp_prenom,
+                          employee.emp_imarmp,
+                          type_conge.typ_appelation as tp_cng_nom,
+                          type_conge.typ_couleur as tp_cng_couleur,
+                          direction.dir_nom')
+                ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+                ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
+                ->join('affectation', 'affectation.emp_code = employee.emp_code AND affectation.aff_date_fin IS NULL', 'left')
+                ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
+                ->where('conge.cng_status', true) // Seulement les validés
+                ->groupStart()
+                    ->where('conge.cng_debut <=', $endDate)
+                    ->where('conge.cng_fin >=', $startDate)
+                ->groupEnd();
+
+            // Filtres optionnels
+            if ($direction) {
+                $builder->where('direction.dir_code', $direction);
+            }
+
+            $conges = $builder->get()->getResultArray();
+
+            log_message('info', "[CALENDAR API] Found " . count($conges) . " congés");
+
+            $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
+            return $this->respond($conges);
+        } catch (\Exception $e) {
+            log_message('error', "[CALENDAR API] Error: " . $e->getMessage());
+            log_message('error', "[CALENDAR API] Stack trace: " . $e->getTraceAsString());
+            return $this->fail('Erreur serveur: ' . $e->getMessage(), 500);
+        }
+    }
+
     public function getConge($id = null)
     {
         $congeModel = new CongeModel();

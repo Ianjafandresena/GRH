@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { DashboardService } from '../../service/dashboard.service';
 import { LayoutService } from '../../../../shared/layout/service/layout.service';
 
@@ -13,14 +13,12 @@ import { LayoutService } from '../../../../shared/layout/service/layout.service'
   styleUrls: ['./index.scss']
 })
 export class HomeComponent implements OnInit {
-  private readonly router = inject(Router);
-  private readonly dashboardService = inject(DashboardService);
   private readonly layoutService = inject(LayoutService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly dashboardService = inject(DashboardService);
 
-  // Admin user data
   admin: any = null;
 
-  // Statistics data
   stats = {
     totalEmployees: 0,
     employeesActive: 0,
@@ -33,7 +31,6 @@ export class HomeComponent implements OnInit {
     permissionsChange: ''
   };
 
-  // Chart Data
   chartLabels: string[] = [];
   chartData = { conges: [] as number[], permissions: [] as number[] };
   congePath = '';
@@ -41,18 +38,15 @@ export class HomeComponent implements OnInit {
   permissionPath = '';
   permissionAreaPath = '';
 
-  // Chart dimensions (viewBox 0 0 400 200)
   width = 400;
   height = 200;
   private maxVal = 10;
 
-  // Tooltip State
   hoveredIndex = -1;
   tooltipX = 0;
   tooltipY = 0;
   tooltipData = { label: '', conges: 0, permissions: 0 };
 
-  // New Signals for widgets
   employeesOnLeave = signal<any[]>([]);
   pendingRequests = signal<any>({ count: 0, total: 0 });
   recentActivity = signal<any[]>([]);
@@ -61,230 +55,134 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.layoutService.setTitle('Tableau de Bord');
 
-    // Load admin from session
     const adminStr = sessionStorage.getItem('admin');
     if (adminStr) {
       this.admin = JSON.parse(adminStr);
     }
 
-    this.loadChartData();
-    this.loadStats();
-    this.loadEmployeesOnLeave();
-    this.loadPendingRequests();
-    this.loadRecentActivity();
-    this.loadDonutData();
+    this.loadData();
   }
 
-  loadStats() {
-    this.dashboardService.getDashboardStats().subscribe({
-      next: (stats) => {
-        // Update Congés card
-        this.stats.congesEnCours = stats.congesEnCours;
-
-        const evoConges = stats.congesEvolution;
-        const arrowConges = evoConges >= 0 ? '↑' : '↓';
-        const signConges = evoConges > 0 ? '+' : '';
-        this.stats.congesChange = `${arrowConges} ${signConges}${evoConges}% vs mois dernier`;
-
-        // Update Employees card
-        this.stats.totalEmployees = stats.totalEmployees;
-        this.stats.employeesActive = stats.activeEmployees;
-
-        const evoEmp = stats.employeesEvolution;
-        const arrowEmp = evoEmp >= 0 ? '↑' : '↓';
-        const signEmp = evoEmp > 0 ? '+' : '';
-        this.stats.employeesChange = `${arrowEmp} ${signEmp}${evoEmp}% vs mois dernier`;
-      },
-      error: (err) => console.error('Failed to load dashboard stats', err)
-    });
+  private loadData() {
+    this.dashboardService.getDashboardStats().subscribe(stats => this.processStats(stats));
+    this.dashboardService.getEvolutionStats().subscribe(evo => this.processChartData(evo));
+    this.dashboardService.getEmployeesOnLeave().subscribe(data => this.employeesOnLeave.set(data));
+    this.dashboardService.getPendingReimbursements().subscribe(data => this.pendingRequests.set(data));
+    this.dashboardService.getRecentActivity().subscribe(data => this.recentActivity.set(data));
+    this.dashboardService.getReimbursementDistribution().subscribe(data => this.donutData.set(data));
   }
 
-  loadChartData() {
-    this.dashboardService.getEvolutionStats().subscribe({
-      next: (data) => {
-        this.chartLabels = data.labels;
-        this.chartData.conges = data.conges;
-        this.chartData.permissions = data.permissions;
+  private processStats(stats: any) {
+    if (!stats) return;
 
-        // Calculate max value for scaling (Dynamic & Proportional)
-        const allValues = [...data.conges, ...data.permissions];
-        const rawMax = Math.max(...allValues, 0);
+    this.stats.congesEnCours = stats.congesEnCours;
+    const evoConges = stats.congesEvolution || 0;
+    const arrowConges = evoConges >= 0 ? '↑' : '↓';
+    const signConges = evoConges > 0 ? '+' : '';
+    this.stats.congesChange = `${arrowConges} ${signConges}${evoConges}% vs mois dernier`;
 
-        // Determine a nice max value (multiple of 4 for clean steps)
-        // If minimal data, default to 10 maybe? User said "max 10 if data < 15".
-        // Let's use a minimum of 4 to avoid flat 0.
-        let targetMax = rawMax > 0 ? Math.ceil(rawMax / 4) * 4 : 4;
-
-        // Extra buffer only if values are high? No, user wants close fit. 
-        // If max is 14, ceil(14/4)*4 = 16. Steps: 0, 4, 8, 12, 16. Perfect.
-        // If max is 5, ceil(5/4)*4 = 8. Steps: 0, 2, 4, 6, 8.
-
-        this.maxVal = targetMax;
-
-        // Generate ticks
-        this.yAxisTicks = [];
-        for (let i = 0; i <= 4; i++) {
-          const val = (targetMax / 4) * i;
-          // y position for this value
-          const y = this.getY(val);
-          // We want y lines at 0, 25%, 50%, 75%, 100% of height?
-          // Since maxVal corresponds to height (y=0), and 0 to y=height.
-          // val=0 -> y=200. val=max -> y=0.
-          this.yAxisTicks.push({ value: val, y: y });
-        }
-
-        // Generate paths
-        this.congePath = this.getSvgPath(data.conges, false);
-        this.congeAreaPath = this.getSvgPath(data.conges, true);
-        this.permissionPath = this.getSvgPath(data.permissions, false);
-        this.permissionAreaPath = this.getSvgPath(data.permissions, true);
-      },
-      error: (err) => console.error('Failed to load chart data', err)
-    });
+    this.stats.totalEmployees = stats.totalEmployees;
+    this.stats.employeesActive = stats.activeEmployees;
+    const evoEmp = stats.employeesEvolution || 0;
+    const arrowEmp = evoEmp >= 0 ? '↑' : '↓';
+    const signEmp = evoEmp > 0 ? '+' : '';
+    this.stats.employeesChange = `${arrowEmp} ${signEmp}${evoEmp}% vs mois dernier`;
   }
 
-  // Ticks for the template
+  private processChartData(data: any) {
+    if (!data || !data.labels) return;
+    this.chartLabels = data.labels;
+    this.chartData.conges = data.conges || [];
+    this.chartData.permissions = data.permissions || [];
+
+    const allValues = [...this.chartData.conges, ...this.chartData.permissions];
+    const rawMax = allValues.length > 0 ? Math.max(...allValues, 0) : 0;
+    let targetMax = rawMax > 0 ? Math.ceil(rawMax / 4) * 4 : 4;
+    if (rawMax >= targetMax) targetMax += 4;
+    this.maxVal = targetMax;
+
+    this.yAxisTicks = [];
+    for (let i = 0; i <= 4; i++) {
+      const val = (targetMax / 4) * i;
+      this.yAxisTicks.push({ value: val, y: this.getY(val) });
+    }
+
+    this.congePath = this.getSvgPath(this.chartData.conges, false);
+    this.congeAreaPath = this.getSvgPath(this.chartData.conges, true);
+    this.permissionPath = this.getSvgPath(this.chartData.permissions, false);
+    this.permissionAreaPath = this.getSvgPath(this.chartData.permissions, true);
+  }
+
   yAxisTicks: { value: number, y: number }[] = [];
 
-  // Helper to get X position for a given index
   getX(index: number): number {
     if (this.chartLabels.length <= 1) return 0;
     return index * (this.width / (this.chartLabels.length - 1));
   }
 
-  // Helper to get Y position for a given value
   getY(value: number): number {
     return this.height - (value / this.maxVal * this.height);
   }
 
   getSvgPath(data: number[], isArea: boolean): string {
     if (!data || data.length === 0) return '';
-
-    const points = data.map((val, i) => {
-      return [this.getX(i), this.getY(val)];
-    });
-
+    const points = data.map((val, i) => [this.getX(i), this.getY(val)]);
     let path = `M ${points[0][0]} ${points[0][1]}`;
-
-    // Cubic Bezier Smoothing
     for (let i = 0; i < points.length - 1; i++) {
       const p0 = points[i === 0 ? i : i - 1];
       const p1 = points[i];
       const p2 = points[i + 1];
       const p3 = points[i + 2] || p2;
-
       const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
       const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
-
       const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
       const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
-
       path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
     }
-
     if (isArea) {
       path += ` L ${this.width} ${this.height} L 0 ${this.height} Z`;
     }
-
     return path;
   }
 
   onChartMouseMove(event: MouseEvent) {
     const svgElement = event.currentTarget as SVGSVGElement;
     const rect = svgElement.getBoundingClientRect();
-
-    // ViewBox dimensions (matches HTML)
     const viewBoxWidth = 440;
     const viewBoxHeight = 220;
-    const graphOriginX = 30; // The translation
-    const graphWidth = 400; // The width used in getX/calculations
-
-    // Scale factors
+    const graphOriginX = 30;
+    const graphWidth = 400;
     const scaleX = viewBoxWidth / rect.width;
     const scaleY = viewBoxHeight / rect.height;
-
-    // Mouse position in SVG coordinates
     const clickX = (event.clientX - rect.left) * scaleX;
-
-    // Position relative to the graph group
     const graphX = clickX - graphOriginX;
-
     const segmentWidth = graphWidth / (this.chartLabels.length - 1);
     const index = Math.round(graphX / segmentWidth);
 
     if (index >= 0 && index < this.chartLabels.length) {
       this.hoveredIndex = index;
-
-      // Tooltip positioning
-      // Snap to the data point's X (in pixels relative to container)
-      const pointSvgX = this.getX(index) + graphOriginX; // In viewBox coords
-      const pointPixelX = (pointSvgX / viewBoxWidth) * rect.width;
-
-      this.tooltipX = pointPixelX;
-
-      // Y position: find heightest point (min Y)
+      const pointSvgX = this.getX(index) + graphOriginX;
+      this.tooltipX = (pointSvgX / viewBoxWidth) * rect.width;
       const val1 = this.chartData.conges[index] || 0;
       const val2 = this.chartData.permissions[index] || 0;
-      const svgY = Math.min(this.getY(val1), this.getY(val2)); // In viewBox coords
-      const pointPixelY = (svgY / viewBoxHeight) * rect.height;
-
-      this.tooltipY = pointPixelY - 15; // Offset
-
-      this.tooltipData = {
-        label: this.chartLabels[index],
-        conges: val1,
-        permissions: val2
-      };
+      const svgY = Math.min(this.getY(val1), this.getY(val2));
+      this.tooltipY = (svgY / viewBoxHeight) * rect.height - 15;
+      this.tooltipData = { label: this.chartLabels[index], conges: val1, permissions: val2 };
     } else {
       this.hoveredIndex = -1;
     }
   }
 
-  onChartMouseLeave() {
-    this.hoveredIndex = -1;
-  }
-
-  // Widget data loading methods
-  loadEmployeesOnLeave() {
-    this.dashboardService.getEmployeesOnLeave().subscribe({
-      next: (data) => this.employeesOnLeave.set(data),
-      error: (err) => console.error('Erreur chargement employés en congé', err)
-    });
-  }
-
-  loadPendingRequests() {
-    this.dashboardService.getPendingReimbursements().subscribe({
-      next: (data) => this.pendingRequests.set(data),
-      error: (err) => console.error('Erreur chargement demandes en attente', err)
-    });
-  }
-
-  loadRecentActivity() {
-    this.dashboardService.getRecentActivity().subscribe({
-      next: (data) => this.recentActivity.set(data),
-      error: (err) => console.error('Erreur chargement activité récente', err)
-    });
-  }
-
-  loadDonutData() {
-    this.dashboardService.getReimbursementDistribution().subscribe({
-      next: (data) => this.donutData.set(data),
-      error: (err) => console.error('Erreur chargement répartition remboursements', err)
-    });
-  }
-
-  // Helper methods for templates
-  activityIcon(type: string): string {
-    return type === 'conge' ? 'event_available' : 'local_hospital';
-  }
+  onChartMouseLeave() { this.hoveredIndex = -1; }
+  activityIcon(type: string): string { return type === 'conge' ? 'event_available' : 'local_hospital'; }
 
   formatTime(dateStr: string): string {
+    if (!dateStr) return 'Récemment';
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
     if (diffHrs < 1) return 'Il y a quelques minutes';
     if (diffHrs < 24) return `Il y a ${diffHrs} heure${diffHrs > 1 ? 's' : ''}`;
     if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;

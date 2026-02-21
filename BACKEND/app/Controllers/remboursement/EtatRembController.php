@@ -6,6 +6,8 @@ use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\remboursement\EtatRembModel;
 use App\Models\remboursement\DemandeRembModel;
+use App\Models\remboursement\EngagementModel;
+use App\Services\EmailService;
 
 class EtatRembController extends ResourceController
 {
@@ -18,21 +20,81 @@ class EtatRembController extends ResourceController
     {
         $db = \Config\Database::connect();
         
+        // Sélectionner les états avec les infos de base de l'agent
         $etats = $db->table('etat_remb')
             ->select('etat_remb.*, 
                       employee.emp_nom AS nom_emp, 
                       employee.emp_prenom AS prenom_emp, 
-                      employee.emp_imarmp AS matricule,
-                      COUNT(demande_remb.rem_code) AS nb_demandes')
+                      employee.emp_imarmp AS matricule')
             ->join('employee', 'employee.emp_code = etat_remb.emp_code', 'left')
-            ->join('demande_remb', 'demande_remb.eta_code = etat_remb.eta_code', 'left')
-            ->groupBy('etat_remb.eta_code, employee.emp_nom, employee.emp_prenom, employee.emp_imarmp')
             ->orderBy('etat_remb.eta_date', 'DESC')
             ->get()
             ->getResultArray();
 
-        $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
+        // Récupérer les métadonnées (nb demandes, centre) pour chaque état
+        foreach ($etats as &$etat) {
+            $etat['nb_demandes'] = $db->table('demande_remb')
+                ->where('eta_code', $etat['eta_code'])
+                ->countAllResults();
+            
+            // On récupère le centre associé (via la première demande liée)
+            $demandeInfo = $db->table('demande_remb')
+                ->select('centre_sante.cen_code, centre_sante.cen_nom')
+                ->join('centre_sante', 'centre_sante.cen_code = demande_remb.cen_code', 'left')
+                ->where('eta_code', $etat['eta_code'])
+                ->limit(1)
+                ->get()
+                ->getRowArray();
+            
+            $etat['cen_code'] = $demandeInfo['cen_code'] ?? null;
+            $etat['cen_nom'] = $demandeInfo['cen_nom'] ?? null;
+            
+            // Conversion explicite des montants pour éviter les strings JSON
+            $etat['eta_total'] = (float)($etat['eta_total'] ?? 0);
+        }
+
         return $this->respond($etats);
+    }
+
+    /**
+     * Afficher le détail d'un état
+     */
+    public function show($id = null)
+    {
+        $db = \Config\Database::connect();
+        $etat = $db->table('etat_remb')
+            ->select('etat_remb.*, 
+                      employee.emp_nom AS nom_emp, 
+                      employee.emp_prenom AS prenom_emp, 
+                      employee.emp_imarmp AS matricule')
+            ->join('employee', 'employee.emp_code = etat_remb.emp_code', 'left')
+            ->where('etat_remb.eta_code', $id)
+            ->get()->getRowArray();
+
+        if (!$etat) {
+            return $this->failNotFound('État non trouvé');
+        }
+        
+        // On récupère le centre associé (via la première demande liée)
+        $demandeInfo = $db->table('demande_remb')
+            ->select('centre_sante.cen_code, centre_sante.cen_nom')
+            ->join('centre_sante', 'centre_sante.cen_code = demande_remb.cen_code', 'left')
+            ->where('eta_code', $id)
+            ->limit(1)
+            ->get()
+            ->getRowArray();
+        
+        $etat['cen_code'] = $demandeInfo['cen_code'] ?? null;
+        $etat['cen_nom'] = $demandeInfo['cen_nom'] ?? null;
+        
+        // nb_demandes
+        $etat['nb_demandes'] = $db->table('demande_remb')
+            ->where('eta_code', $id)
+            ->countAllResults();
+        
+        $etat['eta_total'] = (float)($etat['eta_total'] ?? 0);
+
+        return $this->respond($etat);
     }
 
     /**
@@ -149,5 +211,85 @@ class EtatRembController extends ResourceController
         $model->update($etaCode, ['eta_total' => $total]);
 
         return $total;
+    }
+    /**
+     * Marquer un état comme mandaté
+     */
+    public function mandater($id)
+    {
+        $model = new EtatRembModel();
+        $etat = $model->find($id);
+        
+        if (!$etat) {
+            return $this->failNotFound('État non trouvé');
+        }
+
+        $model->update($id, ['eta_libelle' => 'MANDATE']);
+
+        // Insérer dans la table engagement
+        $engModel = new EngagementModel();
+        $engModel->insert([
+            'eng_date' => date('Y-m-d H:i:s'),
+            'eta_code' => $id
+        ]);
+
+        return $this->respond(['message' => 'État marqué comme mandaté', 'status' => 'MANDATE']);
+    }
+
+    /**
+     * Marquer un état comme envoyé à l'agent comptable
+     */
+    public function agentComptable($id)
+    {
+        $model = new EtatRembModel();
+        $etat = $model->find($id);
+        
+        if (!$etat) {
+            return $this->failNotFound('État non trouvé');
+        }
+
+        if ($etat['eta_libelle'] !== 'MANDATE') {
+            return $this->fail('L\'état doit être mandaté avant d\'être envoyé à l\'agent comptable');
+        }
+
+        $model->update($id, ['eta_libelle' => 'AGENT_COMPTABLE']);
+
+        // 1. Insérer dans la table engagement
+        $engModel = new EngagementModel();
+        $engModel->insert([
+            'eng_date' => date('Y-m-d H:i:s'),
+            'eta_code' => $id
+        ]);
+
+        // 2. Notification Email (SAFE)
+        try {
+            $db = \Config\Database::connect();
+            
+            // Récupérer l'employé et son mail
+            $employee = $db->table('employee')
+                ->where('emp_code', $etat['emp_code'])
+                ->get()->getRowArray();
+            
+            if ($employee && !empty($employee['emp_mail'])) {
+                // Récupérer la liste des demandes détaillées
+                $demandes = $db->table('demande_remb')
+                    ->select('demande_remb.*, objet_remboursement.obj_article')
+                    ->join('objet_remboursement', 'objet_remboursement.obj_code = demande_remb.obj_code', 'left')
+                    ->where('eta_code', $id)
+                    ->get()->getResultArray();
+                
+                $emailService = new EmailService();
+                $emailService->sendEtatComptableNotice(
+                    $employee['emp_mail'],
+                    $employee['emp_nom'] . ' ' . $employee['emp_prenom'],
+                    $etat,
+                    $demandes
+                );
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[EtatMail-SafeFault] ' . $e->getMessage());
+        }
+
+        return $this->respond(['message' => 'État envoyé à l\'agent comptable', 'status' => 'AGENT_COMPTABLE']);
     }
 }

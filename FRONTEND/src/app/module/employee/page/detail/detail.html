@@ -1,0 +1,143 @@
+<div class="dialog-container">
+    <div class="dialog-header">
+        <div class="header-content">
+            <h2 *ngIf="!loading">{{ employee?.emp_nom }} {{ employee?.emp_prenom }}</h2>
+            <h2 *ngIf="loading">Chargement...</h2>
+            <span class="status-badge" [ngClass]="getStatusClass()" *ngIf="employee">
+                <mat-icon>{{ employee.is_available ? 'check_circle' : 'event_busy' }}</mat-icon>
+                {{ getStatusText() }}
+            </span>
+        </div>
+        <button class="close-btn" (click)="close()" mat-dialog-close>
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <div class="dialog-body" *ngIf="!loading && employee">
+        <!-- Personal Information -->
+        <section class="info-section">
+            <h3 class="section-title">
+                <mat-icon>person</mat-icon>
+                Informations Personnelles
+            </h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Matricule</label>
+                    <span class="value">{{ employee.emp_imarmp || '-' }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Sexe</label>
+                    <span class="value">{{ employee.emp_sexe ? 'Masculin' : 'Féminin' }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Date d'embauche</label>
+                    <span class="value">{{ formatDate(employee.emp_date_embauche) }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Email</label>
+                    <span class="value">{{ employee.emp_mail || '-' }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Position & Affectation -->
+        <section class="info-section">
+            <h3 class="section-title">
+                <mat-icon>work</mat-icon>
+                Poste et Affectation
+            </h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Poste/Fonction</label>
+                    <span class="value">{{ employee.pst_fonction || '-' }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Direction</label>
+                    <span class="value">
+                        {{ employee.dir_nom || '-' }}
+                        <span class="badge" *ngIf="employee.dir_abreviation">({{ employee.dir_abreviation }})</span>
+                    </span>
+                </div>
+                <div class="info-item">
+                    <label>Date d'affectation</label>
+                    <span class="value">{{ formatDate(employee.affec_date_debut) }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Leaves -->
+        <section class="info-section" *ngIf="employee.recent_leaves?.length > 0">
+            <h3 class="section-title">
+                <mat-icon>event_available</mat-icon>
+                Historique des Congés Récents
+            </h3>
+            <div class="history-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Début</th>
+                            <th>Fin</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let leave of employee.recent_leaves">
+                            <td>{{ leave.typ_appelation || 'Congé' }}</td>
+                            <td>{{ formatDate(leave.cng_debut) }}</td>
+                            <td>{{ formatDate(leave.cng_fin) }}</td>
+                            <td>
+                                <span class="badge badge-success">Validé</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Recent Permissions -->
+        <section class="info-section" *ngIf="employee.recent_permissions?.length > 0">
+            <h3 class="section-title">
+                <mat-icon>schedule</mat-icon>
+                Historique des Permissions Récentes
+            </h3>
+            <div class="history-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Début</th>
+                            <th>Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let perm of employee.recent_permissions">
+                            <td>{{ formatDate(perm.prm_debut) }}</td>
+                            <td>{{ formatDate(perm.prm_fin) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Empty state for history -->
+        <section class="info-section" *ngIf="!employee.recent_leaves?.length && !employee.recent_permissions?.length">
+            <div class="empty-history">
+                <mat-icon>history</mat-icon>
+                <p>Aucun historique d'absence disponible</p>
+            </div>
+        </section>
+    </div>
+
+    <div class="dialog-body" *ngIf="loading">
+        <div class="loading-state">
+            <p>Chargement des détails...</p>
+        </div>
+    </div>
+
+    <div class="dialog-body" *ngIf="!loading && !employee">
+        <div class="error-state">
+            <mat-icon>error_outline</mat-icon>
+            <p>Impossible de charger les informations de l'employé</p>
+        </div>
+    </div>
+</div>

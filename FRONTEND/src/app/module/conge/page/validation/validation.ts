@@ -1,8 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ValidationCongeService, ValidationStatus } from '../../service/validation-conge.service';
 import { LayoutService } from '../../../../shared/layout/service/layout.service';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 
 interface PendingLeave {
     cng_code: number;
@@ -20,33 +23,62 @@ interface PendingLeave {
 @Component({
     selector: 'app-validation',
     standalone: true,
-    imports: [CommonModule],
+    imports: [
+        CommonModule,
+        MatTableModule,
+        MatPaginatorModule,
+        MatSortModule
+    ],
     templateUrl: './validation.html',
     styleUrls: ['./validation.scss']
 })
-export class ValidationComponent implements OnInit {
+export class ValidationComponent implements OnInit, AfterViewInit {
     private readonly router = inject(Router);
     private readonly validationService = inject(ValidationCongeService);
     private readonly layoutService = inject(LayoutService);
 
     pendingLeaves: PendingLeave[] = [];
+    dataSource = new MatTableDataSource<PendingLeave>([]);
+    displayedColumns: string[] = ['employee', 'matricule', 'demande', 'periode', 'duree', 'type', 'actions'];
+
+    private _paginator!: MatPaginator;
+    private _sort!: MatSort;
+
+    @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+        this._paginator = mp;
+        this.updateDataSourceLinks();
+    }
+
+    @ViewChild(MatSort) set matSort(ms: MatSort) {
+        this._sort = ms;
+        this.updateDataSourceLinks();
+    }
+
+    private updateDataSourceLinks() {
+        this.dataSource.paginator = this._paginator;
+        this.dataSource.sort = this._sort;
+    }
+
     loading = false;
     errorMsg = '';
     successMsg = '';
 
-    // Current user's sign_code (should come from auth service)
-    currentSignCode: number = 1; // Default to CHEF for now
+    currentSignCode: number = 1;
 
     ngOnInit() {
         this.layoutService.setTitle('Validation des Congés');
         this.loadPendingLeaves();
     }
 
+    ngAfterViewInit() {
+    }
+
     loadPendingLeaves() {
         this.loading = true;
         this.validationService.getPendingForSigner(this.currentSignCode).subscribe({
             next: (leaves) => {
-                this.pendingLeaves = leaves;
+                this.pendingLeaves = leaves || [];
+                this.dataSource.data = this.pendingLeaves;
                 this.loading = false;
             },
             error: (err) => {

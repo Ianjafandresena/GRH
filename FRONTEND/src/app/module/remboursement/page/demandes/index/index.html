@@ -1,15 +1,16 @@
 <div class="page-container">
-    <div class="page-header">
-        <h1>Demandes de Remboursement</h1>
+    <div class="page-header-section">
+        <div class="title-group">
+            <h1>Demandes de Remboursement</h1>
+        </div>
         <button class="btn btn-primary" (click)="goToCreate()">
-            <span class="material-icons">add</span>
+            <i class="fas fa-plus"></i>
             Nouvelle Demande
         </button>
     </div>
 
     <!-- FILTRES HORIZONTAUX -->
     <div class="filters-row">
-        <!-- Employé (Custom Select with Search) -->
         <div class="filter-group">
             <label>Employé :</label>
             <div class="custom-select-wrapper">
@@ -26,27 +27,24 @@
             </div>
         </div>
 
-        <!-- Traitement -->
         <div class="filter-group">
             <label>Traitement :</label>
-            <select [(ngModel)]="filter.traitement" class="filter-select">
+            <select [(ngModel)]="filter.traitement" class="filter-select" (change)="applyClientSideFilter()">
                 <option value="all">Tous</option>
                 <option value="traite">Traités</option>
                 <option value="non_traite">Non traités</option>
             </select>
         </div>
 
-        <!-- Type -->
         <div class="filter-group">
             <label>Type :</label>
-            <select [(ngModel)]="filter.type" class="filter-select">
+            <select [(ngModel)]="filter.type" class="filter-select" (change)="applyClientSideFilter()">
                 <option value="all">Tous</option>
-                <option value="agent"><i class="fas fa-user"></i> Agent</option>
-                <option value="centre"><i class="fas fa-hospital"></i> Centre</option>
+                <option value="agent">Agent</option>
+                <option value="centre">Centre</option>
             </select>
         </div>
 
-        <!-- Mois -->
         <div class="filter-group">
             <label>Mois :</label>
             <select [(ngModel)]="filter.mois" class="filter-select">
@@ -65,19 +63,17 @@
             </select>
         </div>
 
-        <!-- Année -->
         <div class="filter-group">
             <label>Année :</label>
             <input type="number" [(ngModel)]="filter.annee" class="filter-input" />
         </div>
 
-        <!-- Boutons -->
         <div class="filter-actions">
-            <button class="btn btn-secondary" (click)="loadDemandes()">
-                <span class="material-icons">search</span>
+            <button class="btn btn-primary" (click)="loadDemandes()">
+                <i class="fas fa-search"></i>
                 Filtrer
             </button>
-            <button class="btn btn-outline" (click)="downloadEtatAgent()">
+            <button class="btn btn-secondary" (click)="downloadEtatAgent()">
                 <span class="material-icons">picture_as_pdf</span>
                 État Agent
             </button>
@@ -87,61 +83,95 @@
     <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
     <div class="loading" *ngIf="loading">Chargement...</div>
 
-    <div class="table-container" *ngIf="!loading">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>N°</th>
-                    <th>Type</th>
-                    <th>Employé</th>
-                    <th>Objet</th>
-                    <th>Date</th>
-                    <th>Montant</th>
-                    <th>Traitement</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let d of filteredDemandes">
-                    <td>{{ d.rem_code }}</td>
-                    <td>
-                        <span class="badge" [style.background]="d.rem_is_centre ? '#17a2b8' : '#6c757d'"
-                            style="color: #fff; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
-                            <i [class]="d.rem_is_centre ? 'fas fa-hospital' : 'fas fa-user'"></i>
-                            {{ d.rem_is_centre ? 'Centre' : 'Agent' }}
-                        </span>
-                    </td>
-                    <td>{{ d.nom_emp }} {{ d.prenom_emp }}</td>
-                    <td>{{ d.rem_objet }}</td>
-                    <td>{{ d.rem_date }}</td>
-                    <td class="amount">{{ d.rem_montant | number:'1.2-2' }} Ar</td>
-                    <td>
-                        <span class="badge" [class.badge-success]="d.rem_status === true"
-                            [class.badge-warning]="d.rem_status !== true">
-                            {{ d.rem_status === true ? 'Traite' : 'Non traite' }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge badge-secondary">
-                            {{ d.eta_libelle || d.etat_num || 'N/A' }}
-                        </span>
-                    </td>
-                    <td class="actions">
-                        <button class="btn btn-sm btn-secondary" (click)="d.rem_code && viewDetail(d.rem_code)"
-                            title="Details">
-                            <span class="material-icons">visibility</span>
-                        </button>
-                        <button class="btn btn-sm btn-primary" (click)="d.rem_code && downloadPdf(d.rem_code)"
-                            title="Telecharger PDF">
-                            <span class="material-icons">picture_as_pdf</span>
-                        </button>
-                    </td>
-                </tr>
-                <tr *ngIf="!filteredDemandes.length">
-                    <td colspan="9" class="empty">Aucune demande trouvee</td>
-                </tr>
-            </tbody>
+    <div class="mat-elevation-z8 table-container" *ngIf="!loading">
+        <table mat-table [dataSource]="dataSource" matSort>
+
+            <!-- ID Column -->
+            <ng-container matColumnDef="rem_code">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> N° </th>
+                <td mat-cell *matCellDef="let d" class="rem-code"> {{ d.rem_code }} </td>
+            </ng-container>
+
+            <!-- Type Column -->
+            <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef> Type </th>
+                <td mat-cell *matCellDef="let d">
+                    <span class="status-badge" [class.agent]="!d.rem_is_centre" [class.centre]="d.rem_is_centre">
+                        <i [class]="d.rem_is_centre ? 'fas fa-hospital' : 'fas fa-user'"></i>
+                        {{ d.rem_is_centre ? 'Centre' : 'Agent' }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <!-- Employee Column -->
+            <ng-container matColumnDef="employee">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Employé </th>
+                <td mat-cell *matCellDef="let d"> {{ d.nom_emp }} {{ d.prenom_emp }} </td>
+            </ng-container>
+
+            <!-- Date Column -->
+            <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Date </th>
+                <td mat-cell *matCellDef="let d"> {{ d.rem_date | date:'dd/MM/yyyy' }} </td>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Montant </th>
+                <td mat-cell *matCellDef="let d" class="amount"> {{ d.rem_montant | number:'1.2-2' }} Ar </td>
+            </ng-container>
+
+            <!-- Treatment Column -->
+            <ng-container matColumnDef="traitement">
+                <th mat-header-cell *matHeaderCellDef class="text-center"> Traitement </th>
+                <td mat-cell *matCellDef="let d" class="text-center">
+                    <span class="status-badge" [class.traite]="d.rem_status === true"
+                        [class.non-traite]="d.rem_status !== true">
+                        {{ d.rem_status === true ? 'Traité' : 'Non traité' }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <!-- Status Column (Ref Etat) -->
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef> Réf. État </th>
+                <td mat-cell *matCellDef="let d">
+                    <span class="ref-code" *ngIf="d.eta_libelle || d.etat_num">
+                        {{ d.eta_libelle || d.etat_num }}
+                    </span>
+                    <span class="text-muted" *ngIf="!d.eta_libelle && !d.etat_num">N/A</span>
+                </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="text-end"> Actions </th>
+                <td mat-cell *matCellDef="let d" class="text-end actions">
+                    <button class="btn btn-sm btn-outline" (click)="d.rem_code && viewDetail(d.rem_code)"
+                        title="Détails">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" (click)="d.rem_code && downloadPdf(d.rem_code)"
+                        title="Télécharger PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell empty" colspan="9">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Aucune demande trouvée</p>
+                    </div>
+                </td>
+            </tr>
         </table>
+
+        <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 25, 50, 100]"
+            aria-label="Choisir la page"></mat-paginator>
     </div>
 </div>

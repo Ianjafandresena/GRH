@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,15 +7,24 @@ import { LayoutService } from '../../../../../shared/layout/service/layout.servi
 import { DemandeRemb } from '../../../model/demande-remb.model';
 import { EmployeeService } from '../../../../employee/service/employee.service';
 import { Employee } from '../../../../employee/model/employee.model';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 
 @Component({
     selector: 'app-demandes-index',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [
+        CommonModule,
+        FormsModule,
+        MatTableModule,
+        MatPaginatorModule,
+        MatSortModule
+    ],
     templateUrl: './index.html',
     styleUrls: ['./index.scss']
 })
-export class DemandesIndexComponent implements OnInit {
+export class DemandesIndexComponent implements OnInit, AfterViewInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly rembService = inject(RemboursementService);
@@ -24,10 +33,30 @@ export class DemandesIndexComponent implements OnInit {
 
     demandes: DemandeRemb[] = [];
     employees: Employee[] = [];
+    dataSource = new MatTableDataSource<DemandeRemb>([]);
+    displayedColumns: string[] = ['rem_code', 'type', 'employee', 'date', 'amount', 'traitement', 'status', 'actions'];
+
+    private _paginator!: MatPaginator;
+    private _sort!: MatSort;
+
+    @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+        this._paginator = mp;
+        this.updateDataSourceLinks();
+    }
+
+    @ViewChild(MatSort) set matSort(ms: MatSort) {
+        this._sort = ms;
+        this.updateDataSourceLinks();
+    }
+
+    private updateDataSourceLinks() {
+        this.dataSource.paginator = this._paginator;
+        this.dataSource.sort = this._sort;
+    }
+
     loading = false;
     errorMsg = '';
 
-    // Filtres
     filter = {
         emp_code: null as number | null,
         traitement: 'all' as 'all' | 'traite' | 'non_traite',
@@ -36,10 +65,25 @@ export class DemandesIndexComponent implements OnInit {
         annee: new Date().getFullYear()
     };
 
-    // Employee dropdown control
     employeeSearch = '';
     employeeDropdownOpen = false;
     selectedEmployee: Employee | null = null;
+
+    ngOnInit() {
+        this.layoutService.setTitle('Demandes de Remboursement');
+        this.loadEmployees();
+        this.route.data.subscribe(data => {
+            this.demandes = data['demandes'] || [];
+            if (!this.demandes.length) {
+                this.loadDemandes();
+            } else {
+                this.applyClientSideFilter();
+            }
+        });
+    }
+
+    ngAfterViewInit() {
+    }
 
     get filteredEmployees(): Employee[] {
         if (!this.employeeSearch) return this.employees.slice(0, 50);
@@ -51,35 +95,22 @@ export class DemandesIndexComponent implements OnInit {
         ).slice(0, 50);
     }
 
-    get filteredDemandes(): DemandeRemb[] {
+    applyClientSideFilter() {
         let result = this.demandes;
 
-        // Filtre type
         if (this.filter.type !== 'all') {
             result = result.filter(d =>
                 this.filter.type === 'centre' ? d.rem_is_centre === true : d.rem_is_centre !== true
             );
         }
 
-        // Filtre traitement
         if (this.filter.traitement !== 'all') {
             result = result.filter(d =>
                 this.filter.traitement === 'traite' ? d.rem_status === true : d.rem_status !== true
             );
         }
 
-        return result;
-    }
-
-    ngOnInit() {
-        this.layoutService.setTitle('Demandes de Remboursement');
-        this.loadEmployees();
-        this.route.data.subscribe(data => {
-            this.demandes = data['demandes'] || [];
-            if (!this.demandes.length) {
-                this.loadDemandes();
-            }
-        });
+        this.dataSource.data = result;
     }
 
     loadEmployees() {
@@ -98,6 +129,7 @@ export class DemandesIndexComponent implements OnInit {
         this.rembService.getDemandes(params).subscribe({
             next: (list) => {
                 this.demandes = list || [];
+                this.applyClientSideFilter();
                 this.loading = false;
             },
             error: () => {
@@ -142,7 +174,7 @@ export class DemandesIndexComponent implements OnInit {
     downloadEtatAgent() {
         const emp = this.filter.emp_code;
         if (!emp) {
-            alert('Veuillez selectionner un employe pour generer etat.');
+            this.layoutService.showErrorMessage('Veuillez sélectionner un employé pour générer l\'état.');
             return;
         }
         this.rembService.downloadEtatAgentPdf(emp, this.filter.annee, this.filter.mois).subscribe(blob => {
@@ -155,17 +187,5 @@ export class DemandesIndexComponent implements OnInit {
         }, () => {
             this.errorMsg = 'Erreur lors du telechargement';
         });
-    }
-
-    getStatutClass(etat: string): string {
-        switch (etat) {
-            case 'EN_ATTENTE': return 'badge-warning';
-            case 'VALIDE_RRH':
-            case 'VALIDE_DAAF': return 'badge-info';
-            case 'ENGAGE': return 'badge-primary';
-            case 'PAYE': return 'badge-success';
-            case 'REFUSE': return 'badge-danger';
-            default: return 'badge-secondary';
-        }
     }
 }

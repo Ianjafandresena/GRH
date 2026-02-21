@@ -47,8 +47,23 @@ export class CentresIndexComponent implements OnInit, AfterViewInit {
     selectedType: number | null = null;
     searchText = '';
 
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
-    @ViewChild(MatSort) sort!: MatSort;
+    private _paginator!: MatPaginator;
+    private _sort!: MatSort;
+
+    @ViewChild(MatPaginator) set matPaginator(mp: MatPaginator) {
+        this._paginator = mp;
+        this.updateDataSourceLinks();
+    }
+
+    @ViewChild(MatSort) set matSort(ms: MatSort) {
+        this._sort = ms;
+        this.updateDataSourceLinks();
+    }
+
+    private updateDataSourceLinks() {
+        this.dataSource.paginator = this._paginator;
+        this.dataSource.sort = this._sort;
+    }
 
     loading = false;
     errorMsg = '';
@@ -60,8 +75,6 @@ export class CentresIndexComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
     }
 
     loadTypes() {

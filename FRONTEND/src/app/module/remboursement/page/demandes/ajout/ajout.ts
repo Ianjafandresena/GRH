@@ -349,11 +349,13 @@ export class AjoutDemandeComponent implements OnInit {
                     const centre = this.centres.find(c => c.cen_code === cenCode);
                     this.selectedPec.cen_nom = centre?.cen_nom || this.selectedPec.cen_nom || '';
                 }
+                this.layoutService.showSuccessMessage('PEC approuvée avec succès');
                 this.showPecModal = false;
                 this.loading = false;
             },
             error: (err) => {
-                this.errorMsg = err?.error?.messages?.error || 'Erreur validation PEC';
+                const msg = err?.error?.messages?.error || 'Erreur validation PEC';
+                this.layoutService.showErrorMessage(msg);
                 this.loading = false;
             }
         });
@@ -593,13 +595,14 @@ export class AjoutDemandeComponent implements OnInit {
 
             this.rembService.createBatch(payload).subscribe({
                 next: (res: any) => {
-                    alert(`${this.demandesLocales.length} demande(s) créée(s) avec succès!`);
+                    this.layoutService.showSuccessMessage(`${this.demandesLocales.length} demande(s) créée(s) avec succès!`);
                     this.demandesLocales = [];
                     this.showFinalModal = false;
                     this.router.navigate(['/remboursement/demandes']);
                 },
                 error: (err: any) => {
-                    this.errorMsg = err?.error?.messages?.error || 'Erreur lors de l\'envoi';
+                    const msg = err?.error?.messages?.error || 'Erreur lors de l\'envoi';
+                    this.layoutService.showErrorMessage(msg);
                     this.loading = false;
                 }
             });
