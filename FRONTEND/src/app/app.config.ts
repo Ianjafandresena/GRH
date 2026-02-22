@@ -4,14 +4,15 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { jwtInterceptor } from './cors/interceptors/jwt.interceptor';
+import { errorInterceptor } from './cors/interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-     provideHttpClient(
-       withInterceptors([jwtInterceptor])
-     )  
+    provideHttpClient(
+      withInterceptors([jwtInterceptor, errorInterceptor])
+    )
   ]
 };

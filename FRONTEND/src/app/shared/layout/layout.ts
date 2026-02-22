@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,7 @@ import { HeaderComponent } from './component/header/header';
 import { AuthService } from '../../module/auth/service/auth-service';
 import { ChatbotComponent } from '../chatbot/chatbot.component';  // ➕ CHATBOT
 import { ChatbotService } from '../chatbot/chatbot.service';       // ➕ CHATBOT
+import { InactivityService } from '../service/inactivity.service';
 
 @Component({
   selector: 'app-layout',
@@ -22,12 +23,14 @@ import { ChatbotService } from '../chatbot/chatbot.service';       // ➕ CHATBO
   templateUrl: './layout.html',
   styleUrls: ['./layout.scss']
 })
-export class LayoutComponent implements OnInit {
+export class LayoutComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly chatbotService = inject(ChatbotService);  // ➕ CHATBOT
+  private readonly inactivityService = inject(InactivityService);
 
   isCollapsed = false;
   showConge = false;
+
   showPermission = false;
   showRemb = false;
   showPec = false;
@@ -76,6 +79,13 @@ export class LayoutComponent implements OnInit {
     if (empCode) {
       this.chatbotService.setEmployee(parseInt(empCode));
     }
+
+    // Démarrer la surveillance de l'inactivité
+    this.inactivityService.startMonitoring();
+  }
+
+  ngOnDestroy() {
+    this.inactivityService.stopMonitoring();
   }
 
   logout() {

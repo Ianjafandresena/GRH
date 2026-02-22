@@ -1,9 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CongeService } from '../../service/conge.service';
 import { EmployeeService } from '../../../employee/service/employee.service';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface CalendarDay {
     date: Date;
@@ -39,7 +41,7 @@ interface CongeCalendar {
     templateUrl: './calendar.component.html',
     styleUrls: ['./calendar.component.scss']
 })
-export class CongeCalendarComponent {
+export class CongeCalendarComponent implements OnDestroy {
     private congeService = inject(CongeService);
     private employeeService = inject(EmployeeService);
     private router = inject(Router);
@@ -66,6 +68,9 @@ export class CongeCalendarComponent {
     months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     years: number[] = [];
+
+    private filterSubject = new Subject<void>();
+    private filterSubscription?: Subscription;
 
     // Computed
     monthName = computed(() => this.months[this.currentMonth().getMonth()]);
@@ -121,7 +126,23 @@ export class CongeCalendarComponent {
         this.loadEmployees();
         this.loadTypesConge();
         this.loadPermissions();
+
+        this.filterSubscription = this.filterSubject.pipe(
+            debounceTime(400),
+            distinctUntilChanged()
+        ).subscribe(() => {
+            this.applyFilters();
+        });
+
         this.loadConges();
+    }
+
+    ngOnDestroy() {
+        this.filterSubscription?.unsubscribe();
+    }
+
+    onFilterChange() {
+        this.filterSubject.next();
     }
 
     initializeYears() {
@@ -192,14 +213,14 @@ export class CongeCalendarComponent {
             e.emp_imarmp?.includes(search)
         );
         this.showEmployeeDropdown = true;
-        // Ne pas appeler applyFilters() automatiquement
+        this.onFilterChange();
     }
 
     selectEmployee(emp: any) {
         this.filterEmployee = `${emp.emp_prenom} ${emp.emp_nom}`;
         this.selectedEmployeeCode = emp.emp_code;
         this.showEmployeeDropdown = false;
-        // Ne pas appeler applyFilters() automatiquement
+        this.onFilterChange();
     }
 
     onMonthChange() {
@@ -296,6 +317,23 @@ export class CongeCalendarComponent {
         this.selectedMonth = now.getMonth();
         this.selectedYear = now.getFullYear();
         this.loadConges();
+    }
+
+    getCongeColor(conge: CongeCalendar): string {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        // On convertit les chaînes YYYY-MM-DD en Date à midi pour éviter les problèmes de timezone
+        const debut = new Date(conge.cng_debut + 'T12:00:00');
+        const fin = new Date(conge.cng_fin + 'T12:00:00');
+
+        if (fin < now) {
+            return '#10b981'; // Vert (déjà fini)
+        } else if (debut <= now && fin >= now) {
+            return '#3b82f6'; // Bleu (en cours)
+        } else {
+            return '#f59e0b'; // Jaune (futur)
+        }
     }
 
     getCongesForDay(day: Date): CongeCalendar[] {

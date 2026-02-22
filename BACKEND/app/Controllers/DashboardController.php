@@ -41,14 +41,23 @@ class DashboardController extends ResourceController
     /**
      * Get pending reimbursement requests statistics
      */
+    /**
+     * Get pending reimbursement requests statistics
+     */
     public function getPendingReimbursements()
     {
         $db = \Config\Database::connect();
+        $startDate = $this->request->getVar('start_date');
+        $endDate = $this->request->getVar('end_date');
         
-        $stats = $db->table('demande_remb')
+        $builder = $db->table('demande_remb')
             ->select('COUNT(*) as count, COALESCE(SUM(rem_montant), 0) as total')
-            ->where('rem_status', false)
-            ->get()->getRowArray();
+            ->where('rem_status', false);
+
+        if ($startDate) $builder->where('rem_date >=', $startDate);
+        if ($endDate) $builder->where('rem_date <=', $endDate);
+        
+        $stats = $builder->get()->getRowArray();
         
         return $this->respond($stats);
     }
@@ -60,30 +69,39 @@ class DashboardController extends ResourceController
     {
         try {
             $db = \Config\Database::connect();
-            $activities = [];
+            $startDate = $this->request->getVar('start_date');
+            $endDate = $this->request->getVar('end_date');
             
             // Recent leaves
-            $conges = $db->table('conge')
+            $congesBuilder = $db->table('conge')
                 ->select("'conge' as type, employee.emp_nom, employee.emp_prenom, 
                           conge.cng_demande as date, 
                           CASE WHEN conge.cng_status = true THEN 'VALIDE' ELSE 'EN_ATTENTE' END as status,
                           type_conge.typ_appelation as label")
                 ->join('employee', 'employee.emp_code = conge.emp_code')
-                ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
-                ->orderBy('conge.cng_demande', 'DESC')
-                ->limit(3)
+                ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left');
+
+            if ($startDate) $congesBuilder->where('conge.cng_demande >=', $startDate);
+            if ($endDate) $congesBuilder->where('conge.cng_demande <=', $endDate);
+            
+            $conges = $congesBuilder->orderBy('conge.cng_demande', 'DESC')
+                ->limit(5)
                 ->get()->getResultArray();
             
             // Recent reimbursements
-            $remb = $db->table('demande_remb')
+            $rembBuilder = $db->table('demande_remb')
                 ->select("'remboursement' as type, employee.emp_nom, employee.emp_prenom,
                           demande_remb.rem_date as date, 
                           CASE WHEN rem_status = true THEN 'TRAITE' ELSE 'EN_ATTENTE' END as status,
                           objet_facture.obj_article as label")
                 ->join('employee', 'employee.emp_code = demande_remb.emp_code')
-                ->join('objet_facture', 'objet_facture.obj_code = demande_remb.obj_code', 'left')
-                ->orderBy('demande_remb.rem_date', 'DESC')
-                ->limit(3)
+                ->join('objet_facture', 'objet_facture.obj_code = demande_remb.obj_code', 'left');
+
+            if ($startDate) $rembBuilder->where('demande_remb.rem_date >=', $startDate);
+            if ($endDate) $rembBuilder->where('demande_remb.rem_date <=', $endDate);
+            
+            $remb = $rembBuilder->orderBy('demande_remb.rem_date', 'DESC')
+                ->limit(5)
                 ->get()->getResultArray();
             
             $activities = array_merge($conges, $remb);
@@ -102,16 +120,30 @@ class DashboardController extends ResourceController
     public function getReimbursementDistribution()
     {
         $db = \Config\Database::connect();
+        $startDate = $this->request->getVar('start_date');
+        $endDate = $this->request->getVar('end_date');
         
-        $total = $db->table('demande_remb')->countAllResults();
+        $totalBuilder = $db->table('demande_remb');
+        if ($startDate) $totalBuilder->where('rem_date >=', $startDate);
+        if ($endDate) $totalBuilder->where('rem_date <=', $endDate);
+        $total = $totalBuilder->countAllResults();
         
-        $approuve = $db->table('demande_remb')->where('rem_status', true)->countAllResults();
-        $en_attente = $db->table('demande_remb')->where('rem_status', false)->countAllResults();
+        $approuveBuilder = $db->table('demande_remb')->where('rem_status', true);
+        if ($startDate) $approuveBuilder->where('rem_date >=', $startDate);
+        if ($endDate) $approuveBuilder->where('rem_date <=', $endDate);
+        $approuve = $approuveBuilder->countAllResults();
+
+        $enAttenteBuilder = $db->table('demande_remb')->where('rem_status', false);
+        if ($startDate) $enAttenteBuilder->where('rem_date >=', $startDate);
+        if ($endDate) $enAttenteBuilder->where('rem_date <=', $endDate);
+        $en_attente = $enAttenteBuilder->countAllResults();
         
-        $montant_attente = $db->table('demande_remb')
+        $montantBuilder = $db->table('demande_remb')
             ->selectSum('rem_montant')
-            ->where('rem_status', false)
-            ->get()->getRow()->rem_montant ?? 0;
+            ->where('rem_status', false);
+        if ($startDate) $montantBuilder->where('rem_date >=', $startDate);
+        if ($endDate) $montantBuilder->where('rem_date <=', $endDate);
+        $montant_attente = $montantBuilder->get()->getRow()->rem_montant ?? 0;
         
         return $this->respond([
             'stats' => [
@@ -166,5 +198,64 @@ class DashboardController extends ResourceController
             'conges' => [12, 18, 15, 25, 22, 19],
             'permissions' => [8, 12, 10, 15, 18, 14]
         ]);
+    }
+
+    /**
+     * Get Top 5 most absent employees
+     */
+    public function getTopAbsentEmployees()
+    {
+        try {
+            $db = \Config\Database::connect();
+            $startDate = $this->request->getVar('start_date');
+            $endDate = $this->request->getVar('end_date');
+            
+            $builder = $db->table('conge')
+                ->select('employee.emp_nom, employee.emp_prenom, SUM(conge.cng_nb_jour) as total_jours')
+                ->join('employee', 'employee.emp_code = conge.emp_code')
+                ->where('conge.cng_status', true);
+
+            if ($startDate) $builder->where('conge.cng_debut >=', $startDate);
+            if ($endDate) $builder->where('conge.cng_fin <=', $endDate);
+
+            $results = $builder->groupBy(['employee.emp_code', 'employee.emp_nom', 'employee.emp_prenom', 'employee.emp_code'])
+                ->orderBy('total_jours', 'DESC')
+                ->limit(5)
+                ->get()->getResultArray();
+            
+            return $this->respond($results);
+        } catch (\Throwable $e) {
+            log_message('error', '[getTopAbsentEmployees] Error: ' . $e->getMessage());
+            return $this->respond([]);
+        }
+    }
+
+    /**
+     * Get Top 5 employees with most reimbursement requests
+     */
+    public function getTopReimbursements()
+    {
+        try {
+            $db = \Config\Database::connect();
+            $startDate = $this->request->getVar('start_date');
+            $endDate = $this->request->getVar('end_date');
+            
+            $builder = $db->table('demande_remb')
+                ->select('employee.emp_nom, employee.emp_prenom, COUNT(*) as nb_demandes, SUM(rem_montant) as total_montant')
+                ->join('employee', 'employee.emp_code = demande_remb.emp_code');
+
+            if ($startDate) $builder->where('rem_date >=', $startDate);
+            if ($endDate) $builder->where('rem_date <=', $endDate);
+
+            $results = $builder->groupBy(['employee.emp_code', 'employee.emp_nom', 'employee.emp_prenom', 'employee.emp_code'])
+                ->orderBy('nb_demandes', 'DESC')
+                ->limit(5)
+                ->get()->getResultArray();
+            
+            return $this->respond($results);
+        } catch (\Throwable $e) {
+            log_message('error', '[getTopReimbursements] Error: ' . $e->getMessage());
+            return $this->respond([]);
+        }
     }
 }

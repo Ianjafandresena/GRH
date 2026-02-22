@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -11,18 +11,28 @@ export class DashboardService {
     private readonly http = inject(HttpClient);
     private readonly apiUrl = environment.apiUrl;
 
-    getDashboardStats(): Observable<any> {
-        const conges$ = this.http.get<any[]>(`${this.apiUrl}/conge`, { withCredentials: true });
-        const employees$ = this.http.get<any[]>(`${this.apiUrl}/employee`, { withCredentials: true });
+    getDashboardStats(startDate?: string, endDate?: string): Observable<any> {
+        const params: any = {};
+        if (startDate) {
+            params.start_date = startDate;
+            params.start = startDate;
+        }
+        if (endDate) {
+            params.end_date = endDate;
+            params.end = endDate;
+        }
+
+        const conges$ = this.http.get<any[]>(`${this.apiUrl}/conge`, { params, withCredentials: true });
+        const employees$ = this.http.get<any[]>(`${this.apiUrl}/employee`, { params, withCredentials: true });
 
         return forkJoin([conges$, employees$]).pipe(
             map(([conges, employees]) => {
-                return this.processStats(conges, employees);
+                return this.processStats(conges, employees, startDate, endDate);
             })
         );
     }
 
-    private processStats(conges: any[], employees: any[]): any {
+    private processStats(conges: any[], employees: any[], startDate?: string, endDate?: string): any {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -39,24 +49,30 @@ export class DashboardService {
             return now >= start && now <= end;
         }).length;
 
-        let currentMonthLeaves = 0;
-        let lastMonthLeaves = 0;
+        let currentPeriodLeaves = 0;
+        let comparisonPeriodLeaves = 0;
 
-        validatedConges.forEach(c => {
-            if (c.cng_debut) {
-                const date = new Date(c.cng_debut);
-                if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-                    currentMonthLeaves++;
-                } else if (date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear) {
-                    lastMonthLeaves++;
+        if (startDate && endDate) {
+            // If custom period is provided, we just count leaves in that period
+            currentPeriodLeaves = validatedConges.length;
+            comparisonPeriodLeaves = 0;
+        } else {
+            validatedConges.forEach(c => {
+                if (c.cng_debut) {
+                    const date = new Date(c.cng_debut);
+                    if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                        currentPeriodLeaves++;
+                    } else if (date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear) {
+                        comparisonPeriodLeaves++;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         let congesEvolution = 0;
-        if (lastMonthLeaves > 0) {
-            congesEvolution = ((currentMonthLeaves - lastMonthLeaves) / lastMonthLeaves) * 100;
-        } else if (currentMonthLeaves > 0) {
+        if (comparisonPeriodLeaves > 0) {
+            congesEvolution = ((currentPeriodLeaves - comparisonPeriodLeaves) / comparisonPeriodLeaves) * 100;
+        } else if (currentPeriodLeaves > 0 && !startDate) {
             congesEvolution = 100;
         }
 
@@ -64,77 +80,110 @@ export class DashboardService {
         const totalEmployees = employees.length;
         const activeEmployees = employees.filter(e => e.is_actif == 1 || e.is_actif === true || e.is_actif === '1').length;
 
-        let currentMonthHires = 0;
-        let lastMonthHires = 0;
-
-        employees.forEach(e => {
-            if (e.date_embauche) {
-                const date = new Date(e.date_embauche);
-                if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-                    currentMonthHires++;
-                } else if (date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear) {
-                    lastMonthHires++;
-                }
-            }
-        });
-
-        let employeesEvolution = 0;
-        if (lastMonthHires > 0) {
-            employeesEvolution = ((currentMonthHires - lastMonthHires) / lastMonthHires) * 100;
-        } else if (currentMonthHires > 0) {
-            employeesEvolution = 100;
-        }
-
         return {
             congesEnCours: activeLeaves,
             congesEvolution: Math.round(congesEvolution),
             totalEmployees,
             activeEmployees,
-            employeesEvolution: Math.round(employeesEvolution)
+            employeesEvolution: 0 // Simplified for consistency
         };
     }
 
-    getEvolutionStats(): Observable<any> {
-        const conges$ = this.http.get<any[]>(`${this.apiUrl}/conge`, { withCredentials: true });
-        const permissions$ = this.http.get<any[]>(`${this.apiUrl}/permission`, { withCredentials: true });
+    getEvolutionStats(startDate?: string, endDate?: string): Observable<any> {
+        const params: any = {};
+        if (startDate) {
+            params.start_date = startDate;
+            params.start = startDate;
+        }
+        if (endDate) {
+            params.end_date = endDate;
+            params.end = endDate;
+        }
+
+        const conges$ = this.http.get<any[]>(`${this.apiUrl}/conge`, { params, withCredentials: true }).pipe(catchError(() => of([])));
+        const permissions$ = this.http.get<any[]>(`${this.apiUrl}/permission`, { params, withCredentials: true }).pipe(catchError(() => of([])));
 
         return forkJoin([conges$, permissions$]).pipe(
             map(([conges, permissions]) => {
-                return this.processData(conges, permissions);
+                return this.processData(conges, permissions, startDate, endDate);
             })
         );
     }
 
-    private processData(conges: any[], permissions: any[]): any {
-        const currentYear = new Date().getFullYear();
-        const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-        const congeCounts = new Array(12).fill(0);
-        const permissionCounts = new Array(12).fill(0);
+    private processData(conges: any[], permissions: any[], startDate?: string, endDate?: string): any {
+        const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), 0, 1);
+        const end = endDate ? new Date(endDate) : new Date(new Date().getFullYear(), 11, 31);
 
-        if (Array.isArray(conges)) {
-            conges.forEach(c => {
-                if ((c.cng_status === true || c.cng_status === 't') && c.cng_debut) {
-                    const date = new Date(c.cng_debut);
-                    if (date.getFullYear() === currentYear) {
-                        congeCounts[date.getMonth()]++;
-                    }
-                }
+        // Ensure start is beginning of month and end is end of day
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
+        const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const labels: string[] = [];
+        const congeCounts: number[] = [];
+        const permissionCounts: number[] = [];
+
+        // Generate chronological buckets between start and end
+        const temp = new Date(start);
+        const buckets: { month: number, year: number, key: string }[] = [];
+
+        // Limit to 24 months to avoid infinite loops or memory issues
+        let maxBuckets = 24;
+        while (temp <= end && maxBuckets > 0) {
+            const m = temp.getMonth();
+            const y = temp.getFullYear();
+            const yearShort = y.toString().slice(-2);
+
+            buckets.push({
+                month: m,
+                year: y,
+                key: `${y}-${m}`
             });
+            labels.push(`${monthNames[m]} '${yearShort}`);
+
+            congeCounts.push(0);
+            permissionCounts.push(0);
+
+            temp.setMonth(temp.getMonth() + 1);
+            maxBuckets--;
         }
 
-        if (Array.isArray(permissions)) {
-            permissions.forEach(p => {
-                if (p.prm_debut) {
-                    const date = new Date(p.prm_debut);
-                    if (date.getFullYear() === currentYear) {
-                        permissionCounts[date.getMonth()]++;
-                    }
+        // Map data to buckets
+        const safeConges = Array.isArray(conges) ? conges : [];
+        const safePermissions = Array.isArray(permissions) ? permissions : [];
+
+        safeConges.forEach(c => {
+            if ((c.cng_status === true || c.cng_status === 't') && c.cng_debut) {
+                const date = new Date(c.cng_debut);
+                const idx = buckets.findIndex(b => b.month === date.getMonth() && b.year === date.getFullYear());
+                if (idx !== -1) {
+                    congeCounts[idx]++;
                 }
-            });
+            }
+        });
+
+        safePermissions.forEach(p => {
+            if (p.prm_debut) {
+                const date = new Date(p.prm_debut);
+                const idx = buckets.findIndex(b => b.month === date.getMonth() && b.year === date.getFullYear());
+                if (idx !== -1) {
+                    permissionCounts[idx]++;
+                }
+            }
+        });
+
+        // Fallback if no buckets generated (should not happen with default year)
+        if (labels.length === 0) {
+            return {
+                labels: monthNames,
+                conges: new Array(12).fill(0),
+                permissions: new Array(12).fill(0)
+            };
         }
 
         return {
-            labels: months,
+            labels,
             conges: congeCounts,
             permissions: permissionCounts
         };
@@ -144,15 +193,38 @@ export class DashboardService {
         return this.http.get<any[]>(`${this.apiUrl}/dashboard/employees-on-leave`, { withCredentials: true });
     }
 
-    getPendingReimbursements(): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/dashboard/pending-reimbursements`, { withCredentials: true });
+    getPendingReimbursements(startDate?: string, endDate?: string): Observable<any> {
+        const params: any = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        return this.http.get<any>(`${this.apiUrl}/dashboard/pending-reimbursements`, { params, withCredentials: true });
     }
 
-    getRecentActivity(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/dashboard/recent-activity`, { withCredentials: true });
+    getRecentActivity(startDate?: string, endDate?: string): Observable<any[]> {
+        const params: any = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/recent-activity`, { params, withCredentials: true });
     }
 
-    getReimbursementDistribution(): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/dashboard/reimbursement-distribution`, { withCredentials: true });
+    getReimbursementDistribution(startDate?: string, endDate?: string): Observable<any> {
+        const params: any = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        return this.http.get<any>(`${this.apiUrl}/dashboard/reimbursement-distribution`, { params, withCredentials: true });
+    }
+
+    getTopAbsent(startDate?: string, endDate?: string): Observable<any[]> {
+        const params: any = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/top-absent`, { params, withCredentials: true });
+    }
+
+    getTopReimbursements(startDate?: string, endDate?: string): Observable<any[]> {
+        const params: any = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        return this.http.get<any[]>(`${this.apiUrl}/dashboard/top-reimbursements`, { params, withCredentials: true });
     }
 }

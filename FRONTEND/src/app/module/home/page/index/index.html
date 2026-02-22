@@ -1,6 +1,24 @@
-<div class="dashboard">
+<div class="page-container dashboard-modern">
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <button class="filter-btn" [class.active]="selectedPeriod() === 'month'" (click)="changePeriod('month')">
+        <mat-icon>calendar_view_month</mat-icon>
+        Ce Mois
+      </button>
+    </div>
 
-  <!-- Stats Cards -->
+    <div class="custom-filter">
+      <div class="input-group">
+        <label>Du</label>
+        <input type="date" [value]="startDate()" (change)="updateStartDate(startInput.value)" #startInput>
+      </div>
+      <div class="input-group">
+        <label>Au</label>
+        <input type="date" [value]="endDate()" (change)="updateEndDate(endInput.value)" #endInput>
+      </div>
+    </div>
+  </div>
 
   <!-- Stats Cards -->
   <div class="stats-grid">
@@ -51,7 +69,6 @@
       </div>
     </div>
 
-    <!-- NEW: Pending Requests Card -->
     <div class="stat-card green">
       <div class="stat-header">
         <div class="stat-icon"><mat-icon>pending_actions</mat-icon></div>
@@ -106,8 +123,6 @@
               number:'1.0-0' }}</text>
 
             <!-- Grid Line (aligned with label) -->
-            <!-- Don't draw line for the x-axis (value 0, which is at y=200, or maybe we do want it?) -->
-            <!-- User had a line at 200. Let's keep it. -->
             <line x1="30" [attr.y1]="tick.y" x2="440" [attr.y2]="tick.y" stroke="var(--border-light)"
               stroke-dasharray="3" opacity="0.5" />
           </g>
@@ -237,6 +252,122 @@
           </div>
         </div>
         }
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP SECTIONS -->
+  <div class="bottom-grid top-5-row top-sections-grid">
+    <!-- Most Absent -->
+    <div class="top-list-card" [class.collapsed]="!showAbsentList()">
+      <div class="card-header" (click)="toggleAbsentVisibility()" style="cursor: pointer;">
+        <div class="header-main" style="display: flex; align-items: center; gap: 0.75rem;">
+          <mat-icon class="icon absent">trending_up</mat-icon>
+          <h3>Les plus absents</h3>
+        </div>
+        <div class="header-actions">
+          <button class="view-toggle" (click)="toggleAbsentViewMode(); $event.stopPropagation()"
+            [title]="viewModeAbsent() === 'list' ? 'Vue graphique' : 'Vue liste'"
+            style="background: none; border: none; cursor: pointer; color: var(--text-secondary); display: flex;">
+            <mat-icon>{{ viewModeAbsent() === 'list' ? 'bar_chart' : 'list' }}</mat-icon>
+          </button>
+          <mat-icon class="collapse-icon" style="color: var(--text-muted);">{{ showAbsentList() ? 'expand_less' :
+            'expand_more' }}</mat-icon>
+        </div>
+      </div>
+
+      <div class="collapsible-content" [class.show]="showAbsentList()">
+        <div class="list-container">
+          @if (viewModeAbsent() === 'list') {
+          @for (emp of topAbsent(); track $index) {
+          <div class="list-item">
+            <div class="rank">{{ $index + 1 }}</div>
+            <div class="emp-info">
+              <span class="name">{{ emp.emp_nom }} {{ emp.emp_prenom }}</span>
+            </div>
+            <div class="value-badge absent">{{ emp.total_jours }} jrs</div>
+          </div>
+          }
+          } @else {
+          <div class="chart-view" style="padding: 1rem 0;">
+            @for (emp of topAbsent(); track $index) {
+            <div class="bar-row" style="margin-bottom: 1rem;">
+              <div class="bar-label" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">{{
+                emp.emp_nom }}</div>
+              <div class="bar-wrapper"
+                style="height: 24px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; position: relative;">
+                <div class="bar absent" [style.width]="getBarWidth(emp.total_jours, topAbsent(), 'total_jours')"
+                  style="height: 100%; background: #ef4444; transition: width 0.6s ease-out; display: flex; align-items: center; padding-left: 8px;">
+                  <span class="bar-value" style="color: white; font-size: 0.75rem; font-weight: 700;">{{ emp.total_jours
+                    }}j</span>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+          }
+          @if (topAbsent().length === 0) {
+          <div class="empty-state">Aucune donnée disponible</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Most Reimbursements -->
+    <div class="top-list-card" [class.collapsed]="!showRembList()">
+      <div class="card-header" (click)="toggleRembVisibility()" style="cursor: pointer;">
+        <div class="header-main" style="display: flex; align-items: center; gap: 0.75rem;">
+          <mat-icon class="icon refund">payments</mat-icon>
+          <h3>Plus de remboursements</h3>
+        </div>
+        <div class="header-actions">
+          <button class="view-toggle" (click)="toggleRembViewMode(); $event.stopPropagation()"
+            [title]="viewModeRemb() === 'list' ? 'Vue graphique' : 'Vue liste'"
+            style="background: none; border: none; cursor: pointer; color: var(--text-secondary); display: flex;">
+            <mat-icon>{{ viewModeRemb() === 'list' ? 'bar_chart' : 'list' }}</mat-icon>
+          </button>
+          <mat-icon class="collapse-icon" style="color: var(--text-muted);">{{ showRembList() ? 'expand_less' :
+            'expand_more' }}</mat-icon>
+        </div>
+      </div>
+
+      <div class="collapsible-content" [class.show]="showRembList()">
+        <div class="list-container">
+          @if (viewModeRemb() === 'list') {
+          @for (emp of topReimbursements(); track $index) {
+          <div class="list-item">
+            <div class="rank">{{ $index + 1 }}</div>
+            <div class="emp-info">
+              <span class="name">{{ emp.emp_nom }} {{ emp.emp_prenom }}</span>
+              <span class="subtext">{{ emp.total_montant | number:'1.0-0' }} Ar</span>
+            </div>
+            <div class="value-badge refund">{{ emp.nb_demandes }} dem.</div>
+          </div>
+          }
+          } @else {
+          <div class="chart-view" style="padding: 1rem 0;">
+            @for (emp of topReimbursements(); track $index) {
+            <div class="bar-row" style="margin-bottom: 1rem;">
+              <div class="bar-label" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                {{
+                emp.emp_nom }}</div>
+              <div class="bar-wrapper"
+                style="height: 24px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; position: relative;">
+                <div class="bar refund" [style.width]="getBarWidth(emp.nb_demandes, topReimbursements(), 'nb_demandes')"
+                  style="height: 100%; background: #10b981; transition: width 0.6s ease-out; display: flex; align-items: center; padding-left: 8px;">
+                  <span class="bar-value" style="color: white; font-size: 0.75rem; font-weight: 700;">{{
+                    emp.nb_demandes
+                    }}</span>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+          }
+          @if (topReimbursements().length === 0) {
+          <div class="empty-state">Aucune donnée disponible</div>
+          }
+        </div>
       </div>
     </div>
   </div>

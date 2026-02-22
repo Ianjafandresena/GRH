@@ -161,7 +161,7 @@ CREATE TABLE solde_permission(
 
 CREATE TABLE conge(
    cng_code SERIAL,
-   cng_nb_jour NUMERIC(2,1)   NOT NULL,
+   cng_nb_jour NUMERIC(5,2)   NOT NULL,
    cng_debut DATE NOT NULL,
    cng_fin DATE NOT NULL,
    cng_demande TIMESTAMP NOT NULL,
