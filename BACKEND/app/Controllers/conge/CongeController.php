@@ -171,7 +171,7 @@ class CongeController extends ResourceController
             $builder->where('conge.cng_debut >=', $start);
         }
         if ($end) {
-            $builder->where('conge.cng_fin <=', $end);
+            $builder->where('conge.cng_debut <=', $end);
         }
         if ($lieu) {
             $builder->like('region.reg_nom', $lieu);

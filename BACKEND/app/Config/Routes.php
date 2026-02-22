@@ -52,6 +52,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('pending-reimbursements', 'DashboardController::getPendingReimbursements');
         $routes->get('recent-activity', 'DashboardController::getRecentActivity');
         $routes->get('reimbursement-distribution', 'DashboardController::getReimbursementDistribution');
+        $routes->get('top-absent', 'DashboardController::getTopAbsentEmployees');
+        $routes->get('top-reimbursements', 'DashboardController::getTopReimbursements');
     });
 
     // Validation congé (workflow multi-étapes: CHEF -> RRH -> DAAF -> DG)

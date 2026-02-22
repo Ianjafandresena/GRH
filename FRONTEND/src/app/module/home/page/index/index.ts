@@ -51,6 +51,19 @@ export class HomeComponent implements OnInit {
   pendingRequests = signal<any>({ count: 0, total: 0 });
   recentActivity = signal<any[]>([]);
   donutData = signal<any>({ stats: { approuve: 0, en_attente: 0, total: 0 }, montants: { en_attente: 0 } });
+  topAbsent = signal<any[]>([]);
+  topReimbursements = signal<any[]>([]);
+
+  // UI State for Top Lists
+  showAbsentList = signal(true);
+  viewModeAbsent = signal<'list' | 'chart'>('list');
+  showRembList = signal(true);
+  viewModeRemb = signal<'list' | 'chart'>('list');
+
+  // Period Filtering
+  selectedPeriod = signal<string>('month');
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
 
   ngOnInit() {
     this.layoutService.setTitle('Tableau de Bord');
@@ -60,16 +73,61 @@ export class HomeComponent implements OnInit {
       this.admin = JSON.parse(adminStr);
     }
 
+    // Default to current month
+    this.changePeriod('month');
+  }
+
+  changePeriod(period: string) {
+    this.selectedPeriod.set(period);
+    const now = new Date();
+
+    if (period === 'month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      this.startDate.set(this.formatDate(start));
+      this.endDate.set(this.formatDate(end));
+    } else if (period === 'year') {
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear(), 11, 31);
+      this.startDate.set(this.formatDate(start));
+      this.endDate.set(this.formatDate(end));
+    } else if (period === 'custom') {
+      // Keep current values or set defaults if null
+      if (!this.startDate()) this.startDate.set(this.formatDate(now));
+      if (!this.endDate()) this.endDate.set(this.formatDate(now));
+    }
+
     this.loadData();
   }
 
+  updateStartDate(date: string) {
+    this.startDate.set(date);
+    this.selectedPeriod.set('custom');
+    this.loadData();
+  }
+
+  updateEndDate(date: string) {
+    this.endDate.set(date);
+    this.selectedPeriod.set('custom');
+    this.loadData();
+  }
+
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
   private loadData() {
-    this.dashboardService.getDashboardStats().subscribe(stats => this.processStats(stats));
-    this.dashboardService.getEvolutionStats().subscribe(evo => this.processChartData(evo));
+    const start = this.startDate() || undefined;
+    const end = this.endDate() || undefined;
+
+    this.dashboardService.getDashboardStats(start, end).subscribe(stats => this.processStats(stats));
+    this.dashboardService.getEvolutionStats(start, end).subscribe(evo => this.processChartData(evo));
     this.dashboardService.getEmployeesOnLeave().subscribe(data => this.employeesOnLeave.set(data));
-    this.dashboardService.getPendingReimbursements().subscribe(data => this.pendingRequests.set(data));
-    this.dashboardService.getRecentActivity().subscribe(data => this.recentActivity.set(data));
-    this.dashboardService.getReimbursementDistribution().subscribe(data => this.donutData.set(data));
+    this.dashboardService.getPendingReimbursements(start, end).subscribe(data => this.pendingRequests.set(data));
+    this.dashboardService.getRecentActivity(start, end).subscribe(data => this.recentActivity.set(data));
+    this.dashboardService.getReimbursementDistribution(start, end).subscribe(data => this.donutData.set(data));
+    this.dashboardService.getTopAbsent(start, end).subscribe(data => this.topAbsent.set(data));
+    this.dashboardService.getTopReimbursements(start, end).subscribe(data => this.topReimbursements.set(data));
   }
 
   private processStats(stats: any) {
@@ -134,9 +192,16 @@ export class HomeComponent implements OnInit {
       const p2 = points[i + 1];
       const p3 = points[i + 2] || p2;
       const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
-      const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+      let cp1y = p1[1] + (p2[1] - p0[1]) / 6;
       const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
-      const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+      let cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+
+      // Clamping Y to avoid negative dips below X axis (y > height)
+      if (cp1y > this.height) cp1y = this.height;
+      if (cp2y > this.height) cp2y = this.height;
+      if (cp1y < 0) cp1y = 0;
+      if (cp2y < 0) cp2y = 0;
+
       path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
     }
     if (isArea) {
@@ -187,5 +252,19 @@ export class HomeComponent implements OnInit {
     if (diffHrs < 24) return `Il y a ${diffHrs} heure${diffHrs > 1 ? 's' : ''}`;
     if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
     return date.toLocaleDateString('fr-FR');
+  }
+
+  // --- UI TOGGLES ---
+  toggleAbsentVisibility() { this.showAbsentList.update(v => !v); }
+  toggleAbsentViewMode() { this.viewModeAbsent.update(m => m === 'list' ? 'chart' : 'list'); }
+
+  toggleRembVisibility() { this.showRembList.update(v => !v); }
+  toggleRembViewMode() { this.viewModeRemb.update(m => m === 'list' ? 'chart' : 'list'); }
+
+  getBarWidth(value: number, data: any[], key: string): string {
+    if (!data || data.length === 0) return '0%';
+    const max = Math.max(...data.map(d => parseFloat(d[key]) || 0));
+    if (max === 0) return '0%';
+    return (value / max * 100) + '%';
   }
 }

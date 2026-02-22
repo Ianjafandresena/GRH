@@ -89,10 +89,11 @@ class NotificationController extends ResourceController
         
         // ===== NOTIFICATIONS REMBOURSEMENTS =====
         
-        // 4. Demandes de remboursement en attente
+        // 4. Demandes de remboursement en attente (status is NULL or false)
         $rembEnAttente = $db->table('demande_remb')
             ->select('COUNT(*) as count')
-            ->where('dem_statut', 'En attente')
+            ->where('rem_status', null)
+            ->orWhere('rem_status', false)
             ->get()->getRowArray();
         
         if (($rembEnAttente['count'] ?? 0) > 0) {
@@ -108,10 +109,10 @@ class NotificationController extends ResourceController
             ];
         }
         
-        // 5. Demandes de remboursement validées (prêtes pour paiement)
+        // 5. Demandes de remboursement validées
         $rembValidees = $db->table('demande_remb')
             ->select('COUNT(*) as count')
-            ->where('dem_statut', 'Validé')
+            ->where('rem_status', true)
             ->get()->getRowArray();
         
         if (($rembValidees['count'] ?? 0) > 0) {
@@ -127,43 +128,23 @@ class NotificationController extends ResourceController
             ];
         }
         
-        // 6. États de remboursement en cours
-        $etatsEnCours = $db->table('etat_remb')
+        // 7. Prises en charge non encore validées
+        $pecNonValides = $db->table('pris_en_charge')
             ->select('COUNT(*) as count')
-            ->where('eta_statut', 'En cours')
+            ->where('pec_approuver', null)
+            ->orWhere('pec_approuver', false)
             ->get()->getRowArray();
         
-        if (($etatsEnCours['count'] ?? 0) > 0) {
-            $notifications[] = [
-                'id' => 'etat_encours',
-                'type' => 'etat_encours',
-                'titre' => 'États en cours',
-                'message' => $etatsEnCours['count'] . ' état(s) de remboursement en cours de traitement',
-                'date' => $today,
-                'icon' => 'description',
-                'color' => 'info',
-                'link' => '/remboursement/etats'
-            ];
-        }
-        
-        // ===== NOTIFICATIONS PRISES EN CHARGE =====
-        
-        // 7. Prises en charge actives (non encore utilisées pour remboursement)
-        $pecActives = $db->table('pris_en_charge')
-            ->select('COUNT(*) as count')
-            ->where('pec_statut', 'Actif')
-            ->get()->getRowArray();
-        
-        if (($pecActives['count'] ?? 0) > 0) {
+        if (($pecNonValides['count'] ?? 0) > 0) {
             $notifications[] = [
                 'id' => 'pec_actives',
                 'type' => 'pec_actives',
-                'titre' => 'Prises en charge actives',
-                'message' => $pecActives['count'] . ' prise(s) en charge active(s)',
+                'titre' => 'Prises en charge en attente',
+                'message' => $pecNonValides['count'] . ' prise(s) en charge en attente d\'approbation',
                 'date' => $today,
                 'icon' => 'medical_services',
                 'color' => 'default',
-                'link' => '/pec'
+                'link' => '/remboursement/prises-en-charge'
             ];
         }
         
@@ -214,29 +195,25 @@ class NotificationController extends ResourceController
         
         // Demandes en attente
         $attenteRemb = $db->table('demande_remb')
-            ->where('dem_statut', 'En attente')
+            ->where('rem_status', null)
+            ->orWhere('rem_status', false)
             ->countAllResults();
         if ($attenteRemb > 0) $count++;
         
         // Demandes validées
         $valideRemb = $db->table('demande_remb')
-            ->where('dem_statut', 'Validé')
+            ->where('rem_status', true)
             ->countAllResults();
         if ($valideRemb > 0) $count++;
         
-        // États en cours
-        $etatsEncours = $db->table('etat_remb')
-            ->where('eta_statut', 'En cours')
-            ->countAllResults();
-        if ($etatsEncours > 0) $count++;
-        
         // ===== PRISES EN CHARGE =====
         
-        // PEC actives
-        $pecActives = $db->table('pris_en_charge')
-            ->where('pec_statut', 'Actif')
+        // PEC non approuvées
+        $pecAttente = $db->table('pris_en_charge')
+            ->where('pec_approuver', null)
+            ->orWhere('pec_approuver', false)
             ->countAllResults();
-        if ($pecActives > 0) $count++;
+        if ($pecAttente > 0) $count++;
         
         return $this->respond(['count' => $count]);
     }

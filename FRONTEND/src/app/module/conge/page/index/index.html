@@ -6,12 +6,14 @@
         <p class="subtitle">Suivi et historique des demandes de congés et permissions</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" routerLink="/conge/calendar">
-          <i class="fas fa-calendar-alt"></i> Vue Calendrier
-        </button>
-        <button class="btn btn-outline" routerLink="/conge/etat">
-          <i class="fas fa-chart-bar"></i> État de Congé
-        </button>
+        <div class="secondary-btn-group">
+          <button class="btn btn-outline" routerLink="/conge/calendar">
+            <i class="fas fa-calendar-alt"></i> Vue Calendrier
+          </button>
+          <button class="btn btn-outline btn-isolated" routerLink="/conge/etat">
+            <i class="fas fa-chart-bar"></i> État de Congé
+          </button>
+        </div>
         <button class="btn btn-primary" (click)="create()">
           <i class="fas fa-plus"></i> Nouveau congé
         </button>
@@ -20,11 +22,11 @@
     <div class="filter-row">
       <div class="form-group">
         <label>Date début</label>
-        <input type="date" class="form-control" [(ngModel)]="start">
+        <input type="date" class="form-control" [(ngModel)]="start" (change)="onFilterChange()">
       </div>
       <div class="form-group">
         <label>Date fin</label>
-        <input type="date" class="form-control" [(ngModel)]="end">
+        <input type="date" class="form-control" [(ngModel)]="end" (change)="onFilterChange()">
       </div>
       <div class="form-group">
         <label>Lieu</label>
@@ -50,11 +52,8 @@
         </select>
       </div>
 
-      <div class="actions-group">
-        <button class="btn btn-primary" (click)="applyFilter()" [disabled]="loading">
-          <i class="fas fa-filter"></i> Filtrer
-        </button>
-        <button class="btn btn-outline" (click)="reload()" title="Recharger">
+      <div class="refresh-group">
+        <button class="btn btn-outline btn-circle" (click)="reload()" title="Recharger">
           <i class="fas fa-sync-alt"></i>
         </button>
       </div>

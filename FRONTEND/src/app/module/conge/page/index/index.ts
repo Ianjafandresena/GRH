@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, AfterViewInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,6 +7,8 @@ import { LayoutService } from '../../../../shared/layout/service/layout.service'
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-conge-index',
@@ -22,7 +24,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
   templateUrl: './index.html',
   styleUrls: ['./index.scss']
 })
-export class CongeIndexComponent implements OnInit, AfterViewInit {
+export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly congeService = inject(CongeService);
@@ -65,6 +67,9 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
   filteredRegions: any[] = [];
   showRegionDropdown = false;
 
+  private filterSubject = new Subject<void>();
+  private filterSubscription?: Subscription;
+
   // Helper for status display
   getStatusLabel(status: any): string {
     if (status === true || status === 't' || status === 1) return 'Validé';
@@ -80,10 +85,19 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.layoutService.setTitle('Gestion des Absences');
+
+    // Setup dynamic filtering with debounce
+    this.filterSubscription = this.filterSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.loadData();
+    });
+
     this.route.data.subscribe(data => {
       this.conges = data['conges'] || [];
       if (!this.conges.length) {
-        this.applyFilter();
+        this.loadData();
       } else {
         this.absences = this.conges.map(c => ({ ...c, absence_type: 'conge' }));
         this.dataSource.data = this.absences;
@@ -96,7 +110,16 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
     });
   }
 
+  ngOnDestroy() {
+    this.filterSubscription?.unsubscribe();
+  }
+
   ngAfterViewInit() {
+  }
+
+  // Trigger dynamic filter
+  onFilterChange() {
+    this.filterSubject.next();
   }
 
   // Region Filter Logic
@@ -117,11 +140,13 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
       r.reg_nom.toLowerCase().includes(filterVal)
     );
     this.showRegionDropdown = true;
+    this.onFilterChange();
   }
 
   selectRegion(region: any) {
     this.lieu = region.reg_nom;
     this.showRegionDropdown = false;
+    this.onFilterChange();
   }
 
   exportCsv() {
@@ -140,11 +165,11 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
     const form = new FormData();
     form.append('file', file);
     this.congeService.importCongesCsv(form).subscribe(() => {
-      this.congeService.getConges().subscribe(list => { this.conges = list || []; });
+      this.loadData();
     });
   }
 
-  applyFilter() {
+  loadData() {
     const params: any = {};
     if (this.start) params.start = this.start;
     if (this.end) params.end = this.end;
@@ -162,6 +187,7 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         this.errorMsg = err?.message || 'Erreur lors du chargement';
+        this.loading = false;
       },
       complete: () => {
         this.loading = false;
@@ -186,7 +212,7 @@ export class CongeIndexComponent implements OnInit, AfterViewInit {
   }
 
   reload() {
-    this.applyFilter();
+    this.loadData();
   }
 
   exportExcel() {
