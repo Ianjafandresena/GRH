@@ -1,0 +1,146 @@
+<div class="page-container">
+    <div class="card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>Interruption de Congé</h1>
+                <p class="subtitle">Interrompre un congé en cours et restituer les jours restants</p>
+            </div>
+            <button class="btn btn-outline" (click)="cancel()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                </svg>
+                Retour
+            </button>
+        </div>
+
+        <!-- Error/Success Messages -->
+        <div class="alert alert-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
+        <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+
+        <!-- Loading -->
+        <div class="loading" *ngIf="loading">
+            <p>Chargement...</p>
+        </div>
+
+        <!-- Leave Info Section -->
+        <div class="content" *ngIf="conge && !loading">
+            <div class="section">
+                <h2 class="section-title">Informations du Congé</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Employé</span>
+                        <span class="value">{{ conge.nom_emp }} {{ conge.prenom_emp }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Type</span>
+                        <span class="value">{{ conge.typ_appelation }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Date début</span>
+                        <span class="value">{{ conge.cng_debut }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Date fin</span>
+                        <span class="value">{{ conge.cng_fin }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Durée totale</span>
+                        <span class="value highlight">{{ conge.cng_nb_jour }} jour(s)</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Lieu</span>
+                        <span class="value">{{ conge.nom_region }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Section (while not previewing) -->
+            <div class="section" *ngIf="!showPreview && !successMsg">
+                <h2 class="section-title">Formulaire d'Interruption</h2>
+
+                <form [formGroup]="interruptionForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="interupDate">Date d'interruption *</label>
+                            <input type="date" id="interupDate" class="form-control" formControlName="interupDate"
+                                [min]="conge.cng_debut" [max]="conge.cng_fin">
+                            <span class="hint">La date doit être comprise entre le début et la fin du congé</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="motif">Motif</label>
+                            <select id="motif" class="form-control" formControlName="interupMotif">
+                                <option *ngFor="let m of motifs" [value]="m">{{ m }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="actions">
+                    <button class="btn btn-primary" (click)="previewRestoration()"
+                        [disabled]="interruptionForm.invalid">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                            <path
+                                d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                        </svg>
+                        Visualiser la restitution
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="section preview-section" *ngIf="showPreview && preview">
+                <h2 class="section-title">Aperçu de la Restitution</h2>
+
+                <div class="preview-summary">
+                    <div class="summary-item">
+                        <span class="big-number">{{ preview.jours_utilises }}</span>
+                        <span class="summary-label">Jour(s) utilisé(s)</span>
+                    </div>
+                    <div class="summary-item highlight-box">
+                        <span class="big-number">{{ preview.jours_a_restituer }}</span>
+                        <span class="summary-label">Jour(s) à restituer</span>
+                    </div>
+                </div>
+
+                <h3>Détails des soldes à créditer</h3>
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Décision</th>
+                            <th>Année</th>
+                            <th>Jours restitués</th>
+                            <th>Solde actuel</th>
+                            <th>Solde après</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let detail of preview.details_restitution">
+                            <td>{{ detail.decision }}</td>
+                            <td>{{ detail.annee }}</td>
+                            <td class="highlight">+{{ detail.jours_a_restituer }}</td>
+                            <td>{{ detail.solde_actuel }} j</td>
+                            <td class="success">{{ detail.solde_apres }} j</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="actions">
+                    <button class="btn btn-outline" (click)="resetPreview()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                        Modifier
+                    </button>
+                    <button class="btn btn-danger" (click)="confirmInterruption()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        Confirmer l'interruption
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

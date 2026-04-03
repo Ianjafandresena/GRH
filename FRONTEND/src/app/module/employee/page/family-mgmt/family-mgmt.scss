@@ -1,0 +1,420 @@
+@use '../../../../../styles/shared-styles.scss' as *;
+@use "sass:color";
+
+.page-container {
+    padding: $spacing-lg;
+    animation: fadeInUp 0.4s ease-out;
+    position: relative;
+    min-height: 80vh;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: $radius-lg;
+    backdrop-filter: blur(4px);
+}
+
+// Header Actions (Exact replicate from detail.scss)
+.header-actions {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacing-xl;
+    padding: 0 $spacing-lg;
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        font-size: $font-size-base;
+        color: $secondary;
+
+        .back-btn {
+            margin-right: $spacing-sm;
+        }
+
+        .root,
+        .parent {
+            cursor: pointer;
+            font-weight: 500;
+
+            &:hover {
+                color: $primary-blue;
+            }
+        }
+
+        .current {
+            font-weight: 700;
+            color: $dark;
+        }
+
+        mat-icon {
+            font-size: 1.2rem;
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+    }
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xl;
+    padding: 0 $spacing-lg;
+
+    @media (max-width: 1100px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// Cards (Exact replicate from detail.scss)
+.details-card {
+    background: $bg-card;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-sm;
+    border: 1px solid $border-light;
+    overflow: hidden;
+    height: fit-content;
+
+    .card-header {
+        padding: $spacing-lg $spacing-xl;
+        background: white;
+        border-bottom: 1px solid #f5f5f5;
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+
+        mat-icon {
+            color: #2ab1bb;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: $dark;
+        }
+    }
+
+    .card-body {
+        padding: $spacing-xl;
+    }
+}
+
+// Specific adjustments for family management forms
+.form-container {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
+    padding: $spacing-lg;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: $spacing-md;
+
+        @media (max-width: 600px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    mat-form-field {
+        width: 100%;
+
+        ::ng-deep .mat-mdc-text-field-wrapper {
+            background-color: white !important;
+            border-radius: $radius-sm !important;
+        }
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        &.flex-1 {
+            flex: 1;
+        }
+
+        &.flex-2 {
+            flex: 2;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 42px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background-color: white;
+            color: #1e293b;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+
+            &:focus {
+                outline: none;
+                border-color: #2ab1bb;
+                box-shadow: 0 0 0 3px rgba(42, 177, 187, 0.1);
+            }
+        }
+    }
+
+    .btn-add-full {
+        width: 100%;
+        height: 48px;
+        border-radius: $radius-md;
+        font-weight: 700;
+        background: #2ab1bb;
+        color: white;
+
+        &:hover:not(:disabled) {
+            background: color.adjust(#2ab1bb, $lightness: -5%);
+        }
+    }
+
+    .action-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $spacing-md;
+        flex-wrap: wrap;
+
+        .btn-add {
+            height: 44px;
+            border-radius: $radius-md;
+            background: #2ab1bb;
+            color: white;
+            font-weight: 700;
+            padding: 0 $spacing-lg;
+        }
+    }
+}
+
+.sex-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: $secondary;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid $border-light;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #2ab1bb;
+    }
+}
+
+// Active Spouse styling to match sidebar/card logic
+.active-spouse {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-xl;
+
+    .spouse-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+        margin-bottom: $spacing-lg;
+
+        .gender-circle {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+            mat-icon {
+                font-size: 24px;
+                width: 24px;
+                height: 24px;
+            }
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            .label {
+                font-size: 10px;
+                color: $secondary;
+                text-transform: uppercase;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            }
+
+            .name {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: $dark;
+            }
+
+            .status-badge {
+                font-size: 11px;
+                font-weight: 600;
+                color: $success;
+            }
+        }
+    }
+
+    .actions {
+        display: flex;
+        gap: $spacing-sm;
+
+        button {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: $radius-md;
+        }
+    }
+}
+
+.history {
+    margin-top: $spacing-lg;
+
+    h3 {
+        font-size: 11px;
+        font-weight: 700;
+        color: $secondary;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: $spacing-md;
+    }
+
+    .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f8f9fa;
+        font-size: 14px;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+
+            &.divorced {
+                background: #fee2e2;
+                color: #ef4444;
+            }
+
+            &.deceased {
+                background: #f1f5f9;
+                color: #64748b;
+            }
+        }
+    }
+}
+
+.children-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+
+    .child-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $spacing-md $spacing-lg;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+
+        .child-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            .child-name-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                mat-icon {
+                    font-size: 18px;
+                    width: 18px;
+                    height: 18px;
+                    color: #2ab1bb;
+                }
+
+                .name {
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: $dark;
+                }
+            }
+
+            .dob {
+                font-size: 12px;
+                color: $secondary;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                mat-icon {
+                    font-size: 14px;
+                    width: 14px;
+                    height: 14px;
+                    color: #ccc;
+                }
+            }
+        }
+    }
+}
+
+.empty-msg {
+    text-align: center;
+    padding: $spacing-xl;
+    color: #cbd5e1;
+    font-style: italic;
+    font-size: 14px;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,77 @@
+<h2 mat-dialog-title>
+    <mat-icon>rate_review</mat-icon>
+    {{ isEdit ? 'Modifier' : 'Ajouter' }} Évaluation de Stage
+</h2>
+
+<mat-dialog-content>
+    <div *ngIf="loadingData" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Chargement...</p>
+    </div>
+
+    <form *ngIf="!loadingData" [formGroup]="form" class="eval-form">
+        <h3>Assiduité</h3>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre d'absences</mat-label>
+            <input matInput type="number" formControlName="asdt_nb_abscence" placeholder="0" />
+            <mat-icon matPrefix>event_busy</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de retards</mat-label>
+            <input matInput type="number" formControlName="asdt_nb_retard" placeholder="0" />
+            <mat-icon matPrefix>schedule</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Remarque assiduité</mat-label>
+            <textarea matInput formControlName="asdt_remarque" rows="2"
+                placeholder="Remarques sur l'assiduité"></textarea>
+            <mat-icon matPrefix>comment</mat-icon>
+        </mat-form-field>
+
+        <h3>Évaluation</h3>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Lieu d'évaluation</mat-label>
+            <input matInput formControlName="evstg_lieu" placeholder="ex: Bureau RH" />
+            <mat-icon matPrefix>place</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <input matInput type="number" formControlName="evstg_note" placeholder="0 - 20" />
+            <mat-icon matPrefix>grade</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Aptitude</mat-label>
+            <input matInput formControlName="evstg_aptitude" placeholder="ex: Très bien, Bien, Passable" />
+            <mat-icon matPrefix>thumb_up</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date d'évaluation</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="evstg_date_eval" (click)="picker.open()"
+                readonly />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <div *ngIf="errorMessage" class="error-message">
+            <mat-icon>error</mat-icon>
+            {{ errorMessage }}
+        </div>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="onCancel()" [disabled]="loading">
+        Annuler
+    </button>
+    <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="loading || loadingData">
+        <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+        <span *ngIf="!loading">{{ isEdit ? 'Modifier' : 'Enregistrer' }}</span>
+    </button>
+</mat-dialog-actions>

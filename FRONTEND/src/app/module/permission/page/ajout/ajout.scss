@@ -1,0 +1,227 @@
+@use '../../../../../styles/shared-styles.scss' as *;
+
+.page-container {
+    @include transition-standard;
+}
+
+.card {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: $bg-card;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    box-shadow: $shadow-lg;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 2px;
+    padding: 0;
+    list-style: none;
+
+    li {
+        padding: $spacing-sm 0.75rem;
+        cursor: pointer;
+        border-bottom: 1px solid $border-section;
+        @include transition-standard;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:hover {
+            background: $bg-hover;
+            color: $primary-blue;
+        }
+
+        small {
+            display: block;
+            opacity: 0.7;
+            font-size: 0.75rem;
+        }
+    }
+}
+
+// Carte info employé + solde
+.employee-info-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    background: linear-gradient(135deg, rgba($primary-blue, 0.05), rgba($primary-blue, 0.02));
+    border: 1px solid rgba($primary-blue, 0.15);
+    border-radius: $radius-md;
+}
+
+.employee-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    mat-icon {
+        font-size: 2rem;
+        width: 2rem;
+        height: 2rem;
+        color: $primary-blue;
+    }
+
+    strong {
+        display: block;
+        font-size: 1rem;
+    }
+
+    small {
+        color: $secondary;
+        font-size: 0.8rem;
+    }
+}
+
+.solde-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba($success, 0.1);
+    color: $success;
+    border-radius: 20px;
+    font-weight: 600;
+
+    mat-icon {
+        font-size: 1.25rem;
+    }
+
+    &.warning {
+        background: rgba($warning, 0.1);
+        color: $warning;
+    }
+}
+
+// Sélecteur de période (Matin / Après-midi / Journée)
+.period-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+
+    @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.period-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid $border-light;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    background: $bg-card;
+
+    input[type="radio"] {
+        display: none;
+    }
+
+    mat-icon {
+        font-size: 2rem;
+        width: 2rem;
+        height: 2rem;
+        margin-bottom: 0.5rem;
+        color: $secondary;
+    }
+
+    span {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    small {
+        color: $secondary;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    &:hover {
+        border-color: $primary-blue;
+        background: rgba($primary-blue, 0.02);
+    }
+
+    &.selected {
+        border-color: $primary-blue;
+        background: rgba($primary-blue, 0.08);
+
+        mat-icon {
+            color: $primary-blue;
+        }
+
+        span {
+            color: $primary-blue;
+        }
+    }
+}
+
+// Info durée
+.duration-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    margin-top: 1rem;
+    background: rgba($primary-blue, 0.08);
+    color: $primary-blue;
+    border-radius: 20px;
+    font-size: 0.9rem;
+
+    mat-icon {
+        font-size: 1.25rem;
+    }
+}
+
+// Footer actions
+.form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid $border-section;
+}
+
+// Alertes
+.alert-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: rgba($warning, 0.1);
+    border: 1px solid rgba($warning, 0.3);
+    border-radius: $radius-md;
+    color: #e6a700;
+
+    mat-icon {
+        color: $warning;
+    }
+}
+
+.error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: $spacing-md;
+    padding: 1rem;
+    background: rgba($danger, 0.1);
+    border: 1px solid rgba($danger, 0.3);
+    border-radius: $radius-md;
+    color: $danger;
+}

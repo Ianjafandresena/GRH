@@ -1,0 +1,304 @@
+<div class="create-employe-container" @fadeIn>
+    <div class="header-section">
+        <div class="header-content">
+            <h1>
+                <mat-icon>person_add</mat-icon>
+                Nouveau Collaborateur
+            </h1>
+            <p class="subtitle">Complétez les étapes pour enregistrer un nouvel employé dans le système.</p>
+        </div>
+    </div>
+
+    <mat-stepper #stepper linear class="premium-stepper">
+        <!-- Étape 1 : Informations Personnelles -->
+        <mat-step [stepControl]="personalForm">
+            <ng-template matStepLabel>Infos Personnelles</ng-template>
+            <div class="step-content" @stepAnimation>
+                <div class="step-header">
+                    <h2><mat-icon>person</mat-icon> Informations Personnelles</h2>
+                    <p>Renseignez l'identité de base de l'employé.</p>
+                </div>
+
+                <form [formGroup]="personalForm">
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Titre</mat-label>
+                            <mat-select formControlName="emp_titre">
+                                <mat-option value="M.">M.</mat-option>
+                                <mat-option value="Mme">Mme</mat-option>
+                                <mat-option value="Dr.">Dr.</mat-option>
+                                <mat-option value="Pr.">Pr.</mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>badge</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_titre', 1) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Nom *</mat-label>
+                            <input matInput formControlName="emp_nom" placeholder="Nom de famille" />
+                            <mat-icon matPrefix>person</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_nom', 1) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Prénom *</mat-label>
+                            <input matInput formControlName="emp_prenom" placeholder="Prénom" />
+                            <mat-icon matPrefix>person_outline</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_prenom', 1) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de Naissance *</mat-label>
+                            <input matInput [matDatepicker]="pickerNaissance" formControlName="emp_datenaissance"
+                                (click)="pickerNaissance.open()" readonly />
+                            <mat-datepicker-toggle matSuffix [for]="pickerNaissance"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerNaissance></mat-datepicker>
+                            <mat-icon matPrefix>calendar_today</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_datenaissance', 1) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Sexe *</mat-label>
+                            <mat-select formControlName="emp_sexe">
+                                <mat-option [value]="true">Homme</mat-option>
+                                <mat-option [value]="false">Femme</mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>wc</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_sexe', 1) }}</mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="step-actions">
+                        <button mat-stroked-button type="button" (click)="onCancel()">Annuler</button>
+                        <button mat-raised-button color="primary" matStepperNext>Suivant
+                            <mat-icon>arrow_forward</mat-icon></button>
+                    </div>
+                </form>
+            </div>
+        </mat-step>
+
+        <!-- Étape 2 : Informations Administratives -->
+        <mat-step [stepControl]="adminForm">
+            <ng-template matStepLabel>Administrative</ng-template>
+            <div class="step-content" @stepAnimation>
+                <div class="step-header">
+                    <h2><mat-icon>admin_panel_settings</mat-icon> Informations Administratives</h2>
+                    <p>Identifiants officiels et coordonnées de contact.</p>
+                </div>
+
+                <form [formGroup]="adminForm">
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>IM ARMP *</mat-label>
+                            <input matInput formControlName="emp_im_armp" placeholder="Identifiant ARMP" />
+                            <mat-icon matPrefix>fingerprint</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_im_armp', 2) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>IM État</mat-label>
+                            <input matInput formControlName="emp_im_etat" placeholder="Identifiant État (optionnel)" />
+                            <mat-icon matPrefix>badge</mat-icon>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>CIN *</mat-label>
+                            <input matInput formControlName="emp_cin" placeholder="XXX XXX XXX XXX"
+                                (input)="formatCin($event)" maxlength="15" />
+                            <mat-icon matPrefix>perm_identity</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_cin', 2) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Email *</mat-label>
+                            <input matInput type="email" formControlName="emp_mail" placeholder="email@example.com" />
+                            <mat-icon matPrefix>email</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_mail', 2) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Contact *</mat-label>
+                            <input matInput formControlName="emp_contact" placeholder="XXX XX XXX XX"
+                                (input)="onPhoneInput($event)" maxlength="15" type="tel" />
+                            <mat-icon matPrefix>phone</mat-icon>
+                            <mat-error>{{ getErrorMessage('emp_contact', 2) }}</mat-error>
+                            <mat-hint>Format: XXX XX XXX XX (10 chiffres)</mat-hint>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="step-actions">
+                        <button mat-button matStepperPrevious><mat-icon>arrow_back</mat-icon> Précédent</button>
+                        <button mat-raised-button color="primary" matStepperNext>Suivant
+                            <mat-icon>arrow_forward</mat-icon></button>
+                    </div>
+                </form>
+            </div>
+        </mat-step>
+
+        <!-- Étape 3 : Informations d'Entrée -->
+        <mat-step [stepControl]="entryForm">
+            <ng-template matStepLabel>Entrée</ng-template>
+            <div class="step-content" @stepAnimation>
+                <div class="step-header">
+                    <h2><mat-icon>login</mat-icon> Informations d'Entrée</h2>
+                    <p>Détails sur l'embauche et le statut au sein de l'ARMP.</p>
+                </div>
+
+                <form [formGroup]="entryForm">
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date d'Entrée *</mat-label>
+                            <input matInput [matDatepicker]="pickerEntree" formControlName="date_entree"
+                                (click)="pickerEntree.open()" readonly />
+                            <mat-datepicker-toggle matSuffix [for]="pickerEntree"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerEntree></mat-datepicker>
+                            <mat-icon matPrefix>event</mat-icon>
+                            <mat-error>{{ getErrorMessage('date_entree', 3) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Type d'Entrée *</mat-label>
+                            <mat-select formControlName="e_type_code">
+                                <mat-option *ngFor="let type of typesEntree" [value]="type.e_type_code">
+                                    {{ type.e_type_motif }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>category</mat-icon>
+                            <mat-error>{{ getErrorMessage('e_type_code', 3) }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Statut ARMP *</mat-label>
+                            <mat-select formControlName="stt_armp_code">
+                                <mat-option *ngFor="let statut of statutsArmp" [value]="statut.stt_armp_code">
+                                    {{ statut.stt_armp_statut }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>verified_user</mat-icon>
+                            <mat-error>{{ getErrorMessage('stt_armp_code', 3) }}</mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="step-actions">
+                        <button mat-button matStepperPrevious><mat-icon>arrow_back</mat-icon> Précédent</button>
+                        <button mat-raised-button color="primary" matStepperNext>Suivant
+                            <mat-icon>arrow_forward</mat-icon></button>
+                    </div>
+                </form>
+            </div>
+        </mat-step>
+
+        <!-- Étape 4 : Affectation Initiale -->
+        <mat-step [stepControl]="affectationForm">
+            <ng-template matStepLabel>Affectation</ng-template>
+            <div class="step-content" @stepAnimation>
+                <div class="step-header">
+                    <h2><mat-icon>work</mat-icon> Affectation Initiale</h2>
+                    <p>Poste occupé et conditions contractuelles pour commencer.</p>
+                </div>
+
+                <form [formGroup]="affectationForm">
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Poste *</mat-label>
+                            <input type="text" matInput formControlName="pst_code" [matAutocomplete]="autoPoste"
+                                placeholder="Rechercher un poste...">
+                            <mat-autocomplete #autoPoste="matAutocomplete" [displayWith]="displayPoste.bind(this)">
+                                <mat-option *ngFor="let poste of filteredPostes$ | async" [value]="poste">
+                                    {{ poste.pst_fonction }} <span *ngIf="poste.srvc_nom" class="srvc-hint">- {{
+                                        poste.srvc_nom }}</span>
+                                </mat-option>
+                            </mat-autocomplete>
+                            <mat-icon matPrefix>business_center</mat-icon>
+                            <mat-error>{{ getAffectationErrorMessage('pst_code') }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Motif d'Affectation *</mat-label>
+                            <mat-select formControlName="m_aff_code">
+                                <mat-option *ngFor="let motif of motifs" [value]="motif.m_aff_code">
+                                    {{ motif.m_aff_motif }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>label</mat-icon>
+                            <mat-error>{{ getAffectationErrorMessage('m_aff_code') }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de Début *</mat-label>
+                            <input matInput [matDatepicker]="pickerDebut" formControlName="affec_date_debut"
+                                (click)="pickerDebut.open()" readonly />
+                            <mat-datepicker-toggle matSuffix [for]="pickerDebut"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerDebut></mat-datepicker>
+                            <mat-icon matPrefix>event</mat-icon>
+                            <mat-error>{{ getAffectationErrorMessage('affec_date_debut') }}</mat-error>
+                            <mat-hint
+                                *ngIf="!affectationForm.get('affec_date_debut')?.value && entryForm.get('date_entree')?.value">
+                                Sera copiée depuis la date d'entrée
+                            </mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Type de Contrat *</mat-label>
+                            <mat-select formControlName="tcontrat_code">
+                                <mat-option *ngFor="let type of typesContrat" [value]="type.tcontrat_code">
+                                    {{ type.tcontrat_nom }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matPrefix>description</mat-icon>
+                            <mat-error>{{ getAffectationErrorMessage('tcontrat_code') }}</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" *ngIf="shouldShowDateFin()">
+                            <mat-label>Date de Fin <span *ngIf="isDateFinRequired()">*</span></mat-label>
+                            <input matInput [matDatepicker]="pickerFin" formControlName="affec_date_fin"
+                                [readonly]="isDateFinReadonly()" (click)="!isDateFinReadonly() && pickerFin.open()" />
+                            <mat-datepicker-toggle matSuffix [for]="pickerFin"
+                                [disabled]="isDateFinReadonly()"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerFin></mat-datepicker>
+                            <mat-icon matPrefix>event_available</mat-icon>
+                            <mat-error>{{ getAffectationErrorMessage('affec_date_fin') }}</mat-error>
+                            <mat-hint *ngIf="isDateFinReadonly()">Générée automatiquement (date entrée + 6
+                                ans)</mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Commentaire</mat-label>
+                            <textarea matInput formControlName="affec_commentaire" rows="3"
+                                placeholder="Commentaire optionnel"></textarea>
+                            <mat-icon matPrefix>notes</mat-icon>
+                        </mat-form-field>
+                    </div>
+
+                    <div *ngIf="getAffectationFormError()" class="error-message">
+                        <mat-icon>error</mat-icon>
+                        {{ getAffectationFormError() }}
+                    </div>
+
+                    <!-- Messages d'erreur et succès -->
+                    <div *ngIf="errorMessage" class="error-message-card mt-3">
+                        <mat-icon>error</mat-icon>
+                        <span>{{ errorMessage }}</span>
+                    </div>
+
+                    <div *ngIf="successMessage" class="success-message-card mt-3">
+                        <mat-icon>check_circle</mat-icon>
+                        <span>{{ successMessage }}</span>
+                    </div>
+
+                    <div class="step-actions">
+                        <button mat-button matStepperPrevious><mat-icon>arrow_back</mat-icon> Précédent</button>
+                        <button mat-raised-button color="primary" type="button" (click)="onSubmit()"
+                            [disabled]="loading || loadingData || personalForm.invalid || adminForm.invalid || entryForm.invalid || affectationForm.invalid"
+                            class="submit-btn">
+                            <mat-spinner *ngIf="loading" diameter="20"
+                                style="display: inline-block; margin-right: 0.5rem;"></mat-spinner>
+                            <mat-icon *ngIf="!loading">save</mat-icon>
+                            {{ loading ? 'Création...' : 'Finaliser la création' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </mat-step>
+    </mat-stepper>
+</div>

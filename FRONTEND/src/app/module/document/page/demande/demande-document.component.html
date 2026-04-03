@@ -1,0 +1,128 @@
+<div class="demande-document-container" @fadeIn>
+  <!-- Page Header (ERPNext Style) -->
+  <header class="header-section">
+    <div class="header-content">
+      <h1>
+        <mat-icon>document_scanner</mat-icon>
+        Demande de Document Officiel
+      </h1>
+      <p class="subtitle">Générez instantanément des attestations, certificats ou conventions pour vos collaborateurs.
+      </p>
+    </div>
+  </header>
+
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>edit_note</mat-icon>
+        Formulaire de Demande
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="demandeForm" (ngSubmit)="onSubmit()">
+
+        <!-- Section 1: Identification -->
+        <section class="form-section">
+          <div class="section-title">
+            <mat-icon>person_search</mat-icon> Bénéficiaire du Document
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Rechercher un employé</mat-label>
+            <input matInput [formControl]="employeControl" [matAutocomplete]="autoEmploye"
+              placeholder="Nom, prénom ou matricule..." [value]="getDisplayValue(employeControl.value)" />
+            <mat-icon matPrefix>person</mat-icon>
+            <mat-autocomplete #autoEmploye="matAutocomplete" [displayWith]="getDisplayValue.bind(this)"
+              (optionSelected)="onEmployeSelected($event)">
+              <mat-option *ngFor="let employe of filteredEmployes$ | async" [value]="employe">
+                <div class="emp-option">
+                  <span class="emp-name">{{ employe.emp_nom }} {{ employe.emp_prenom }}</span>
+                  <span class="emp-mat text-muted" *ngIf="employe.emp_im_armp">IM ARMP: {{ employe.emp_im_armp }}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+            <mat-error *ngIf="employeControl.hasError('required') && employeControl.touched">
+              Veuillez sélectionner un bénéficiaire.
+            </mat-error>
+          </mat-form-field>
+        </section>
+
+        <!-- Section 2: Type & Usage -->
+        <section class="form-section mt-4">
+          <div class="section-title">
+            <mat-icon>article</mat-icon> Détails du Document
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Type de document à générer *</mat-label>
+              <mat-select formControlName="type_document" [disabled]="loadingTypes">
+                <mat-option *ngIf="loadingTypes" disabled>
+                  <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
+                  Chargement des types...
+                </mat-option>
+                <mat-option *ngFor="let type of typeDocuments" [value]="type.tdoc_code">
+                  {{ type.tdoc_nom }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>description</mat-icon>
+              <mat-error
+                *ngIf="demandeForm.get('type_document')?.hasError('required') && demandeForm.get('type_document')?.touched">
+                Le type de document est requis.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Usage prévu *</mat-label>
+              <mat-select formControlName="usage">
+                <mat-option [value]="'Bancaire'">Usage Bancaire</mat-option>
+                <mat-option [value]="'Administrative'">Usage Administratif</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>account_balance</mat-icon>
+              <mat-error *ngIf="demandeForm.get('usage')?.hasError('required') && demandeForm.get('usage')?.touched">
+                L'usage est requis pour la personnalisation du texte.
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field *ngIf="demandeForm.get('usage')?.value === 'Administrative'" appearance="outline"
+            class="full-width">
+            <mat-label>Note de précision / Destinataire *</mat-label>
+            <textarea matInput formControlName="commentaire" rows="3"
+              placeholder="Précisez le destinataire ou toute information complémentaire nécessaire..."></textarea>
+            <mat-icon matPrefix>notes</mat-icon>
+            <mat-error
+              *ngIf="demandeForm.get('commentaire')?.hasError('required') && demandeForm.get('commentaire')?.touched">
+              Une précision est obligatoire pour les demandes administratives.
+            </mat-error>
+          </mat-form-field>
+        </section>
+
+        <!-- Feedback Messages -->
+        <div *ngIf="errorMessage" class="error-message" @fadeIn>
+          <mat-icon>warning_amber</mat-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <div *ngIf="successMessage" class="success-message" @fadeIn>
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ successMessage }}</span>
+        </div>
+
+        <!-- Submission Actions -->
+        <div class="action-buttons">
+          <button mat-button type="button" (click)="onCancel()" class="cancel-btn" [disabled]="loading">
+            Annuler
+          </button>
+          <button mat-raised-button color="primary" type="submit" class="submit-btn"
+            [disabled]="loading || demandeForm.invalid || employeControl.invalid">
+            <mat-spinner *ngIf="loading" diameter="20" style="display:inline-block; margin-right: 8px;"></mat-spinner>
+            <mat-icon *ngIf="!loading">send</mat-icon>
+            <span>{{ loading ? 'Génération en cours...' : 'Générer & Télécharger le PDF' }}</span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

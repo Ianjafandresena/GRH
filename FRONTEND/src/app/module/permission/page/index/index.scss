@@ -1,0 +1,4 @@
+.table-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; padding: 8px; }
+tbody td { padding: 8px; border-top: 1px solid var(--erp-border); }

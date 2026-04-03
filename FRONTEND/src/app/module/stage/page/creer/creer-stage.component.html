@@ -1,0 +1,175 @@
+<div class="creer-stage-container" [@fadeIn]>
+    <div *ngIf="loadingData" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Préchargement des données...</p>
+    </div>
+
+    <mat-card class="form-card" *ngIf="!loadingData">
+        <div class="card-header-gradient">
+            <div class="title-content">
+                <mat-icon>school</mat-icon>
+                <div class="text">
+                    <h2>{{ isEdit ? 'Modifier le Stage' : 'Nouveau Stage' }}</h2>
+                    <p>Configuration complète des modalités de stage</p>
+                </div>
+            </div>
+        </div>
+
+        <mat-card-content>
+            <div *ngIf="errorMessage" class="error-message">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ errorMessage }}</span>
+            </div>
+
+            <div *ngIf="successMessage" class="success-message">
+                <mat-icon>check_circle_outline</mat-icon>
+                <span>{{ successMessage }}</span>
+            </div>
+
+            <form [formGroup]="stageForm" (ngSubmit)="onSubmit()" class="modern-form">
+
+                <!-- Section 1: Bénéficiaire & Thème -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <mat-icon>person</mat-icon>
+                        <span>Bénéficiaire & Thème</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Rechercher un stagiaire</mat-label>
+                            <input type="text" matInput [formControl]="stagiaireCtrl" [matAutocomplete]="autoStgr"
+                                placeholder="Nom ou prénom du stagiaire...">
+                            <mat-autocomplete #autoStgr="matAutocomplete" [displayWith]="displayStagiaire"
+                                (optionSelected)="onStagiaireSelected($event)">
+                                <mat-option *ngFor="let s of filteredStagiaires$ | async" [value]="s">
+                                    <div class="emp-option-modern">
+                                        <div class="icon-circle">
+                                            <mat-icon>person_outline</mat-icon>
+                                        </div>
+                                        <div class="emp-details">
+                                            <span class="emp-name">{{ s.stgr_nom }} {{ s.stgr_prenom }}</span>
+                                            <div class="emp-info-sub">
+                                                <mat-icon inline>phone</mat-icon>
+                                                <span>{{ s.stgr_contact || 'Non renseigné' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </mat-option>
+                            </mat-autocomplete>
+                            <mat-icon matSuffix color="primary">search</mat-icon>
+                            <mat-error *ngIf="stageForm.get('stgr_code')?.hasError('required')">Le stagiaire est
+                                requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Thème du stage</mat-label>
+                            <input matInput formControlName="stg_theme"
+                                placeholder="Ex: Développement d'une application de gestion...">
+                            <mat-icon matSuffix>topic</mat-icon>
+                            <mat-error *ngIf="stageForm.get('stg_theme')?.hasError('required')">Le thème est
+                                obligatoire</mat-error>
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <!-- Section 2: Calendrier Prévisionnel -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <mat-icon>calendar_today</mat-icon>
+                        <span>Calendrier Prévisionnel</span>
+                    </div>
+
+                    <div class="form-grid tree-cols">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de début</mat-label>
+                            <input matInput [matDatepicker]="pickerDebut" formControlName="stg_date_debut">
+                            <mat-datepicker-toggle matSuffix [for]="pickerDebut"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerDebut></mat-datepicker>
+                            <mat-error *ngIf="stageForm.get('stg_date_debut')?.hasError('required')">Date
+                                requise</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Durée (mois)</mat-label>
+                            <input matInput type="number" step="0.5" formControlName="stg_duree">
+                            <mat-icon matSuffix>timer</mat-icon>
+                            <mat-hint>Ex: 1.5 pour un mois et demi</mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="readonly-field">
+                            <mat-label>Date de fin calculée</mat-label>
+                            <input matInput [matDatepicker]="pickerFin" formControlName="stg_date_fin">
+                            <mat-datepicker-toggle matSuffix [for]="pickerFin" disabled></mat-datepicker-toggle>
+                            <mat-datepicker #pickerFin></mat-datepicker>
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <!-- Section 3: Encadrement & Affiliation -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <mat-icon>business</mat-icon>
+                        <span>Encadrement & Affiliation</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Établissement / Université</mat-label>
+                            <input type="text" matInput [formControl]="etablissementCtrl" [matAutocomplete]="autoEtab"
+                                placeholder="Rechercher un établissement...">
+                            <mat-autocomplete #autoEtab="matAutocomplete" [displayWith]="displayEtablissement"
+                                (optionSelected)="onEtablissementSelected($event)">
+                                <mat-option *ngFor="let e of filteredEtablissements$ | async" [value]="e">
+                                    {{ e.etab_nom }}
+                                </mat-option>
+                            </mat-autocomplete>
+                            <mat-icon matSuffix>school</mat-icon>
+                            <mat-error *ngIf="stageForm.get('etab_code')?.hasError('required')">L'établissement est
+                                requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Encadreur Professionnel (ARMP)</mat-label>
+                            <input type="text" matInput [formControl]="encadreurCtrl" [matAutocomplete]="autoEnc"
+                                placeholder="Rechercher un collaborateur...">
+                            <mat-autocomplete #autoEnc="matAutocomplete" [displayWith]="displayEncadreur"
+                                (optionSelected)="onEncadreurSelected($event)">
+                                <mat-option *ngFor="let emp of filteredEncadreurs$ | async" [value]="emp">
+                                    <div class="emp-option-modern">
+                                        <div class="icon-circle">
+                                            <mat-icon>person</mat-icon>
+                                        </div>
+                                        <div class="emp-details">
+                                            <span class="emp-name">{{ emp.emp_nom | uppercase }} {{ emp.emp_prenom
+                                                }}</span>
+                                            <div class="emp-info-sub">
+                                                <mat-icon inline>badge</mat-icon>
+                                                <span>IM ARMP : <strong>{{ emp.emp_im_armp || 'N/A' }}</strong></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </mat-option>
+                            </mat-autocomplete>
+                            <mat-icon matSuffix>assignment_ind</mat-icon>
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <!-- Submission -->
+                <div class="action-buttons">
+                    <button mat-button type="button" (click)="onCancel()" class="cancel-btn">
+                        Annuler
+                    </button>
+                    <button mat-raised-button type="submit" [disabled]="loading" class="submit-btn">
+                        <mat-spinner *ngIf="loading" diameter="20"
+                            style="margin-right: 8px; display: inline-block;"></mat-spinner>
+                        <mat-icon *ngIf="!loading">save</mat-icon>
+                        {{ isEdit ? 'Enregistrer les modifications' : 'Confirmer le stage' }}
+                    </button>
+                </div>
+
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

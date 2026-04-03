@@ -1,0 +1,81 @@
+<div class="solde-tracking-container">
+    <div class="header">
+        <h3>📊 Suivi Soldes de Congé - {{empNom}} {{empPrenom}}</h3>
+        <button *ngIf="!loading" (click)="loadSoldes()" class="btn-refresh">
+            <i class="fas fa-sync-alt"></i> Actualiser
+        </button>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Chargement des soldes...</p>
+    </div>
+
+    <div *ngIf="error" class="alert alert-danger">
+        {{ error }}
+    </div>
+
+    <div *ngIf="!loading && !error" class="content">
+        <!-- Total Disponible -->
+        <div class="total-card">
+            <div class="total-label">Total Disponible</div>
+            <div class="total-value">{{ totalDisponible }} jours</div>
+            <div class="total-hint">Tous soldes confondus (FIFO)</div>
+        </div>
+
+        <!-- Liste Soldes par Année -->
+        <div class="soldes-list">
+            <div *ngFor="let solde of soldes" class="solde-item" [class.old-balance]="isOldBalance(solde.sld_anne)">
+
+                <div class="solde-header">
+                    <div class="year-badge">Année {{ solde.sld_anne }}</div>
+                    <div class="decision-badge">{{ solde.dec_num }}</div>
+                </div>
+
+                <div class="solde-details">
+                    <div class="detail-row">
+                        <span class="label">Initial:</span>
+                        <span class="value">{{ solde.sld_initial }} jours</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Restant:</span>
+                        <span class="value strong">{{ solde.sld_restant }} jours</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Utilisé:</span>
+                        <span class="value">{{ solde.sld_initial - solde.sld_restant }} jours</span>
+                    </div>
+                </div>
+
+                <!-- Barre de progression -->
+                <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getProgressPercent(solde)"
+                        [style.background-color]="getProgressColor(getProgressPercent(solde))">
+                    </div>
+                </div>
+                <div class="progress-label">
+                    {{ getProgressPercent(solde) | number:'1.0-0' }}% disponible
+                </div>
+
+                <div class="solde-footer">
+                    <small>Dernière MAJ: {{ solde.sld_maj | date:'dd/MM/yyyy' }}</small>
+                    <span *ngIf="isOldBalance(solde.sld_anne)" class="old-badge">
+                        ⚠️ Ancien solde
+                    </span>
+                </div>
+            </div>
+
+            <div *ngIf="soldes.length === 0" class="empty-state">
+                <i class="fas fa-info-circle"></i>
+                <p>Aucun solde disponible pour cet employé</p>
+            </div>
+        </div>
+
+        <!-- Légende FIFO -->
+        <div class="fifo-legend">
+            <div class="legend-title">ℹ️ Règle FIFO</div>
+            <p>Les soldes sont débités du <strong>plus ancien au plus récent</strong>.</p>
+            <p>Exemple: Si solde 2021 = 2j, il sera épuisé avant de toucher 2022.</p>
+        </div>
+    </div>
+</div>

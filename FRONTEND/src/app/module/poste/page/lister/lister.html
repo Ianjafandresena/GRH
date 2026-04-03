@@ -1,0 +1,297 @@
+<div class="lister-postes-container" @fadeIn>
+    <!-- Header amélioré avec compteur -->
+    <div class="header-section">
+        <div class="header-content">
+            <div class="title-section">
+                <h1>
+                    <mat-icon>work_outline</mat-icon>
+                    Liste des Postes
+                </h1>
+                <p class="subtitle" *ngIf="!loading && !errorMessage">
+                    {{ postes.length }} poste{{ postes.length > 1 ? 's' : '' }} trouvé{{ postes.length > 1 ? 's' : '' }}
+                </p>
+            </div>
+            <button mat-icon-button class="refresh-btn" (click)="loadPostes(filters)" [disabled]="loading"
+                matTooltip="Actualiser">
+                <mat-icon>refresh</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards Summary -->
+    <div class="stats-grid" *ngIf="stats" @fadeIn>
+        <mat-card class="stats-card total">
+            <div class="stats-icon">
+                <mat-icon>business_center</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Total Postes</span>
+                <span class="stats-value">{{ stats.total_postes }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card quota">
+            <div class="stats-icon">
+                <mat-icon>assignment</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Capacité Totale (Quota)</span>
+                <span class="stats-value">{{ stats.total_quota }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card occupied">
+            <div class="stats-icon">
+                <mat-icon>person</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Total Occupés</span>
+                <span class="stats-value">{{ stats.total_occupe }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card vacant">
+            <div class="stats-icon">
+                <mat-icon>person_add</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Places Vacantes</span>
+                <span class="stats-value">{{ stats.total_vacant }}</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <!-- Filtres améliorés -->
+    <mat-card class="filters-card">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon>tune</mat-icon>
+                Filtres de recherche
+            </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="gprh-filters-grid">
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Poste</mat-label>
+                    <input type="text" matInput [formControl]="posteControl" [matAutocomplete]="autoPoste"
+                        placeholder="Rechercher un poste...">
+                    <mat-icon matPrefix>work</mat-icon>
+                    <mat-autocomplete #autoPoste="matAutocomplete">
+                        <mat-option *ngFor="let option of filteredPostes | async" [value]="option">
+                            <mat-icon>business_center</mat-icon>
+                            <span>{{ option }}</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Direction</mat-label>
+                    <input type="text" matInput [formControl]="directionControl" [matAutocomplete]="autoDirection"
+                        placeholder="Rechercher une direction...">
+                    <mat-icon matPrefix>account_tree</mat-icon>
+                    <mat-autocomplete #autoDirection="matAutocomplete">
+                        <mat-option *ngFor="let option of filteredDirections | async" [value]="option">
+                            <mat-icon>domain</mat-icon>
+                            <span>{{ option }}</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Service</mat-label>
+                    <input type="text" matInput [formControl]="serviceControl" [matAutocomplete]="autoService"
+                        placeholder="Rechercher un service...">
+                    <mat-icon matPrefix>business</mat-icon>
+                    <mat-autocomplete #autoService="matAutocomplete">
+                        <mat-option *ngFor="let option of filteredServices | async" [value]="option">
+                            <mat-icon>corporate_fare</mat-icon>
+                            <span>{{ option }}</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Rang</mat-label>
+                    <input type="text" matInput [formControl]="rangControl" [matAutocomplete]="autoRang"
+                        placeholder="Rechercher un rang...">
+                    <mat-icon matPrefix>star</mat-icon>
+                    <mat-autocomplete #autoRang="matAutocomplete">
+                        <mat-option *ngFor="let option of filteredRangs | async" [value]="option">
+                            <mat-icon>trending_up</mat-icon>
+                            <span>{{ option }}</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Statut</mat-label>
+                    <input type="text" matInput [formControl]="statutControl" [matAutocomplete]="autoStatut"
+                        placeholder="Rechercher un statut...">
+                    <mat-icon matPrefix>info</mat-icon>
+                    <mat-autocomplete #autoStatut="matAutocomplete">
+                        <mat-option *ngFor="let option of filteredStatuts | async" [value]="option">
+                            <mat-icon>flag</mat-icon>
+                            <span>{{ option }}</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+                <button mat-raised-button color="primary" (click)="onFilterChange()" [disabled]="loading">
+                    <mat-icon>search</mat-icon>
+                    <span>Rechercher</span>
+                </button>
+                <button mat-stroked-button (click)="resetFilters()" [disabled]="loading">
+                    <mat-icon>clear</mat-icon>
+                    <span>Réinitialiser</span>
+                </button>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Loading state -->
+    <div *ngIf="loading" class="loading-container">
+        <mat-spinner diameter="60"></mat-spinner>
+        <p>Chargement des postes...</p>
+    </div>
+
+    <!-- Error state -->
+    <mat-card *ngIf="errorMessage && !loading" class="error-card">
+        <mat-card-content>
+            <div class="error-content">
+                <mat-icon class="error-icon">error_outline</mat-icon>
+                <div>
+                    <h3>Erreur de chargement</h3>
+                    <p>{{ errorMessage }}</p>
+                </div>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Liste des postes en cartes regroupées par direction -->
+    <div *ngIf="!loading && !errorMessage && postes.length > 0" class="grouped-postes-container">
+        <div *ngFor="let group of groupedPostes" class="direction-group" @fadeIn>
+            <div class="direction-header">
+                <mat-icon>domain</mat-icon>
+                <h2>{{ group.direction }}</h2>
+                <span class="badge">
+                    {{ group.totalPostes }} poste(s)
+                </span>
+            </div>
+
+            <!-- Services Sub-groups -->
+            <div *ngFor="let srvc of group.services" class="service-section">
+                <div class="service-header">
+                    <mat-icon>corporate_fare</mat-icon>
+                    <h3>{{ srvc.serviceName }}</h3>
+                    <span class="service-badge">{{ srvc.postes.length }}</span>
+                </div>
+                <div class="postes-grid">
+                    <ng-container *ngFor="let poste of srvc.postes; trackBy: trackByPosteCode">
+                        <!-- Poste Card Template (Reused) -->
+                        <ng-container
+                            *ngTemplateOutlet="posteCardTemplate; context: { $implicit: poste }"></ng-container>
+                    </ng-container>
+                </div>
+            </div>
+
+            <!-- Direct Posts -->
+            <div *ngIf="group.directPostes.length > 0" class="direct-postes-section">
+                <div class="service-header" *ngIf="group.services.length > 0">
+                    <mat-icon>folder_shared</mat-icon>
+                    <h3>Rattachés directement</h3>
+                </div>
+                <div class="postes-grid">
+                    <ng-container *ngFor="let poste of group.directPostes; trackBy: trackByPosteCode">
+                        <ng-container
+                            *ngTemplateOutlet="posteCardTemplate; context: { $implicit: poste }"></ng-container>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for Poste Card to avoid duplication -->
+    <ng-template #posteCardTemplate let-poste>
+        <mat-card class="poste-card" [routerLink]="['/postes', poste.pst_code]">
+            <mat-card-header>
+                <div class="poste-header">
+                    <div class="poste-title-section">
+                        <mat-card-title>
+                            <mat-icon class="poste-icon">business_center</mat-icon>
+                            {{ poste.pst_fonction }}
+                        </mat-card-title>
+                        <!-- Service name redundant inside service group, maybe hide or keep for context? -->
+                        <!-- If grouped by service, srvc_nom is implied by header, but we keep it for now or remove. -->
+                    </div>
+                </div>
+            </mat-card-header>
+
+            <mat-card-content>
+                <!-- Compteurs d'occupation -->
+                <div class="occupation-counters"
+                    *ngIf="poste.nb_occupe !== undefined || poste.nb_vacant !== undefined || poste.nb_encessation !== undefined">
+                    <div class="counter-item occupied">
+                        <mat-icon>person</mat-icon>
+                        <div class="counter-content">
+                            <span class="counter-value">{{ poste.nb_occupe ?? 0 }}</span>
+                            <span class="counter-label">Occupé(s)</span>
+                        </div>
+                    </div>
+                    <div class="counter-item vacant">
+                        <mat-icon>work_off</mat-icon>
+                        <div class="counter-content">
+                            <span class="counter-value">{{ poste.nb_vacant ?? 0 }}</span>
+                            <span class="counter-label">Vacant(s)</span>
+                        </div>
+                    </div>
+                    <div class="counter-item cessation">
+                        <mat-icon>event_busy</mat-icon>
+                        <div class="counter-content">
+                            <span class="counter-value">{{ poste.nb_encessation ?? 0 }}</span>
+                            <span class="counter-label">En cessation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="poste-info-grid">
+                    <div class="info-item" *ngIf="poste.rhq_rang">
+                        <mat-icon>star</mat-icon>
+                        <div class="info-content">
+                            <span class="info-label">Rang</span>
+                            <span class="info-value">{{ poste.rhq_rang }}</span>
+                        </div>
+                    </div>
+                </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+                <button mat-button color="primary" (click)="$event.stopPropagation()"
+                    [routerLink]="['/postes', poste.pst_code]">
+                    <mat-icon>visibility</mat-icon>
+                    Voir détails
+                </button>
+                <button mat-icon-button color="accent" (click)="$event.stopPropagation(); openQuotaDialog(poste)"
+                    matTooltip="Paramètres du quota">
+                    <mat-icon>settings</mat-icon>
+                </button>
+            </mat-card-actions>
+        </mat-card>
+    </ng-template>
+
+    <!-- Empty state -->
+    <mat-card *ngIf="!loading && !errorMessage && postes.length === 0" class="empty-state-card">
+        <mat-card-content>
+            <div class="empty-state">
+                <mat-icon>work_off</mat-icon>
+                <h3>Aucun poste trouvé</h3>
+                <p>Essayez de modifier vos critères de recherche</p>
+                <button mat-raised-button color="primary" (click)="resetFilters()">
+                    <mat-icon>refresh</mat-icon>
+                    Réinitialiser les filtres
+                </button>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div>

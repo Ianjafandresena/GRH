@@ -1,0 +1,256 @@
+.lister-employes-container {
+    padding: 2rem;
+}
+
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        font-size: 1.75rem;
+        color: #1e293b;
+    }
+
+    .actions-header {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+
+        .export-btn {
+            background-color: #10b981;
+            color: white;
+
+            &:hover:not(:disabled) {
+                background-color: #059669;
+            }
+
+            mat-spinner {
+                margin-right: 8px;
+            }
+        }
+    }
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+    gap: 1rem;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 1.5rem !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+    }
+
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1.25rem;
+
+        mat-icon {
+            font-size: 28px;
+            width: 28px;
+            height: 28px;
+        }
+    }
+
+    .stats-content {
+        display: flex;
+        flex-direction: column;
+
+        .stats-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stats-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+    }
+
+    &.total {
+        .stats-icon {
+            background-color: #eff6ff;
+            color: #3b82f6;
+        }
+    }
+
+    &.service {
+        .stats-icon {
+            background-color: #f0fdf4;
+            color: #22c55e;
+        }
+    }
+
+    &.cessation {
+        .stats-icon {
+            background-color: #fffbeb;
+            color: #f59e0b;
+        }
+    }
+
+    &.sortie {
+        .stats-icon {
+            background-color: #fef2f2;
+            color: #ef4444;
+        }
+    }
+}
+
+.employes-table {
+    width: 100%;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 1rem;
+
+    .filter-field {
+        flex: 1 1 240px;
+        min-width: 220px;
+    }
+}
+
+@media (max-width: 900px) {
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+
+        .filter-field {
+            width: 100%;
+        }
+    }
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+
+    mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        color: #cbd5e1;
+    }
+}
+
+.anciennete-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #6366f1;
+    }
+}
+
+.retraite-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #10b981;
+    }
+
+    &.retraite {
+        color: #f59e0b;
+        font-weight: 500;
+
+        mat-icon {
+            color: #f59e0b;
+        }
+    }
+}
+
+.text-muted {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.non-disponible {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #cbd5e1;
+    }
+}
+
+.sort-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-between;
+
+    button {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+
+        mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+        }
+    }
+}

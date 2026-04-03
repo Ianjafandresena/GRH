@@ -1,0 +1,163 @@
+<div class="page-container">
+    <div class="card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>Détail Demande</h1>
+                <p class="subtitle">{{ demande?.rem_num || 'N°---' }}</p>
+            </div>
+            <button class="btn btn-outline btn-sm" (click)="goBack()">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
+        </div>
+
+        <div class="alert alert-danger" *ngIf="errorMsg">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ errorMsg }}
+        </div>
+        <div class="loading" *ngIf="loading">Chargement...</div>
+
+        <div class="detail-content" *ngIf="demande && !loading">
+            <!-- En-tête info -->
+            <div class="header-badges">
+                <span class="type-badge" [class.agent]="!demande.rem_is_centre" [class.centre]="demande.rem_is_centre">
+                    <i [class]="demande.rem_is_centre ? 'fas fa-hospital' : 'fas fa-user'"></i>
+                    {{ demande.rem_is_centre ? 'Centre' : 'Agent' }}
+                </span>
+                <span class="status-badge" [class]="'status-' + (demande.eta_libelle || 'default')">
+                    {{ demande.eta_libelle || 'N/A' }}
+                </span>
+            </div>
+
+            <!-- Infos Agent -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-user"></i> Agent demandeur</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Nom:</span>
+                        <span class="value">{{ demande.nom_emp }} {{ demande.prenom_emp }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Matricule:</span>
+                        <span class="value">{{ demande.matricule }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Direction:</span>
+                        <span class="value">{{ demande.direction }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Fonction:</span>
+                        <span class="value">{{ demande.fonction }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infos Bénéficiaire/Malade -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-user-injured"></i> Bénéficiaire</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">N° PEC:</span>
+                        <span class="value">{{ demande.pec_num || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Nom:</span>
+                        <span class="value">{{ demande.beneficiaire_nom || demande.nom_malade || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Lien:</span>
+                        <span class="value">{{ demande.beneficiaire_lien || demande.lien_malade || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Centre de santé:</span>
+                        <span class="value">{{ demande.cen_nom || '-' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Montant -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-money-bill-wave"></i> Montant</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Demandé:</span>
+                        <span class="value amount">{{ demande.rem_montant | number:'1.2-2' }} Ar</span>
+                    </div>
+                    <div class="info-item" *ngIf="demande.montant_valide">
+                        <span class="label">Validé:</span>
+                        <span class="value amount">{{ demande.montant_valide | number:'1.2-2' }} Ar</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pièces fournies -->
+            <div class="info-section">
+                <h3 class="section-title"><i class="fas fa-paperclip"></i> Pièces fournies</h3>
+                <div class="pieces-list">
+                    <span class="piece-item" [class.checked]="demande.has_ordonnance">
+                        <i [class]="demande.has_ordonnance ? 'fas fa-check-square' : 'far fa-square'"></i>
+                        Ordonnance
+                    </span>
+                    <span class="piece-item" [class.checked]="demande.has_facture">
+                        <i [class]="demande.has_facture ? 'fas fa-check-square' : 'far fa-square'"></i>
+                        Facture(s)
+                    </span>
+                    <span class="piece-item" [class.checked]="demande.has_prise_en_charge">
+                        <i [class]="demande.has_prise_en_charge ? 'fas fa-check-square' : 'far fa-square'"></i>
+                        Prise en charge
+                    </span>
+                </div>
+                <div class="info-item" *ngIf="demande.pec_reference">
+                    <span class="label">Réf PEC:</span>
+                    <span class="value">{{ demande.pec_reference }}</span>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            <div class="info-section" *ngIf="historique.length">
+                <h3 class="section-title"><i class="fas fa-history"></i> Historique des validations</h3>
+                <ul class="history-list">
+                    <li *ngFor="let h of historique">{{ h.sin_dem_code }} - {{ h.date_ }}</li>
+                </ul>
+            </div>
+
+            <!-- Rejet -->
+            <div class="info-section rejet-section" *ngIf="demande.motif_rejet">
+                <h3 class="section-title"><i class="fas fa-times-circle"></i> Motif de rejet</h3>
+                <p>{{ demande.motif_rejet }}</p>
+            </div>
+
+            <!-- Actions selon état -->
+            <div class="form-footer">
+                <div class="actions">
+                    <button class="btn btn-success" *ngIf="demande.eta_libelle === 'SOUMIS'" (click)="validerRRH()">
+                        <i class="fas fa-check"></i> Valider RRH
+                    </button>
+                    <button class="btn btn-success" *ngIf="demande.eta_libelle === 'VALIDE_RRH'"
+                        (click)="validerDAAF()">
+                        <i class="fas fa-check"></i> Valider DAAF
+                    </button>
+                    <button class="btn btn-primary" *ngIf="demande.eta_libelle === 'VALIDE_DAAF'" (click)="engager()">
+                        <i class="fas fa-file-contract"></i> Engager
+                    </button>
+                    <button class="btn btn-success" *ngIf="demande.eta_libelle === 'ENGAGE'" (click)="payer()">
+                        <i class="fas fa-money-check-alt"></i> Payer
+                    </button>
+
+                    <button class="btn btn-danger"
+                        *ngIf="['SOUMIS','VALIDE_RRH','VALIDE_DAAF'].includes(demande.eta_libelle)" (click)="rejeter()">
+                        <i class="fas fa-times"></i> Rejeter
+                    </button>
+
+                    <button class="btn btn-primary" *ngIf="demande.rem_status !== true && demande.rem_status !== 't'"
+                        (click)="traiter()">
+                        <i class="fas fa-tasks"></i> Traiter
+                    </button>
+
+                    <button class="btn btn-secondary" (click)="downloadPdf()">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,114 @@
+<div class="page-container">
+  <div class="card">
+    <div class="card-header-internal">
+      <div class="title-group">
+        <h1>Nouvelle Demande de Permission</h1>
+        <p class="subtitle">Enregistrer une absence exceptionnelle (max 1 journée)</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-outline" (click)="reset()">
+          <mat-icon>refresh</mat-icon> Réinitialiser
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <!-- 1. Recherche Employé -->
+      <div class="form-section">
+        <h3 class="section-title">Informations Employé</h3>
+        <div class="form-group required">
+          <label>Employé concerné</label>
+          <div class="input-wrapper">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input type="text" class="form-control" formControlName="emp_search"
+              placeholder="Nom ou prénom de l'employé..." autocomplete="off" />
+
+            <ul class="suggestions"
+              *ngIf="filteredEmployees.length && form.get('emp_search')?.value && !selectedEmployee">
+              <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
+                <strong>{{ emp.emp_nom }}</strong> {{ emp.emp_prenom }}
+                <small class="text-muted">{{ emp.emp_im_armp }}</small>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Employé sélectionné -->
+          <div *ngIf="selectedEmployee" class="selected-employee-info">
+            <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_im_armp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+            <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
+            <div class="info-row" *ngIf="soldeRestant !== null">
+              <strong>Solde:</strong> {{ soldeRestant }}h
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Date et Période -->
+      <div class="form-section">
+        <h3 class="section-title">Détails de la Permission</h3>
+
+        <div class="form-group required">
+          <label>Date de la permission</label>
+          <input type="date" class="form-control" formControlName="prm_date" />
+        </div>
+
+        <div class="form-group required">
+          <label>Période</label>
+          <div class="period-selector">
+            <label class="period-option" [class.selected]="form.get('periode')?.value === 'matin'">
+              <input type="radio" formControlName="periode" value="matin" />
+              <mat-icon>wb_sunny</mat-icon>
+              <span>Matin</span>
+              <small>08h00 - 12h00</small>
+            </label>
+            <label class="period-option" [class.selected]="form.get('periode')?.value === 'apres-midi'">
+              <input type="radio" formControlName="periode" value="apres-midi" />
+              <mat-icon>wb_twilight</mat-icon>
+              <span>Après-midi</span>
+              <small>14h00 - 18h00</small>
+            </label>
+            <label class="period-option" [class.selected]="form.get('periode')?.value === 'journee'">
+              <input type="radio" formControlName="periode" value="journee" />
+              <mat-icon>today</mat-icon>
+              <span>Journée entière</span>
+              <small>08h00 - 18h00</small>
+            </label>
+          </div>
+        </div>
+
+        <!-- Durée calculée -->
+        <div class="duration-info" *ngIf="calculatedHours">
+          <mat-icon>timer</mat-icon>
+          <span>Durée: <strong>{{ calculatedHours }}h</strong> ({{ calculatedHours / 8 }} jour)</span>
+        </div>
+
+        <div class="form-group mt-3">
+          <label>Motif</label>
+          <input type="text" class="form-control" formControlName="motif"
+            placeholder="Raison de la permission (ex: RDV médical, urgence familiale...)" />
+        </div>
+      </div>
+
+      <!-- Validation Messages -->
+      <div class="alert alert-warning"
+        *ngIf="soldeRestant !== null && calculatedHours && calculatedHours > soldeRestant">
+        <mat-icon>warning</mat-icon>
+        Solde insuffisant ! Vous demandez {{ calculatedHours }}h mais il reste {{ soldeRestant }}h.
+      </div>
+
+      <div class="form-footer mt-4">
+        <button type="button" class="btn btn-outline" routerLink="/permission">
+          Annuler
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid || !selectedEmployee">
+          <mat-icon>save</mat-icon> {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+
+      <div *ngIf="errorMsg" class="error-msg">
+        <mat-icon>error</mat-icon> {{ errorMsg }}
+      </div>
+    </form>
+  </div>
+</div>

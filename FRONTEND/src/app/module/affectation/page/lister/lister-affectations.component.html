@@ -1,0 +1,232 @@
+<div class="lister-affectations-container" @fadeIn>
+    <header class="header-section">
+        <h1>
+            <mat-icon>history</mat-icon>
+            Historique des Affectations
+        </h1>
+    </header>
+
+    <!-- Stats Summary Cards -->
+    <div class="stats-grid" *ngIf="stats" @fadeIn>
+        <mat-card class="stats-card total">
+            <div class="stats-card-inner">
+                <div class="stats-icon"><mat-icon>groups</mat-icon></div>
+                <div class="stats-content">
+                    <span class="stats-label">Volume Total</span>
+                    <span class="stats-value">{{ stats.total }}</span>
+                </div>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card warning">
+            <div class="stats-card-inner">
+                <div class="stats-icon"><mat-icon>pending_actions</mat-icon></div>
+                <div class="stats-content">
+                    <span class="stats-label">Affectations Actives</span>
+                    <span class="stats-value">{{ stats.actives }}</span>
+                </div>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card success">
+            <div class="stats-card-inner">
+                <div class="stats-icon"><mat-icon>task_alt</mat-icon></div>
+                <div class="stats-content">
+                    <span class="stats-label">Affectations Clôturées</span>
+                    <span class="stats-value">{{ stats.cloturees }}</span>
+                </div>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card info">
+            <div class="stats-card-inner">
+                <div class="stats-icon"><mat-icon>swap_horiz</mat-icon></div>
+                <div class="stats-content">
+                    <span class="stats-label">Mouvements ce Mois</span>
+                    <span class="stats-value">{{ stats.mouvements || 0 }}</span>
+                </div>
+            </div>
+        </mat-card>
+    </div>
+
+    <!-- Filtering Toolbar with Borders -->
+    <mat-card class="filters-card">
+        <form [formGroup]="filterForm" class="gprh-filters-grid">
+                <mat-form-field appearance="outline">
+                    <mat-label>Employé</mat-label>
+                    <input type="text" matInput [formControl]="employeControl" [matAutocomplete]="autoEmp"
+                        placeholder="Ex: Rakoto">
+                    <mat-autocomplete #autoEmp="matAutocomplete" [displayWith]="displayEmploye"
+                        (optionSelected)="onEmployeSelected($event)">
+                        <mat-option *ngFor="let emp of filteredEmployes$ | async" [value]="emp">
+                            {{ emp.emp_nom }} {{ emp.emp_prenom }}
+                        </mat-option>
+                    </mat-autocomplete>
+                    <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Poste Occupé</mat-label>
+                    <input type="text" matInput [formControl]="posteControl" [matAutocomplete]="autoPoste"
+                        placeholder="Ex: Développeur">
+                    <mat-autocomplete #autoPoste="matAutocomplete" [displayWith]="displayPoste"
+                        (optionSelected)="onPosteSelected($event)">
+                        <mat-option *ngFor="let p of filteredPostes$ | async" [value]="p">{{ p.pst_fonction
+                            }}</mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Type de Contrat</mat-label>
+                    <mat-select formControlName="tcontrat_code">
+                        <mat-option value="">Tous les types</mat-option>
+                        <mat-option *ngFor="let type of typesContrat" [value]="type.tcontrat_code">{{ type.tcontrat_nom
+                            }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Date de Début</mat-label>
+                    <input matInput [matDatepicker]="pickerDebut" formControlName="date_debut">
+                    <mat-datepicker-toggle matSuffix [for]="pickerDebut"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerDebut></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Date de Fin</mat-label>
+                    <input matInput [matDatepicker]="pickerFin" formControlName="date_fin">
+                    <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFin></mat-datepicker>
+                </mat-form-field>
+
+                <div class="filter-actions">
+                    <button mat-raised-button color="primary" class="search-btn" type="button" (click)="load()"
+                        [disabled]="loading">
+                        <mat-icon>filter_list</mat-icon>
+                        Rechercher
+                    </button>
+                    <button mat-stroked-button type="button" (click)="reset()" [disabled]="loading">
+                        <mat-icon>refresh</mat-icon>
+                        Effacer
+                    </button>
+                </div>
+        </form>
+    </mat-card>
+
+    <!-- Content Section -->
+    <div *ngIf="loading" class="loading-container">
+        <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+        <p>Recherche en cours...</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error_outline</mat-icon>
+        {{ errorMessage }}
+    </div>
+
+    <mat-card class="table-card" *ngIf="!loading && !errorMessage">
+        <div class="table-header-info">
+            <button mat-raised-button color="primary" routerLink="/affectations/creer" class="btn-global-new">
+                <mat-icon>add</mat-icon>
+                Nouvelle Affectation
+            </button>
+            <span class="results-count">{{ dataSource.data.length }} Affectations au total</span>
+        </div>
+
+        <div class="table-container">
+            <table mat-table [dataSource]="dataSource" class="affectations-table">
+
+                <ng-container matColumnDef="employe">
+                    <th mat-header-cell *matHeaderCellDef>Employé</th>
+                    <td mat-cell *matCellDef="let a" class="employe-cell">
+                        <div class="emp-row">
+                            <div class="emp-avatar">{{ (a.emp_nom || '?').charAt(0) }}</div>
+                            <div class="emp-info">
+                                <a class="emp-name-link" [routerLink]="['/employes', a.emp_code, 'parcours']"
+                                    matTooltip="Voir le parcours de l'agent">
+                                    {{ (a.emp_nom || '') + ' ' + (a.emp_prenom || '') }}
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="poste">
+                    <th mat-header-cell *matHeaderCellDef>Poste Occupé</th>
+                    <td mat-cell *matCellDef="let a" class="poste-cell">
+                        <span class="poste-label">{{ a.pst_fonction || a.pst_code }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="motif">
+                    <th mat-header-cell *matHeaderCellDef>Motif</th>
+                    <td mat-cell *matCellDef="let a">
+                        <span class="status-badge status-info">{{ a.m_aff_motif || a.m_aff_code }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="type_contrat">
+                    <th mat-header-cell *matHeaderCellDef>Contrat</th>
+                    <td mat-cell *matCellDef="let a">
+                        <span class="status-badge" [ngClass]="{
+                                'status-success': a.tcontrat_nom?.toLowerCase()?.includes('fonctionnaire') ,
+                                'status-warning': a.tcontrat_nom?.toLowerCase()?.includes('efa'),
+                                'status-error': a.tcontrat_nom?.toLowerCase()?.includes('eld')
+                                
+                            }">
+                            {{ a.tcontrat_nom || '-' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="date_debut">
+                    <th mat-header-cell *matHeaderCellDef>Date Début</th>
+                    <td mat-cell *matCellDef="let a" class="date-cell">{{ a.affec_date_debut | date:'dd/MM/yyyy' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="date_fin">
+                    <th mat-header-cell *matHeaderCellDef>Date Fin / Statut</th>
+                    <td mat-cell *matCellDef="let a">
+                        <span *ngIf="a.affec_date_fin" class="date-fin-text"
+                            [class.closed]="a.affec_etat === 'cloture'">
+                            {{ a.affec_date_fin | date:'dd/MM/yyyy' }}
+                        </span>
+                        <span *ngIf="!a.affec_date_fin" class="status-badge status-success">Actif</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="commentaire">
+                    <th mat-header-cell *matHeaderCellDef>Commentaire</th>
+                    <td mat-cell *matCellDef="let a" class="comment-cell">
+                        {{ a.affec_commentaire || '-' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let a">
+                        <button mat-button class="action-btn-cloture" *ngIf="isOpen(a)" (click)="openCloturer(a)">
+                            <mat-icon>event_busy</mat-icon> Clôturer
+                        </button>
+                        <div *ngIf="!isOpen(a)" class="cloture-actions">
+                            <span class="status-badge status-success">
+                                <mat-icon>check_circle</mat-icon> Terminé
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div *ngIf="dataSource.data.length === 0" class="no-data">
+                <mat-icon>search_off</mat-icon>
+                <p>Aucune affectation trouvée pour ces critères.</p>
+            </div>
+        </div>
+
+        <mat-paginator [pageSizeOptions]="[5, 10, 25]" pageSize="10" showFirstLastButtons class="custom-paginator">
+        </mat-paginator>
+    </mat-card>
+</div>

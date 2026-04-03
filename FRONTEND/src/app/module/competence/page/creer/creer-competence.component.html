@@ -1,0 +1,91 @@
+<div class="creer-competence-container" @fadeIn>
+    <!-- Page Header (ERPNext Style) -->
+    <header class="header-section">
+        <div class="header-content">
+            <h1>
+                <mat-icon>{{ isEdit ? 'edit' : 'psychology' }}</mat-icon>
+                {{ isEdit ? 'Modifier la' : 'Nouvelle' }} Compétence
+            </h1>
+            <p class="subtitle">
+                {{ isEdit ? 'Mettez à jour les informations de la compétence existante.' : 'Définissez une nouvelle
+                compétence clé pour enrichir le référentiel de l\'organisation.' }}
+            </p>
+        </div>
+    </header>
+
+    <div *ngIf="loadingData" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Chargement des données...</p>
+    </div>
+
+    <mat-card class="form-card" *ngIf="!loadingData">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon>settings_suggest</mat-icon>
+                Détails de la Compétence
+            </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            <form [formGroup]="competenceForm" (ngSubmit)="onSubmit()">
+
+                <section class="form-section">
+                    <div class="section-title">
+                        <mat-icon>info</mat-icon> Informations Générales
+                    </div>
+
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Intitulé de la compétence *</mat-label>
+                            <input matInput formControlName="comp_intitule"
+                                placeholder="Ex: Gestion de projet agile, Analyse de données, etc." />
+                            <mat-icon matPrefix>label</mat-icon>
+                            <mat-error *ngIf="competenceForm.get('comp_intitule')?.hasError('required')">
+                                L'intitulé est obligatoire.
+                            </mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Domaine d'expertise</mat-label>
+                            <input matInput formControlName="comp_domaine"
+                                placeholder="Ex: Management, Technique, Soft Skills..." />
+                            <mat-icon matPrefix>category</mat-icon>
+                        </mat-form-field>
+                    </div>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Description détaillée</mat-label>
+                        <textarea matInput formControlName="comp_description" rows="4"
+                            placeholder="Décrivez les comportements observables ou les indicateurs de maîtrise liés à cette compétence..."></textarea>
+                        <mat-icon matPrefix>description</mat-icon>
+                    </mat-form-field>
+                </section>
+
+                <!-- Feedback Messages -->
+                <div *ngIf="errorMessage" class="error-message" @fadeIn>
+                    <mat-icon>warning_amber</mat-icon>
+                    <span>{{ errorMessage }}</span>
+                </div>
+
+                <div *ngIf="successMessage" class="success-message" @fadeIn>
+                    <mat-icon>check_circle</mat-icon>
+                    <span>{{ successMessage }}</span>
+                </div>
+
+                <!-- Submission Actions -->
+                <div class="action-buttons">
+                    <button mat-button type="button" (click)="onCancel()" class="cancel-btn" [disabled]="loading">
+                        Annuler
+                    </button>
+                    <button mat-raised-button color="primary" type="submit" class="submit-btn"
+                        [disabled]="competenceForm.invalid || loading">
+                        <mat-spinner *ngIf="loading" diameter="20"
+                            style="display:inline-block; margin-right: 8px;"></mat-spinner>
+                        <mat-icon *ngIf="!loading">save</mat-icon>
+                        <span>{{ isEdit ? 'Sauvegarder les modifications' : 'Créer la compétence' }}</span>
+                    </button>
+                </div>
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

@@ -1,0 +1,271 @@
+<div class="dashboard-container">
+    <div class="dashboard-content">
+
+        <!-- Filtres -->
+        <div class="filters-bar">
+            <div class="filter-label">
+                <mat-icon>tune</mat-icon> Filtres & Période
+            </div>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Période</mat-label>
+                <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onFilterChange()">
+                    <mat-option *ngFor="let p of periods" [value]="p.value">{{ p.label }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Service</mat-label>
+                <mat-select [(ngModel)]="selectedService" (selectionChange)="onFilterChange()"
+                    placeholder="Tous les services">
+                    <mat-option [value]="null">-- Tous les services --</mat-option>
+                    <mat-option *ngFor="let s of services" [value]="s.srvc_code">
+                        {{ s.srvc_nom }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <button mat-icon-button (click)="loadStats()" [disabled]="loading" title="Actualiser">
+                <mat-icon>refresh</mat-icon>
+            </button>
+        </div>
+
+        <!-- Spinner -->
+        <div class="spinner-container" *ngIf="loading">
+            <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+        </div>
+
+        <div *ngIf="!loading && errorMessage" class="error-box">
+            <mat-icon>error</mat-icon>
+            {{ errorMessage }}
+        </div>
+
+        <!-- Dashboard Content -->
+        <div *ngIf="!loading && stats" class="animate-fade-in content-fade">
+            <!-- KPIs Grid -->
+            <div class="kpi-grid">
+                <!-- Card 1 -->
+                <mat-card class="kpi-card card-blue">
+                    <mat-icon class="bg-icon">groups</mat-icon>
+                    <div class="kpi-header">
+                        <div class="icon-box">
+                            <mat-icon>groups</mat-icon>
+                        </div>
+                        <span class="kpi-label">Employés Actifs</span>
+                    </div>
+                    <span class="kpi-value">{{ stats.kpi.total_employes }}</span>
+                </mat-card>
+
+                <!-- Card 2 -->
+                <mat-card class="kpi-card card-green">
+                    <mat-icon class="bg-icon">pie_chart</mat-icon>
+                    <div class="kpi-header">
+                        <div class="icon-box">
+                            <mat-icon>pie_chart</mat-icon>
+                        </div>
+                        <span class="kpi-label">Taux d'occupation</span>
+                    </div>
+                    <span class="kpi-value">{{ stats.kpi.taux_occupation }}%</span>
+                </mat-card>
+
+                <!-- Card 3 -->
+                <mat-card class="kpi-card card-orange">
+                    <mat-icon class="bg-icon">work_off</mat-icon>
+                    <div class="kpi-header">
+                        <div class="icon-box">
+                            <mat-icon>work_off</mat-icon>
+                        </div>
+                        <span class="kpi-label">Postes Vacants</span>
+                    </div>
+                    <span class="kpi-value">{{ stats.kpi.postes_vacants }}</span>
+                </mat-card>
+
+                <!-- Card 4 -->
+                <mat-card class="kpi-card card-red">
+                    <mat-icon class="bg-icon">warning</mat-icon>
+                    <div class="kpi-header">
+                        <div class="icon-box">
+                            <mat-icon>warning</mat-icon>
+                        </div>
+                        <span class="kpi-label">Contrats à échoir</span>
+                    </div>
+                    <span class="kpi-value">{{ stats.kpi.alertes_contrats }}</span>
+                </mat-card>
+            </div>
+
+            <!-- Main Grid (Charts & Lists) -->
+            <div class="main-grid">
+
+                <!-- Chart 1: Contrats (Donut) -->
+                <mat-card class="chart-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            <mat-icon>donut_large</mat-icon> Types de Contrat
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <div class="donut-wrapper" *ngIf="stats.charts.contrats.length > 0">
+                            <div class="donut-container" [style.background]="getDonutStyle(stats.charts.contrats)">
+                                <div class="donut-center">
+                                    <span class="total-value">{{ stats.kpi.total_employes }}</span>
+                                    <span class="total-label">Total</span>
+                                </div>
+                            </div>
+                            <div class="chart-legend">
+                                <div class="legend-item" *ngFor="let item of stats.charts.contrats; let i = index">
+                                    <div class="dot"
+                                        [style.background]="['#6366f1', '#a855f7', '#3b82f6', '#2dd4bf', '#f59e0b', '#ef4444'][i % 6]">
+                                    </div>
+                                    <span>{{ item.name }} ({{ item.value }})</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="stats.charts.contrats.length === 0" class="no-data">
+                            Aucune donnée
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+
+                <!-- Chart 2: Evolution -->
+                <mat-card class="chart-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            <mat-icon>trending_up</mat-icon> Recrutements
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <div class="bar-chart-container" *ngIf="stats.charts.evolution.length > 0">
+                            <div class="bars-wrapper">
+                                <div class="bar-item" *ngFor="let item of stats.charts.evolution">
+                                    <div class="bar-value-label">{{ item.count }}</div>
+                                    <div class="bar-track">
+                                        <div class="bar-fill" [style.height.%]="getBarHeight(item.count)"></div>
+                                    </div>
+                                    <div class="bar-month">{{ item.month }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="stats.charts.evolution.length === 0" class="no-data">
+                            Aucune donnée
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+
+                <!-- Alerts List -->
+                <mat-card class="list-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            <mat-icon>notifications_active</mat-icon> Échéances Contrats
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content class="alert-list">
+                        <div class="list-item" *ngFor="let alert of stats.lists.fin_contrats">
+                            <div class="item-avatar">
+                                <mat-icon>event_busy</mat-icon>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">{{ alert.emp_prenom }} {{ alert.emp_nom }}</div>
+                                <div class="item-subtitle">Fin: {{ alert.affec_date_fin | date:'dd/MM/yyyy' }}</div>
+                            </div>
+                            <div class="item-action">
+                                <span class="days-badge">Bientôt</span>
+                            </div>
+                        </div>
+                        <div *ngIf="stats.lists.fin_contrats.length === 0" class="no-data">
+                            Aucune alerte
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+
+                <!-- Chart 3: Ages -->
+                <mat-card class="chart-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            <mat-icon>layers</mat-icon> Pyramide des Âges
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <div class="age-progress-list" *ngIf="(stats.charts.ages || []).length > 0">
+                            <div class="progress-row" *ngFor="let item of stats.charts.ages">
+                                <div class="row-meta">
+                                    <span class="L">{{ item.name }}</span>
+                                    <span class="V">{{ item.value }} pers.</span>
+                                </div>
+                                <div class="row-track">
+                                    <div class="row-fill"
+                                        [style.width.%]="(item.value / stats.kpi.total_employes) * 100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="(stats.charts.ages || []).length === 0" class="no-data">
+                            Aucune donnée
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+
+                <!-- Chart 4: Sexe -->
+                <mat-card class="chart-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            <mat-icon>face</mat-icon> Répartition Genre
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <div class="gender-modern-container">
+                            <div class="gender-block male">
+                                <div class="icon-wrap">
+                                    <mat-icon>male</mat-icon>
+                                </div>
+                                <div class="gender-data">
+                                    <div class="big-val">{{ getGenderCounts().male }}</div>
+                                    <div class="percent-label">{{ getGenderRatio().male | number:'1.0-0' }}%</div>
+                                    <div class="sub-lab">Hommes</div>
+                                </div>
+                            </div>
+                            <div class="gender-block female">
+                                <div class="icon-wrap">
+                                    <mat-icon>female</mat-icon>
+                                </div>
+                                <div class="gender-data">
+                                    <div class="big-val">{{ getGenderCounts().female }}</div>
+                                    <div class="percent-label">{{ getGenderRatio().female | number:'1.0-0' }}%</div>
+                                    <div class="sub-lab">Femmes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+
+                <!-- Recent Affectations List -->
+                <mat-card class="list-card">
+                    <mat-card-header>
+                        <mat-card-title>
+                            <mat-icon>history</mat-icon> Dernières Affectations
+                        </mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content class="recent-list">
+                        <div class="list-item" *ngFor="let aff of stats.lists.dernieres_affectations">
+                            <div class="item-avatar">
+                                {{ aff.emp_prenom.charAt(0) }}{{ aff.emp_nom.charAt(0) }}
+                            </div>
+                            <div class="item-content">
+                                <div class="item-title">{{ aff.emp_prenom }} {{ aff.emp_nom }}</div>
+                                <div class="item-subtitle">{{ aff.pst_fonction }}</div>
+                            </div>
+                            <div class="item-action">
+                                <span class="date-badge">
+                                    {{ aff.affec_date_debut | date:'dd/MM/yyyy' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div *ngIf="stats.lists.dernieres_affectations.length === 0" class="no-data">
+                            Aucune affectation
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+
+            </div>
+        </div>
+    </div>
+</div>

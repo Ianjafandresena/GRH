@@ -1,0 +1,105 @@
+<div class="chatbot-wrapper">
+    <!-- Widget minimisé (FAB) -->
+    @if (!isOpen()) {
+    <button class="chat-fab" (click)="toggle()" title="Assistant RH">
+        <mat-icon>smart_toy</mat-icon>
+    </button>
+    }
+
+    <!-- Chatbot ouvert -->
+    @if (isOpen()) {
+    <div class="chatbot-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <div class="header-info">
+                <mat-icon>smart_toy</mat-icon>
+                <div class="header-text">
+                    <span class="title">Assistant RH</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" (click)="toggleSettings()" title="Paramètres">
+                    <mat-icon>more_vert</mat-icon>
+                </button>
+                <button class="btn-icon" (click)="clearChat()" title="Effacer">
+                    <mat-icon>delete</mat-icon>
+                </button>
+                <button class="btn-icon" (click)="toggle()" title="Fermer">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <!-- Menu Paramètres -->
+            @if (showSettings) {
+            <div class="settings-dropdown">
+                <div class="settings-item">
+                    <label class="checkbox-label">
+                        <input type="checkbox" [(ngModel)]="navigationMode" (change)="toggleNavigationMode()">
+                        <span>Mode navigation</span>
+                    </label>
+                    <small class="hint">Active la navigation automatique</small>
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages" #messagesContainer>
+            @for (msg of messages(); track msg.id) {
+            <div class="message" [class.user]="msg.sender === 'user'">
+                <div class="message-avatar">
+                    <mat-icon>{{ msg.sender === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+                </div>
+                <div class="message-bubble">
+                    <div class="message-content" [innerHTML]="msg.content"></div>
+                    <div class="message-time">{{ formatTime(msg.timestamp) }}</div>
+
+                    <!-- Actions -->
+                    @if (msg.actions && msg.actions.length > 0) {
+                    <div class="message-actions">
+                        @for (action of msg.actions; track action.route) {
+                        <button class="action-btn" (click)="executeAction(action)">
+                            <mat-icon>arrow_forward</mat-icon> {{ action.label }}
+                        </button>
+                        }
+                    </div>
+                    }
+
+                    <!-- Suggestions -->
+                    @if (msg.suggestions && msg.suggestions.length > 0) {
+                    <div class="message-suggestions">
+                        @for (sug of msg.suggestions; track sug) {
+                        <button class="suggestion-chip" (click)="sendSuggestion(sug)">
+                            {{ sug }}
+                        </button>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Typing indicator -->
+            @if (isTyping()) {
+            <div class="message bot">
+                <div class="message-avatar">
+                    <mat-icon>smart_toy</mat-icon>
+                </div>
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input">
+            <input type="text" [(ngModel)]="currentMessage" (keyup.enter)="send()" placeholder="Posez votre question..."
+                autocomplete="off">
+            <button class="send-btn" (click)="send()" [disabled]="!currentMessage.trim()">
+                <mat-icon>send</mat-icon>
+            </button>
+        </div>
+    </div>
+    }
+</div>

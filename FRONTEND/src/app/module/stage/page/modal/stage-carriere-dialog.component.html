@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>Assigner carrière</h2>
+
+<div mat-dialog-content>
+    <form [formGroup]="form" class="dialog-form">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Employé</mat-label>
+            <mat-select formControlName="emp_code">
+                <mat-option *ngFor="let e of employes" [value]="e.emp_code">
+                    {{ e.emp_nom }} {{ e.emp_prenom }}
+                </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>person</mat-icon>
+        </mat-form-field>
+
+        <div *ngIf="errorMessage" class="error-message">
+            <mat-icon>error</mat-icon>
+            {{ errorMessage }}
+        </div>
+    </form>
+</div>
+
+<div mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="onCancel()" [disabled]="loading">
+        Annuler
+    </button>
+
+    <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="loading || form.invalid">
+        <mat-spinner *ngIf="loading" diameter="18"></mat-spinner>
+        <span *ngIf="!loading">Enregistrer</span>
+    </button>
+</div>

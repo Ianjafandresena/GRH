@@ -1,0 +1,88 @@
+<div class="creer-stagiaire-container">
+    <mat-card class="form-card">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon>school</mat-icon>
+                Créer un Stagiaire
+            </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            <form [formGroup]="stagiaireForm">
+                <h3 class="section-title">Informations du stagiaire</h3>
+                <div class="form-grid">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Nom</mat-label>
+                        <input matInput formControlName="stgr_nom" />
+                        <mat-icon matPrefix>person</mat-icon>
+                        <mat-error>{{ getErrorMessage('stgr_nom') }}</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Prénom</mat-label>
+                        <input matInput formControlName="stgr_prenom" />
+                        <mat-icon matPrefix>person_outline</mat-icon>
+                        <mat-error>{{ getErrorMessage('stgr_prenom') }}</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Contact</mat-label>
+                        <input matInput formControlName="stgr_contact" />
+                        <mat-icon matPrefix>phone</mat-icon>
+                        <mat-error>{{ getErrorMessage('stgr_contact') }}</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Filière</mat-label>
+                        <input matInput formControlName="stgr_filiere" />
+                        <mat-icon matPrefix>topic</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Niveau</mat-label>
+                        <input matInput formControlName="stgr_niveau" />
+                        <mat-icon matPrefix>grade</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Sexe</mat-label>
+                        <mat-select formControlName="stgr_sexe">
+                            <mat-option [value]="true">Masculin</mat-option>
+                            <mat-option [value]="false">Féminin</mat-option>
+                        </mat-select>
+                        <mat-icon matPrefix>wc</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Adresse</mat-label>
+                        <input matInput formControlName="stgr_adresse" />
+                        <mat-icon matPrefix>location_on</mat-icon>
+                    </mat-form-field>
+                </div>
+
+                <div *ngIf="errorMessage" class="error-message">
+                    <mat-icon>error</mat-icon>
+                    {{ errorMessage }}
+                </div>
+
+                <div *ngIf="successMessage" class="success-message">
+                    <mat-icon>check_circle</mat-icon>
+                    {{ successMessage }}
+                </div>
+
+                <div class="action-buttons">
+                    <button mat-raised-button color="primary" type="button" (click)="onSubmit()"
+                        [disabled]="loading || stagiaireForm.invalid">
+                        <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+                        <mat-icon *ngIf="!loading">save</mat-icon>
+                        {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+                    </button>
+                    <button mat-stroked-button type="button" (click)="onCancel()" [disabled]="loading">
+                        <mat-icon>cancel</mat-icon>
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

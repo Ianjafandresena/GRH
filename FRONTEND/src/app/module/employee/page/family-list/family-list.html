@@ -1,0 +1,121 @@
+<div class="page-container">
+    <div class="card filter-card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>Gestion des Familles</h1>
+                <p class="subtitle">Liste récapitulative des employés et de leurs ayants droit</p>
+            </div>
+            <button class="btn btn-primary" (click)="addNewFamily()">
+                <mat-icon>add</mat-icon>
+                Nouvelle Famille
+            </button>
+        </div>
+
+        <div class="filter-row">
+            <div class="form-group flex-2">
+                <label>Recherche rapide</label>
+                <div class="search-input-wrapper">
+                    <mat-icon>search</mat-icon>
+                    <input type="text" class="form-control" [(ngModel)]="searchQuery" (input)="applyFilters()"
+                        placeholder="Rechercher un employé ou conjoint...">
+                </div>
+            </div>
+
+            <div class="form-group flex-1">
+                <label>Direction</label>
+                <select class="form-control" [(ngModel)]="directionFilter" (change)="applyFilters()">
+                    <option value="">Toutes les directions</option>
+                    <option *ngFor="let dir of availableDirections" [value]="dir">{{ dir }}</option>
+                </select>
+            </div>
+
+            <div class="actions-group">
+                <button class="btn btn-outline" (click)="resetFilters()" title="Réinitialiser">
+                    <mat-icon>refresh</mat-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card table-card">
+        <div class="loading-overlay" *ngIf="loading">
+            <div class="spinner"></div>
+            <span>Chargement des familles...</span>
+        </div>
+
+        <div class="table-responsive" *ngIf="!loading">
+            <table mat-table [dataSource]="dataSource" matSort class="modern-table">
+
+                <!-- Famille (Nom) -->
+                <ng-container matColumnDef="family_name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nom de Famille </th>
+                    <td mat-cell *matCellDef="let fam">
+                        <div class="family-name-cell">
+                            <span class="name">FAMILLE {{ fam.emp_nom | uppercase }}</span>
+                            <span class="conjoint" *ngIf="fam.conj_nom_prenom">Conjoint(e) : {{ fam.conj_nom_prenom
+                                }}</span>
+                            <span class="conjoint no-conj" *ngIf="!fam.conj_nom_prenom">Pas de conjoint
+                                enregistré</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Employé -->
+                <ng-container matColumnDef="employee">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Employé </th>
+                    <td mat-cell *matCellDef="let fam">
+                        <div class="employee-cell">
+                            <span class="emp-name">{{ fam.emp_nom }} {{ fam.emp_prenom }}</span>
+                            <span class="relation-badge"
+                                [class.father]="getGenderDetails(fam.emp_sexe, fam.nb_enfants) === 'Père' || getGenderDetails(fam.emp_sexe, fam.nb_enfants) === 'Marié'"
+                                [class.mother]="getGenderDetails(fam.emp_sexe, fam.nb_enfants) === 'Mère' || getGenderDetails(fam.emp_sexe, fam.nb_enfants) === 'Épouse'">
+                                {{ getGenderDetails(fam.emp_sexe, fam.nb_enfants) }}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Enfants -->
+                <ng-container matColumnDef="nb_enfants">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center"> Enfants </th>
+                    <td mat-cell *matCellDef="let fam" class="text-center">
+                        <span class="children-count" [class.has-children]="fam.nb_enfants > 0">
+                            {{ fam.nb_enfants }} enfant(s)
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Actions -->
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef class="text-end"> Actions </th>
+                    <td mat-cell *matCellDef="let fam" class="text-end">
+                        <button class="btn btn-icon btn-view" (click)="viewEmployee(fam.emp_code)"
+                            title="Voir le profil complet">
+                            <mat-icon>visibility</mat-icon>
+                        </button>
+                        <button class="btn btn-icon btn-edit" (click)="openFamilyMgmt(fam.emp_code)"
+                            title="Modifier la famille">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="interactive-row"></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell" colspan="4">
+                        <div class="empty-state">
+                            <mat-icon>family_restroom</mat-icon>
+                            <p>Aucune famille trouvée avec ces critères</p>
+                            <button class="btn btn-outline btn-sm" (click)="resetFilters()">Voir tout</button>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 50]" showFirstLastButtons
+                aria-label="Choisir la page"></mat-paginator>
+        </div>
+    </div>
+</div>

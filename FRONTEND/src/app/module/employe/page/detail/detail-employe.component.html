@@ -1,0 +1,253 @@
+<div class="detail-employe-container" *ngIf="!loading && !errorMessage && employe" @fadeIn>
+
+    <!-- Top Action Bar -->
+    <div class="header-actions">
+        <div class="breadcrumb">
+            <button mat-icon-button (click)="goBack()" class="back-btn">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <span>Employés</span>
+            <mat-icon>chevron_right</mat-icon>
+            <span class="current">{{ employe.emp_nom }} {{ employe.emp_prenom }}</span>
+        </div>
+
+        <div class="action-group">
+            <button mat-flat-button class="btn-parcours" (click)="goToParcours()">
+                <mat-icon>timeline</mat-icon>
+                Parcours Pro
+            </button>
+            <button mat-stroked-button color="warn" (click)="openModifierDialog()">
+                <mat-icon>edit</mat-icon>
+                Modifier
+            </button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+
+        <!-- Sidebar: Profile Overview -->
+        <aside class="profile-sidebar">
+            <div class="avatar-wrapper">
+                <div class="avatar">
+                    {{ (employe.emp_nom || '?').charAt(0) }}
+                </div>
+                <div class="status-indicator" [class.inactive]="employe.date_sortie"
+                    [class.retired]="employe.annee_retraite?.deja_retraite"
+                    [matTooltip]="employe.date_sortie ? 'Compte inactif' : 'Employé actif'">
+                </div>
+            </div>
+
+            <h1 class="profile-name">{{ employe.emp_nom }} {{ employe.emp_prenom }}</h1>
+            <span class="profile-title">{{ employe.affectation_active?.pst_fonction || 'Sans poste défini' }}</span>
+
+            <div class="stats-list">
+                <div class="stat-item">
+                    <span class="label">Matricule</span>
+                    <span class="value">{{ employe.emp_matricule || 'N/A' }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">IM ARMP</span>
+                    <span class="value armp-badge">{{ employe.emp_im_armp }}</span>
+                </div>
+                <div class="stat-item" *ngIf="employe.emp_im_etat">
+                    <span class="label">IM État</span>
+                    <span class="value">{{ employe.emp_im_etat }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">Position actuelle</span>
+                    <span class="value">{{ employe.pos_type || 'En service' }}</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+
+            <!-- Section: Career Overview -->
+            <section class="career-badges">
+                <div class="badge-item">
+                    <div class="icon-box"><mat-icon>history</mat-icon></div>
+                    <div class="badge-content">
+                        <span class="badge-label">Ancienneté</span>
+                        <span class="badge-value">{{ employe.anciennete?.formatted || 'Début de carrière' }}</span>
+                    </div>
+                </div>
+                <div class="badge-item">
+                    <div class="icon-box"><mat-icon>event_repeat</mat-icon></div>
+                    <div class="badge-content">
+                        <span class="badge-label">Année de retraite</span>
+                        <span class="badge-value">Retraite en {{ employe.annee_retraite?.annee || 'N/A' }}</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card: Personal Information -->
+            <div class="details-card">
+                <div class="card-header">
+                    <mat-icon>person</mat-icon>
+                    <h2>Informations Personnelles</h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <span class="label">Sexe</span>
+                            <span class="value">
+                                <mat-icon>{{ employe.emp_sexe ? 'male' : 'female' }}</mat-icon>
+                                {{ employe.emp_sexe ? 'Homme' : 'Femme' }}
+                            </span>
+                        </div>
+                        <div class="info-group">
+                            <span class="label">Date de Naissance</span>
+                            <span class="value">{{ formatDate(employe.emp_datenaissance) }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="label">Email Professionnel</span>
+                            <span class="value">{{ employe.emp_mail || 'Non renseigné' }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="label">Contact Téléphonique</span>
+                            <span class="value">{{ employe.emp_contact || 'Non renseigné' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Entry Details -->
+            <div class="details-card">
+                <div class="card-header">
+                    <mat-icon>login</mat-icon>
+                    <h2>Détails d'Entrée & Recrutement</h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <span class="label">Date d'Entrée</span>
+                            <span class="value">{{ formatDate(employe.date_entree) }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="label">Mode de Recrutement</span>
+                            <span class="value">{{ employe.type_entree?.e_type_motif || 'Néant' }}</span>
+                        </div>
+                        <div class="info-group" *ngIf="employe.date_sortie">
+                            <span class="label">Date de Sortie</span>
+                            <span class="value text-danger">{{ formatDate(employe.date_sortie) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Competencies -->
+            <div class="details-card">
+                <div class="card-header">
+                    <mat-icon>auto_awesome</mat-icon>
+                    <h2>Compétences & Expertise</h2>
+                    <span class="flex-spacer"></span>
+                    <button mat-icon-button (click)="openCompetenceDialog()" matTooltip="Gérer les compétences">
+                        <mat-icon>add_circle_outline</mat-icon>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="comp-container" *ngIf="competences && competences.length > 0; else noCompetences">
+                        <div class="comp-item" *ngFor="let comp of competences">
+                            <div class="comp-info">
+                                <span class="comp-name">{{ comp.comp_intitule }}</span>
+                                <span class="comp-domain">{{ comp.comp_domaine }}</span>
+                            </div>
+                            <div class="comp-level">
+                                <span class="level-label">Niveau {{ comp.niveau_acquis }}/5</span>
+                                <div class="level-bar">
+                                    <div class="level-fill" [style.width.%]="comp.niveau_acquis * 20"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <ng-template #noCompetences>
+                        <div class="no-data-msg">
+                            <mat-icon>info_outline</mat-icon>
+                            <span>pas encore de competence attribuer</span>
+                        </div>
+                    </ng-template>
+                </div>
+            </div>
+
+            <!-- Card: Current Assignment -->
+            <div class="details-card" *ngIf="employe.affectation_active">
+                <div class="card-header">
+                    <mat-icon>business</mat-icon>
+                    <h2>Affectation & Poste Actuel</h2>
+                </div>
+                <div class="card-body">
+                    <div class="assignment-banner">
+                        <div class="banner-info">
+                            <h3 class="pst-title">{{ employe.affectation_active.pst_fonction }}</h3>
+                            <p class="srv-name">
+                                <mat-icon>apartment</mat-icon>
+                                {{ employe.affectation_active.srvc_nom || 'Service Central' }}
+                            </p>
+                        </div>
+                        <div class="contrat-pill"
+                            [ngClass]="employe.affectation_active.tcontrat_nom?.toLowerCase() || ''">
+                            {{ employe.affectation_active.tcontrat_nom }}
+                        </div>
+                    </div>
+
+                    <div class="assignment-meta">
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <mat-icon>calendar_today</mat-icon>
+                            </div>
+                            <div class="meta-content">
+                                <span class="label">Date de Début</span>
+                                <span class="value">{{ formatDate(employe.affectation_active.affec_date_debut) }}</span>
+                            </div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">
+                                <mat-icon>assignment_ind</mat-icon>
+                            </div>
+                            <div class="meta-content">
+                                <span class="label">Motif d'Affectation</span>
+                                <span class="value">{{ employe.affectation_active.m_aff_motif || 'Recrutement' }}</span>
+                            </div>
+                        </div>
+                        <div class="meta-item full-width" *ngIf="employe.affectation_active.affec_commentaire">
+                            <div class="meta-icon">
+                                <mat-icon>notes</mat-icon>
+                            </div>
+                            <div class="meta-content">
+                                <span class="label">Note / Commentaire</span>
+                                <span class="value italic">"{{ employe.affectation_active.affec_commentaire }}"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State for assignment -->
+            <div class="details-card" *ngIf="!employe.affectation_active">
+                <div class="card-body no-data-state">
+                    <mat-icon>work_off</mat-icon>
+                    <p>Aucune affectation active pour cet employé.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Loading state -->
+<div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Récupération des données du profil...</p>
+</div>
+
+<!-- Error state -->
+<div *ngIf="errorMessage && !loading" class="error-container">
+    <mat-icon>error_outline</mat-icon>
+    <h3>Oups ! Une erreur est survenue</h3>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Retourner à l'annuaire
+    </button>
+</div>

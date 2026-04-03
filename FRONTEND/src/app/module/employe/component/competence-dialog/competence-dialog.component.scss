@@ -1,0 +1,92 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 500px;
+    min-height: 400px;
+}
+
+.add-section {
+    padding-bottom: 1rem;
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        color: #333;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .flex-grow {
+        flex: 1;
+    }
+
+    .w-150 {
+        width: 200px;
+    }
+
+    .add-btn {
+        height: 56px; /* Match form field height */
+    }
+
+    .domaine-tag {
+        font-size: 0.8em;
+        color: #666;
+        margin-left: 0.5rem;
+    }
+}
+
+.list-section {
+    padding-top: 1rem;
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        color: #333;
+    }
+
+    .spinner-container {
+        display: flex;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #666;
+        padding: 2rem;
+        font-style: italic;
+    }
+
+    .comp-item {
+        border-bottom: 1px solid #eee;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        .level-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            color: #333;
+            font-weight: bold;
+            margin-right: 1rem;
+
+            &.high-level {
+                background-color: #4caf50;
+                color: white;
+            }
+        }
+    }
+}

@@ -1,0 +1,36 @@
+<div class="container">
+  <div class="card">
+    <h2>Historique des permissions</h2>
+    <div class="table-toolbar">
+      <label>Début <input type="date" [(ngModel)]="start"></label>
+      <label>Fin <input type="date" [(ngModel)]="end"></label>
+      <button class="btn btn-primary" (click)="applyFilter()">Filtrer</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Employé</th>
+          <th>Début</th>
+          <th>Fin</th>
+          <th>Durée</th>
+          <th>Tranche</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of permissions">
+          <td>{{ p.nom_emp }} {{ p.prenom_emp }}</td>
+          <td>{{ p.prm_debut | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ p.prm_fin | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            <span *ngIf="p.prm_duree >= 24">{{ (p.prm_duree / 24) | number:'1.0-0' }} j</span>
+            <span *ngIf="p.prm_duree < 24">{{ p.prm_duree }} h</span>
+          </td>
+          <td>-</td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!loading && permissions.length === 0" class="errorMsg">Aucune donnée à afficher.</div>
+    <div *ngIf="errorMsg" class="errorMsg">{{ errorMsg }}</div>
+  </div>
+</div>

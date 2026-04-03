@@ -1,0 +1,84 @@
+<div class="container">
+
+    <!-- Sub Header / Tabs -->
+    <div class="tabs-header">
+        <div class="tab-item" [class.active]="activeTab === 'general'" (click)="setTab('general')">
+            <i class="material-icons">tune</i> Général
+        </div>
+        <div class="tab-item" [class.active]="activeTab === 'profil'" (click)="setTab('profil')">
+            <i class="material-icons">person_outline</i> Profil
+        </div>
+        <div class="tab-item" [class.active]="activeTab === 'notifications'" (click)="setTab('notifications')">
+            <i class="material-icons">notifications_none</i> Notifications
+        </div>
+        <div class="tab-item" [class.active]="activeTab === 'securite'" (click)="setTab('securite')">
+            <i class="material-icons">shield</i> Sécurité
+        </div>
+        <div class="tab-item" [class.active]="activeTab === 'api'" (click)="setTab('api')">
+            <i class="material-icons">code</i> API
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="card settings-card" *ngIf="activeTab === 'general'">
+        <div class="card-header">
+            <h2>Paramètres Généraux</h2>
+            <p class="subtitle">Configuration générale de l'application GRH</p>
+        </div>
+
+        <div class="settings-section">
+            <h3>Apparence</h3>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <label>Thème de l'application</label>
+                    <p class="desc">Basculez entre le mode clair et le mode sombre.</p>
+                </div>
+                <div class="setting-action">
+                    <div class="theme-switch" (click)="toggleTheme()" [class.dark]="isDarkTheme()">
+                        <div class="switch-handle">
+                            <i class="material-icons">{{ isDarkTheme() ? 'dark_mode' : 'light_mode' }}</i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Informations Application</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nom de l'application</label>
+                    <input type="text" value="GRH ARMP" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Année fiscale</label>
+                    <input type="text" value="2025" readonly>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Paramètres de congés</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Jours de congé annuels</label>
+                    <input type="text" value="30" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Heures de permission/an</label>
+                    <input type="text" value="24" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Placeholder for other tabs -->
+    <div class="card settings-card" *ngIf="activeTab !== 'general'">
+        <div class="empty-state">
+            <i class="material-icons">construction</i>
+            <h3>Section en construction</h3>
+            <p>Le module {{ activeTab }} sera bientôt disponible.</p>
+        </div>
+    </div>
+
+</div>

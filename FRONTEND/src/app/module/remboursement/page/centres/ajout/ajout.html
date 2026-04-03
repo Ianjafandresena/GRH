@@ -1,0 +1,68 @@
+<div class="page-container">
+    <div class="card form-card">
+        <div class="card-header-internal">
+            <div class="title-group">
+                <h1>{{ isEdit ? 'Modifier' : 'Nouveau' }} Centre de Santé</h1>
+            </div>
+            <button class="btn btn-outline btn-sm" (click)="cancel()">
+                <i class="fas fa-arrow-left"></i> Retour
+            </button>
+        </div>
+
+        <div class="alert alert-danger" *ngIf="errorMsg">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ errorMsg }}
+        </div>
+
+        <form (ngSubmit)="submit()">
+            <div class="form-section">
+                <h3 class="section-title">Informations du Centre</h3>
+
+                <div class="form-grid">
+                    <!-- Type de centre -->
+                    <div class="form-group required">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Type de centre</mat-label>
+                            <mat-select [(ngModel)]="centre.tp_cen_code" name="tp_cen_code" required>
+                                <mat-option *ngFor="let t of types" [value]="t.tp_cen_code">
+                                    {{ t.tp_cen }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matSuffix>local_hospital</mat-icon>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Nom -->
+                    <div class="form-group required">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Nom de l'établissement</mat-label>
+                            <input matInput [(ngModel)]="centre.cen_nom" name="cen_nom" required
+                                placeholder="Ex: HJRA Ampefiloha">
+                            <mat-icon matSuffix>business</mat-icon>
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <!-- Adresse (full width) -->
+                <div class="form-group">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Adresse</mat-label>
+                        <input matInput [(ngModel)]="centre.cen_adresse" name="cen_adresse"
+                            placeholder="Ex: Ampefiloha, Antananarivo">
+                        <mat-icon matSuffix>place</mat-icon>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="loading">
+                        <i class="fas fa-save"></i>
+                        {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

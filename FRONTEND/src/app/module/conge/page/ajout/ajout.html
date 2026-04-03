@@ -1,0 +1,272 @@
+<div class="page-container">
+  <div class="card form-card">
+    <div class="card-header-internal">
+      <div class="title-group">
+        <h1>{{ absenceType === 'conge' ? 'Nouvelle Demande de Congé' : 'Nouvelle Demande de Permission' }}</h1>
+        <!-- <p class="subtitle">Remplissez le formulaire</p> -->
+      </div>
+      <button class="btn btn-outline btn-sm" routerLink="/conge">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+    </div>
+
+    <!-- ========== TOGGLE TYPE D'ABSENCE (Congé/Permission) ========== -->
+    <div class="mode-toggle">
+      <button type="button" [class.active]="absenceType === 'conge'" (click)="absenceType = 'conge'; onTypeChange()">
+        <i class="fas fa-calendar-alt"></i> Congé
+      </button>
+      <button type="button" [class.active]="absenceType === 'permission'"
+        (click)="absenceType = 'permission'; onTypeChange()">
+        <i class="fas fa-clock"></i> Permission
+      </button>
+    </div>
+
+    <!-- ========== FORMULAIRE CONGÉ (existant - NE PAS MODIFIER) ========== -->
+    <form *ngIf="absenceType === 'conge'" [formGroup]="congeForm" (ngSubmit)="submit()" novalidate>
+
+      <!-- Employee Section (Admin View) -->
+      <div class="form-section">
+        <h3 class="section-title">Informations Salarié</h3>
+        <div class="form-group required">
+          <label for="emp_search">Employé concerné</label>
+          <div class="select2-container">
+            <div class="input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input id="emp_search" type="text" formControlName="emp_search" autocomplete="off" class="form-control"
+                placeholder="Rechercher par nom ou matricule..." (focus)="onEmpFocus()" (blur)="onEmpBlur()"
+                [class.is-invalid]="congeForm.get('emp_search')?.invalid && congeForm.get('emp_search')?.touched">
+            </div>
+            <ul class="suggestions" *ngIf="showEmpDropdown && filteredEmployees.length > 0">
+              <li *ngFor="let emp of filteredEmployees" (mousedown)="selectEmployee(emp)">
+                <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
+                <div class="suggestion-sub">{{ emp.emp_im_armp }}</div>
+              </li>
+            </ul>
+          </div>
+          <div *ngIf="selectedEmployee" class="selected-employee-info">
+            <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_im_armp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+            <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leave Details -->
+      <div class="form-section">
+        <h3 class="section-title">Détails du Congé</h3>
+        <div class="form-grid">
+          <div class="form-group required">
+            <label for="typ_code">Type de congé</label>
+            <div class="select-wrapper">
+              <select id="typ_code" formControlName="typ_code" class="form-control">
+                <option [ngValue]="null">-- Sélectionner le motif --</option>
+                <option *ngFor="let t of typesConge" [value]="t.typ_code">{{ t.typ_appelation }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group required">
+            <label for="region_search">Lieu de jouissance</label>
+            <div class="select2-container">
+              <div class="input-wrapper">
+                <i class="fas fa-map-marker-alt search-icon"></i>
+                <input id="region_search" type="text" formControlName="region_search" autocomplete="off"
+                  class="form-control" placeholder="Rechercher une région..." (focus)="onRegionFocus()"
+                  (blur)="onRegionBlur()">
+              </div>
+              <ul class="suggestions" *ngIf="showRegionDropdown && filteredRegions.length > 0">
+                <li *ngFor="let region of filteredRegions" (mousedown)="selectRegion(region)">
+                  {{ region.reg_nom }}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="form-group required">
+            <label for="cng_debut">Date de début</label>
+            <input type="date" id="cng_debut" formControlName="cng_debut" class="form-control">
+          </div>
+
+          <div class="form-group required">
+            <label for="cng_fin">Date de fin</label>
+            <input type="date" id="cng_fin" formControlName="cng_fin" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="cng_demande">Date de demande</label>
+            <input type="date" id="cng_demande" formControlName="cng_demande" class="form-control">
+            <span class="hint">Par défaut: aujourd'hui</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calculation Summary -->
+      <div class="summary-box">
+        <div class="summary-item duration">
+          <span class="label">Durée calculée</span>
+          <span class="value">{{ calculatedNbJours !== null ? calculatedNbJours + ' jours' : '-' }}</span>
+        </div>
+
+        <div class="balance-info" *ngIf="dernierSolde">
+          <div class="balance-header">
+            <i class="fas fa-info-circle"></i> Situation Solde ({{ anneeSolde }})
+          </div>
+          <div class="balance-grid">
+            <div class="balance-item">
+              <span class="lbl">Décision N°</span>
+              <span class="val">{{ numeroDecision }}</span>
+            </div>
+            <div class="balance-item">
+              <span class="lbl">Année du solde</span>
+              <span class="val">{{ anneeSolde }}</span>
+            </div>
+            <div class="balance-item main">
+              <span class="lbl">Solde Restant</span>
+              <span class="val" [class.negative]="(joursRestants || 0) === 0"
+                [class.positive]="(joursRestants || 0) > 0">
+                {{ joursRestants }} jours
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interims -->
+      <div class="form-section" formArrayName="interims">
+        <h3 class="section-title">Intérimaires / Suppléants</h3>
+
+        <div *ngFor="let group of interims.controls; let i=index" [formGroupName]="i" class="interim-row">
+          <div class="select2-container flex-grow">
+            <div class="input-wrapper">
+              <i class="fas fa-user-friends search-icon"></i>
+              <input type="text" formControlName="interim_search" class="form-control"
+                placeholder="Rechercher un suppléant..." autocomplete="off" (focus)="onInterimFocus(i)"
+                (blur)="onInterimBlur(i)">
+            </div>
+            <ul class="suggestions" *ngIf="showInterimDropdowns[i] && (filteredInterims[i]?.length || 0) > 0">
+              <li *ngFor="let emp of filteredInterims[i]" (mousedown)="selectInterim(i, emp)">
+                {{ emp.emp_nom }} {{ emp.emp_prenom }}
+              </li>
+            </ul>
+          </div>
+
+          <button type="button" class="btn btn-icon delete" *ngIf="interims.length > 1" (click)="removeInterimField(i)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-dashed" (click)="addInterimField()">
+          <i class="fas fa-plus"></i> Ajouter un suppléant
+        </button>
+      </div>
+
+      <div class="form-footer">
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" routerLink="/conge">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading || congeForm.invalid">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </form>
+    <!-- ========== FORMULAIRE PERMISSION (nouveau) ========== -->
+    <form *ngIf="absenceType === 'permission'" [formGroup]="permissionForm" (ngSubmit)="submitPermission()" novalidate>
+
+      <!-- Employee Section -->
+      <div class="form-section">
+        <h3 class="section-title">Informations Employé</h3>
+        <div class="form-group required">
+          <label for="perm_emp_search">Employé concerné</label>
+          <div class="select2-container">
+            <div class="input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input id="perm_emp_search" type="text" formControlName="emp_search" autocomplete="off"
+                class="form-control" placeholder="Rechercher par nom ou matricule..." (focus)="onPermissionEmpFocus()"
+                (blur)="onPermissionEmpBlur()" (input)="filterPermissionEmployees($any($event.target).value)">
+            </div>
+            <ul class="suggestions" *ngIf="permissionShowEmpDropdown && permissionFilteredEmployees.length > 0">
+              <li *ngFor="let emp of permissionFilteredEmployees" (mousedown)="selectPermissionEmployee(emp)">
+                <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
+                <div class="suggestion-sub">{{ emp.emp_im_armp }}</div>
+              </li>
+            </ul>
+          </div>
+          <div *ngIf="permissionSelectedEmployee" class="selected-employee-info">
+            <div class="info-row"><strong>Matricule:</strong> {{ permissionSelectedEmployee.emp_im_armp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ permissionSelectedEmployee.pst_fonction || '-' }}</div>
+            <div class="info-row"><strong>Direction:</strong> {{ permissionSelectedEmployee.dir_nom || '-' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permission Details -->
+      <div class="form-section">
+        <h3 class="section-title">Détails de la Permission</h3>
+        <div class="form-grid">
+          <!-- Début -->
+          <div class="form-group required">
+            <label>Début</label>
+            <div class="datetime-simplified">
+              <input type="date" formControlName="prm_date_debut" class="form-control" (change)="updatePermissionDurations()">
+              <div class="moment-toggle">
+                <label class="toggle-item">
+                  <input type="radio" value="matin" formControlName="prm_moment_debut" (change)="updatePermissionDurations()">
+                  <span>Matin</span>
+                </label>
+                <label class="toggle-item">
+                  <input type="radio" value="apres_midi" formControlName="prm_moment_debut" (change)="updatePermissionDurations()">
+                  <span>Après-midi</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fin -->
+          <div class="form-group required">
+            <label>Fin</label>
+            <div class="datetime-simplified">
+              <input type="date" formControlName="prm_date_fin" class="form-control" (change)="updatePermissionDurations()">
+              <div class="moment-toggle">
+                <label class="toggle-item">
+                  <input type="radio" value="matin" formControlName="prm_moment_fin" (change)="updatePermissionDurations()">
+                  <span>Matin</span>
+                </label>
+                <label class="toggle-item">
+                  <input type="radio" value="apres_midi" formControlName="prm_moment_fin" (change)="updatePermissionDurations()">
+                  <span>Après-midi</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Duration Summary -->
+      <div class="summary-box">
+        <div class="summary-item duration">
+          <span class="label">Durée calculée</span>
+          <span class="value" [class.over-limit]="(permissionCalculatedHours || 0) > 8">
+            <span *ngIf="permissionCalculatedDays !== null">
+              {{ permissionCalculatedDays }} jour(s) <small>({{ permissionCalculatedHours }}h)</small>
+            </span>
+            <span *ngIf="permissionCalculatedHours === null">--</span>
+            <span class="limit-warning" *ngIf="(permissionCalculatedHours || 0) > 8">
+              <i class="pi pi-exclamation-triangle"></i> Dépasse la limite d'une journée (8h)
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-footer">
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" routerLink="/conge">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="permissionLoading || permissionForm.invalid">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>

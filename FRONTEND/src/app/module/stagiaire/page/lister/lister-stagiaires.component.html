@@ -1,0 +1,158 @@
+<div class="lister-stagiaires-container" @fadeIn>
+    <div class="header-section">
+        <h1>
+            <mat-icon>school</mat-icon>
+            Liste des Stagiaires
+        </h1>
+        <button mat-raised-button color="primary" routerLink="/stagiaires/creer">
+            <mat-icon>add</mat-icon>
+            Nouveau Stagiaire
+        </button>
+    </div>
+
+    <!-- Stats Cards Summary -->
+    <div class="stats-grid" *ngIf="stats" @fadeIn>
+        <mat-card class="stats-card total">
+            <div class="stats-icon">
+                <mat-icon>people</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Total Stagiaires</span>
+                <span class="stats-value">{{ stats.total }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card info" *ngIf="stats.filieres && stats.filieres.length > 0">
+            <div class="stats-icon">
+                <mat-icon>category</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Top Filière</span>
+                <span class="stats-value">{{ stats.filieres[0].label }}</span>
+                <span class="stats-subvalue">{{ stats.filieres[0].value }} stagiaires</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card success" *ngIf="stats.niveaux && stats.niveaux.length > 0">
+            <div class="stats-icon">
+                <mat-icon>school</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Top Niveau</span>
+                <span class="stats-value">{{ stats.niveaux[0].label }}</span>
+                <span class="stats-subvalue">{{ stats.niveaux[0].value }} stagiaires</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+        <mat-spinner></mat-spinner>
+        <p>Chargement des stagiaires...</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+    </div>
+
+    <mat-card class="filters-card" *ngIf="!loading && !errorMessage">
+        <form [formGroup]="filterForm" class="gprh-filters-grid">
+            <mat-form-field appearance="outline">
+                <mat-label>Recherche</mat-label>
+                <input matInput formControlName="q" placeholder="Nom / Prénom" />
+                <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Contact</mat-label>
+                <input matInput formControlName="contact" placeholder="Téléphone" />
+                <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Filière</mat-label>
+                <input matInput formControlName="filiere" placeholder="Filière" />
+                <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Niveau</mat-label>
+                <input matInput formControlName="niveau" placeholder="Niveau" />
+                <mat-icon matPrefix>school</mat-icon>
+            </mat-form-field>
+
+            <div class="filter-actions">
+                <button mat-raised-button color="primary" type="button" (click)="loadStagiaires()" [disabled]="loading">
+                    <mat-icon>search</mat-icon>
+                    Rechercher
+                </button>
+                <button mat-stroked-button type="button" (click)="resetFilters()" [disabled]="loading">
+                    <mat-icon>refresh</mat-icon>
+                    Réinitialiser
+                </button>
+            </div>
+        </form>
+    </mat-card>
+
+    <mat-card *ngIf="!loading && !errorMessage">
+        <table mat-table [dataSource]="stagiaires" class="stagiaires-table">
+            <ng-container matColumnDef="nom">
+                <th mat-header-cell *matHeaderCellDef>Nom complet</th>
+                <td mat-cell *matCellDef="let s" style="font-weight: 600; color: #1e293b;">
+                    {{ s.stgr_nom_prenom || (s.stgr_nom + ' ' + s.stgr_prenom) | uppercase }}
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="sexe">
+                <th mat-header-cell *matHeaderCellDef>Sexe</th>
+                <td mat-cell *matCellDef="let s">
+                    <span class="status-badge" [ngClass]="s.stgr_sexe ? 'info' : 'accent'"
+                        style="min-width: 40px; text-align: center;">
+                        {{ s.stgr_sexe ? 'M' : 'F' }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="contact">
+                <th mat-header-cell *matHeaderCellDef>Contact</th>
+                <td mat-cell *matCellDef="let s">
+                    <span class="code-highlight" style="background: #eff6ff; color: #1d4ed8;">{{ s.stgr_contact
+                        }}</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="adresse">
+                <th mat-header-cell *matHeaderCellDef>Adresse</th>
+                <td mat-cell *matCellDef="let s"
+                    style="font-size: 0.85rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ s.stgr_adresse || '-' }}
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="filiere">
+                <th mat-header-cell *matHeaderCellDef>Filière</th>
+                <td mat-cell *matCellDef="let s">
+                    <span class="status-badge info">{{ s.stgr_filiere || 'N/A' }}</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="niveau">
+                <th mat-header-cell *matHeaderCellDef>Niveau</th>
+                <td mat-cell *matCellDef="let s">
+                    <span class="status-badge success"
+                        style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;">{{ s.stgr_niveau ||
+                        'N/A' }}</span>
+                </td>
+            </ng-container>
+
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div *ngIf="stagiaires.length === 0" class="no-data">
+            <mat-icon>inbox</mat-icon>
+            <p>Aucun stagiaire trouvé</p>
+        </div>
+    </mat-card>
+</div>

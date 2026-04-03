@@ -1,0 +1,395 @@
+@use 'sass:color';
+@use '../../../../../../styles/shared-styles.scss' as *;
+
+// Component-specific overrides
+.search-container {
+    position: relative;
+
+    input {
+        width: 100%;
+    }
+
+    .suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: $bg-card;
+        border: 1px solid $border-light;
+        border-radius: $radius-md;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        margin-top: 2px;
+        box-shadow: $shadow-lg;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            padding: $spacing-sm 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid $border-section;
+
+            &:hover {
+                background: $bg-hover;
+                color: $primary-blue;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+    }
+
+    &.with-action {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        input {
+            flex: 1;
+        }
+
+        .btn-add-inline {
+            background: none;
+            border: none;
+            color: #2ab1bb;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, color 0.2s;
+
+            &:hover {
+                transform: scale(1.1);
+                color: color.adjust(#2ab1bb, $lightness: -10%);
+            }
+        }
+    }
+}
+
+// Styles pour les cartes d'information migrés vers shared-styles.scss (.selected-employee-info)
+
+.hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: $font-size-sm;
+    color: $secondary;
+    font-style: italic;
+
+    i {
+        margin-right: 0.25rem;
+    }
+}
+
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 0 !important; // Override form-control padding to handle button
+    overflow: hidden;
+
+    &.disabled {
+        background-color: #f1f5f9 !important;
+        cursor: not-allowed;
+
+        .internal-input {
+            cursor: not-allowed;
+            color: $secondary;
+        }
+    }
+
+    .internal-input {
+        flex: 1;
+        border: none !important;
+        padding: 0.4rem 0.75rem;
+        font-size: $font-size-base;
+        outline: none !important;
+        background: transparent !important;
+        height: 100%;
+        color: inherit;
+
+        &::placeholder {
+            color: #94a3b8;
+        }
+    }
+
+    .clear-btn {
+        padding: 0.25rem 0.5rem;
+        border: none;
+        background: transparent;
+        color: #999;
+        cursor: pointer;
+        font-size: 1.25rem;
+        transition: color 0.2s;
+
+        &:hover {
+            color: $danger;
+        }
+    }
+}
+
+.custom-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid $border-light;
+    border-radius: $radius-sm;
+    box-shadow: $shadow-lg;
+    z-index: 1000;
+    margin-top: 4px;
+    list-style: none;
+    padding: 0;
+
+    li {
+        padding: 0.75rem;
+        cursor: pointer;
+        transition: background 0.15s;
+        border-bottom: 1px solid $border-section;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:hover {
+            background: $bg-hover;
+        }
+
+        strong {
+            display: block;
+            color: $dark;
+            font-size: $font-size-base;
+        }
+
+        .subtitle {
+            display: block;
+            color: #666;
+            font-size: $font-size-xs;
+            margin-top: 2px;
+        }
+    }
+}
+
+.pec-info-box {
+    background: #e0f2fe;
+    border-left: 4px solid $primary-blue;
+    padding: $spacing-md;
+    border-radius: $radius-sm;
+    margin-top: $spacing-md;
+
+    .info-row {
+        margin-bottom: 0.5rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-md;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: normal;
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: $primary-blue;
+        cursor: pointer;
+    }
+}
+
+.selected-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: $primary-blue;
+    border-radius: 20px;
+    width: fit-content;
+
+    .item-badge {
+        color: white;
+        font-size: $font-size-base;
+    }
+
+    .btn-clear {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0.8;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
+.montant-lettres {
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: $bg-input;
+    border: 1px solid $border-light;
+    border-radius: $radius-sm;
+    font-style: italic;
+    color: $secondary;
+    font-size: $font-size-sm;
+}
+
+// Cart section
+.cart-section {
+    margin-top: $spacing-xl;
+    padding: $spacing-lg;
+    background: $bg-card;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-md;
+
+    h3 {
+        margin: 0 0 $spacing-md;
+        color: $dark;
+        font-size: $font-size-lg;
+    }
+}
+
+.cart-cards {
+    display: grid;
+    gap: $spacing-md;
+}
+
+.cart-card {
+    background: $bg-input;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    overflow: hidden;
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem $spacing-md;
+        background: $primary-blue;
+        color: white;
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: $radius-sm;
+            font-size: $font-size-xs;
+        }
+    }
+
+    .card-body {
+        padding: $spacing-md;
+
+        p {
+            margin: 0 0 0.5rem;
+            font-size: $font-size-sm;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    .card-actions {
+        display: flex;
+        gap: $spacing-xs;
+        padding: 0.75rem $spacing-md;
+        border-top: 1px solid $border-light;
+        background: $bg-card;
+    }
+}
+
+.cart-actions {
+    margin-top: $spacing-lg;
+    text-align: center;
+}
+
+// Modal styles
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: $bg-card;
+    padding: $spacing-lg;
+    border-radius: $radius-md;
+    width: 90%;
+    max-width: 450px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: $shadow-lg;
+    animation: slideUp 0.3s ease;
+
+    h3 {
+        margin: 0 0 $spacing-md;
+        font-size: $font-size-lg;
+        color: $dark;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-actions {
+    display: flex;
+    gap: $spacing-sm;
+    justify-content: flex-end;
+    margin-top: $spacing-lg;
+    padding-top: $spacing-md;
+    border-top: 1px solid $border-section;
+}
