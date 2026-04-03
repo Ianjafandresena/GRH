@@ -32,18 +32,20 @@ class EtatCongeController extends ResourceController
             // Récupérer tous employés actifs
             $employeeModel = new EmployeeModel();
             $employeesQuery = $employeeModel
-                ->select('employee.*, direction.dir_nom, direction.dir_abreviation, poste.pst_fonction')
-                ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
-                ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
+                ->select('employe.*, COALESCE(d_direct.dir_nom, d_service.dir_nom) AS dir_nom, COALESCE(d_direct.dir_abbreviation, d_service.dir_abbreviation) AS dir_abbreviation, poste.pst_fonction')
+                ->join('affectation', "affectation.emp_code = employe.emp_code AND affectation.affec_etat = 'active'", 'left')
                 ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
-                ->where('employee.emp_disponibilite', true);
+                ->join('service', 'service.srvc_code = poste.srvc_code', 'left')
+                ->join('direction d_direct', 'd_direct.dir_code = poste.dir_code', 'left')
+                ->join('direction d_service', 'd_service.dir_code = service.dir_code', 'left')
+                ->where('employe.emp_disponibilite', true);
             
             // Filtre recherche
             if ($search) {
                 $employeesQuery->groupStart()
-                    ->like('employee.emp_nom', $search)
-                    ->orLike('employee.emp_prenom', $search)
-                    ->orLike('employee.emp_imarmp', $search)
+                    ->like('employe.emp_nom', $search)
+                    ->orLike('employe.emp_prenom', $search)
+                    ->orLike('employe.emp_im_armp', $search)
                 ->groupEnd();
             }
             
@@ -80,9 +82,9 @@ class EtatCongeController extends ResourceController
                     'emp_code' => (int)$emp['emp_code'],
                     'emp_nom' => $emp['emp_nom'],
                     'emp_prenom' => $emp['emp_prenom'],
-                    'emp_imarmp' => $emp['emp_imarmp'],
+                    'emp_im_armp' => $emp['emp_im_armp'],
                     'direction' => $emp['dir_nom'] ?? 'N/A',
-                    'direction_abrev' => $emp['dir_abreviation'] ?? '',
+                    'direction_abrev' => $emp['dir_abbreviation'] ?? '',
                     'fonction' => $emp['pst_fonction'] ?? 'N/A',
                     'soldes' => $soldesFormatted
                 ];
@@ -140,11 +142,13 @@ class EtatCongeController extends ResourceController
             // Récupérer employé
             $employeeModel = new EmployeeModel();
             $employee = $employeeModel
-                ->select('employee.*, direction.dir_nom, poste.pst_fonction')
-                ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
-                ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
+                ->select('employe.*, COALESCE(d_direct.dir_nom, d_service.dir_nom) AS dir_nom, poste.pst_fonction')
+                ->join('affectation', "affectation.emp_code = employe.emp_code AND affectation.affec_etat = 'active'", 'left')
                 ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
-                ->where('employee.emp_code', $empCode)
+                ->join('service', 'service.srvc_code = poste.srvc_code', 'left')
+                ->join('direction d_direct', 'd_direct.dir_code = poste.dir_code', 'left')
+                ->join('direction d_service', 'd_service.dir_code = service.dir_code', 'left')
+                ->where('employe.emp_code', $empCode)
                 ->first();
             
             if (!$employee) {
@@ -173,7 +177,7 @@ class EtatCongeController extends ResourceController
                 'emp_code' => (int)$employee['emp_code'],
                 'emp_nom' => $employee['emp_nom'],
                 'emp_prenom' => $employee['emp_prenom'],
-                'emp_imarmp' => $employee['emp_imarmp'],
+                'emp_im_armp' => $employee['emp_im_armp'],
                 'direction' => $employee['dir_nom'] ?? 'N/A',
                 'fonction' => $employee['pst_fonction'] ?? 'N/A',
                 'soldes' => $soldesFormatted

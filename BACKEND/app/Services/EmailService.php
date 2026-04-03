@@ -199,13 +199,20 @@ HTML;
         string $toEmail,
         string $toName,
         array $etat,
-        array $demandes
+        array $demandes,
+        ?array $attachment = null // ['path' => '...', 'name' => '...']
     ): bool {
         try {
             if (!isset($this->mailer)) return false;
 
             $this->mailer->clearAddresses();
+            $this->mailer->clearAttachments();
             $this->mailer->addAddress($toEmail, $toName);
+            
+            if ($attachment && !empty($attachment['content'])) {
+                $this->mailer->addStringAttachment($attachment['content'], $attachment['name'] ?? 'etat_remboursement.pdf');
+            }
+
             $this->mailer->Subject = "Suivi de Remboursement : État envoyé à l'Agent Comptable";
 
             $body = $this->getEtatEmailTemplate($etat, $demandes);

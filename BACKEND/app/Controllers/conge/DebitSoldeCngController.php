@@ -31,7 +31,7 @@ class DebitSoldeCngController extends ResourceController
         return $this->respond($debit);
     }
 
-    // POST create new debit
+  
    public function create()
 {
     $debitModel = new DebitSoldeCngModel();

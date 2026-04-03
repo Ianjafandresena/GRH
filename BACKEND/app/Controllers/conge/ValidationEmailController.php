@@ -113,8 +113,13 @@ class ValidationEmailController extends BaseController
         }
 
         // Final
-        $this->markCongeAsValidated($conge['cng_code']);
-        $this->sendCompletionEmail($conge);
+        try {
+            $this->markCongeAsValidated($conge['cng_code']);
+            $this->validationService->debitSolde($conge);
+            $this->sendCompletionEmail($conge);
+        } catch (\Throwable $e) {
+            log_message('critical', "Erreur finalisation débit via email (cng {$conge['cng_code']}): " . $e->getMessage());
+        }
         return $this->showResultPage('success', 'Congé entièrement validé !');
     }
 
@@ -140,7 +145,7 @@ class ValidationEmailController extends BaseController
         $db = \Config\Database::connect();
         $previousValidations = $db->table('validation_cng v')
             ->select('e.emp_mail, e.emp_nom, e.emp_prenom')
-            ->join('employee e', 'e.sign_code = v.sign_code')
+            ->join('employe e', 'e.sign_code = v.sign_code')
             ->where('v.cng_code', $conge['cng_code'])
             ->where('v.val_status', true)
             ->get()->getResultArray();
@@ -178,8 +183,8 @@ class ValidationEmailController extends BaseController
     {
         $db = \Config\Database::connect();
         return $db->table('conge c')
-            ->select('c.*, e.emp_code, e.emp_nom as nom_emp, e.emp_prenom as prenom_emp, e.emp_mail, e.emp_imarmp as matricule, t.typ_appelation, r.reg_nom as nom_region')
-            ->join('employee e', 'e.emp_code = c.emp_code')
+            ->select('c.*, e.emp_code, e.emp_nom as nom_emp, e.emp_prenom as prenom_emp, e.emp_mail, e.emp_im_armp as matricule, t.typ_appelation, r.reg_nom as nom_region')
+            ->join('employe e', 'e.emp_code = c.emp_code')
             ->join('type_conge t', 't.typ_code = c.typ_code')
             ->join('region r', 'r.reg_code = c.reg_code')
             ->where('c.cng_code', $cngCode)

@@ -12,83 +12,61 @@ class EtatPdfController extends ResourceController
     use ResponseTrait;
 
     /**
-     * Générer le PDF d'un État de Remboursement (Agent)
-     * Format EXACT conforme au document officiel ARMP
+     * Obtenir le binaire PDF et le nom de fichier
      */
-    public function generateEtatPdf($etaCode)
+    public function getBinaryPdf($etaCode)
     {
         $db = \Config\Database::connect();
         
-        // 1. Récupérer l'état avec infos employé
         $etat = $db->table('etat_remb')
-            ->select('etat_remb.*, 
-                      employee.emp_nom, 
-                      employee.emp_prenom, 
-                      employee.emp_imarmp,
-                      poste.pst_fonction,
-                      direction.dir_nom,
-                      direction.dir_abreviation')
-            ->join('employee', 'employee.emp_code = etat_remb.emp_code', 'left')
-            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
+            ->select('etat_remb.*, employe.emp_nom, employe.emp_prenom, employe.emp_im_armp, poste.pst_fonction, direction.dir_nom')
+            ->join('employe', 'employe.emp_code = etat_remb.emp_code', 'left')
+            ->join('affectation', 'affectation.emp_code = employe.emp_code', 'left')
             ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
-            ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
+            ->join('direction', 'direction.dir_code = poste.dir_code', 'left')
             ->where('etat_remb.eta_code', $etaCode)
-            ->orderBy('affectation.affec_date_debut', 'DESC')
             ->get()->getRowArray();
         
-        if (!$etat) {
-            return $this->failNotFound('État non trouvé');
-        }
-        
-        // 2. Récupérer toutes les demandes liées
+        if (!$etat) return null;
+
         $demandes = $db->table('demande_remb')
-            ->select('demande_remb.*,
-                      facture.fac_num,
-                      facture.fac_date,
-                      objet_remboursement.obj_article,
-                      pris_en_charge.pec_num,
-                      centre_sante.cen_nom,
-                      COALESCE(pec_employee.emp_nom || \' \' || pec_employee.emp_prenom, pec_conj.conj_nom, pec_enf.enf_nom) AS beneficiaire_nom,
-                      CASE 
-                        WHEN pris_en_charge.conj_code IS NOT NULL THEN \'Conjoint(e)\'
-                        WHEN pris_en_charge.enf_code IS NOT NULL THEN \'Enfant\'
-                        ELSE \'Agent\'
-                      END AS beneficiaire_lien')
+            ->select('demande_remb.*, facture.fac_num, facture.fac_date, objet_remboursement.obj_article, pris_en_charge.pec_num, centre_sante.cen_nom, COALESCE(pec_employe.emp_nom || \' \' || pec_employe.emp_prenom, pec_conj.conj_nom, pec_enf.enf_nom) AS beneficiaire_nom, CASE WHEN pris_en_charge.conj_code IS NOT NULL THEN \'Conjoint(e)\' WHEN pris_en_charge.enf_code IS NOT NULL THEN \'Enfant\' ELSE \'Agent\' END AS beneficiaire_lien')
             ->join('facture', 'facture.fac_code = demande_remb.fac_code', 'left')
             ->join('objet_remboursement', 'objet_remboursement.obj_code = demande_remb.obj_code', 'left')
             ->join('pris_en_charge', 'pris_en_charge.pec_code = demande_remb.pec_code', 'left')
-            ->join('employee pec_employee', 'pec_employee.emp_code = pris_en_charge.emp_code', 'left')
+            ->join('employe pec_employe', 'pec_employe.emp_code = pris_en_charge.emp_code', 'left')
             ->join('conjointe pec_conj', 'pec_conj.conj_code = pris_en_charge.conj_code', 'left')
             ->join('enfant pec_enf', 'pec_enf.enf_code = pris_en_charge.enf_code', 'left')
             ->join('centre_sante', 'centre_sante.cen_code = demande_remb.cen_code', 'left')
             ->where('demande_remb.eta_code', $etaCode)
-            ->orderBy('demande_remb.rem_code', 'ASC')
             ->get()->getResultArray();
-        
-        // 3. Extraire le mois depuis la date de création de l'état
+
         $mois = $this->getMoisFromDate($etat['eta_date'] ?? null);
-        
-        // 4. Générer le HTML exact
         $html = $this->buildPdfHtml($etat, $demandes, $mois);
-        
-        // 5. Générer le PDF
+
         $options = new Options();
         $options->set('isRemoteEnabled', true);
         $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('isHtml5ParserEnabled', true);
-        
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
-        
-        $output = $dompdf->output();
-        $filename = 'etat_remb_' . str_replace('/', '-', $etat['etat_num'] ?? $etaCode) . '.pdf';
-        
+
+        return [
+            'content' => $dompdf->output(),
+            'filename' => 'etat_remb_' . str_replace('/', '-', $etat['etat_num']) . '.pdf'
+        ];
+    }
+
+    public function generateEtatPdf($etaCode)
+    {
+        $pdfData = $this->getBinaryPdf($etaCode);
+        if (!$pdfData) return $this->failNotFound('État non trouvé');
+
         return $this->response
             ->setHeader('Content-Type', 'application/pdf')
-            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
-            ->setBody($output);
+            ->setHeader('Content-Disposition', 'inline; filename="' . $pdfData['filename'] . '"')
+            ->setBody($pdfData['content']);
     }
     
     /**
@@ -302,7 +280,7 @@ class EtatPdfController extends ResourceController
     <table class="agent-info-table">
         <tr>
             <td class="left-col"><span class="label">Nom de l\'Agent :</span> ' . htmlspecialchars($nomAgent) . '</td>
-            <td class="right-col" rowspan="3"><span class="label">IM :</span> ' . htmlspecialchars($etat['emp_imarmp'] ?? '') . '</td>
+            <td class="right-col" rowspan="3"><span class="label">IM :</span> ' . htmlspecialchars($etat['emp_im_armp'] ?? '') . '</td>
         </tr>
         <tr>
             <td><span class="label">Fonction :</span> ' . htmlspecialchars($etat['pst_fonction'] ?? '') . '</td>

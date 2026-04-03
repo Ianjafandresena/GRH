@@ -10,7 +10,10 @@ class ConjointeModel extends Model
 
     protected $allowedFields = [
         'conj_nom',
-        'conj_sexe'
+        'conj_prenom',
+        'conj_sexe',
+        'cjs_id',
+        'conj_date_statut'
     ];
 
     protected $useAutoIncrement = true;

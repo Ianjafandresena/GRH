@@ -123,8 +123,8 @@ class CongeController extends ResourceController
     {
         $db = \Config\Database::connect();
         return $db->table('conge c')
-            ->select('c.*, e.emp_nom as nom_emp, e.emp_prenom as prenom_emp, e.emp_mail, e.emp_imarmp as matricule, t.typ_appelation, r.reg_nom as nom_region')
-            ->join('employee e', 'e.emp_code = c.emp_code')
+            ->select('c.*, e.emp_nom as nom_emp, e.emp_prenom as prenom_emp, e.emp_mail, e.emp_im_armp as matricule, t.typ_appelation, r.reg_nom as nom_region')
+            ->join('employe e', 'e.emp_code = c.emp_code')
             ->join('type_conge t', 't.typ_code = c.typ_code')
             ->join('region r', 'r.reg_code = c.reg_code')
             ->where('c.cng_code', $cngCode)
@@ -137,7 +137,7 @@ class CongeController extends ResourceController
     private function getEmployeePoste(int $empCode): string
     {
         $db = \Config\Database::connect();
-        $result = $db->table('employee e')
+        $result = $db->table('employe e')
             ->select('p.pst_fonction')
             ->join('affectation a', 'a.emp_code = e.emp_code')
             ->join('poste p', 'p.pst_code = a.pst_code')
@@ -150,8 +150,8 @@ class CongeController extends ResourceController
     public function getAllConges()
     {
         $congeModel = new CongeModel();
-        $builder = $congeModel->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
-            ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+        $builder = $congeModel->select('conge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+            ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
             ->join('region', 'region.reg_code = conge.reg_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left');
 
@@ -205,16 +205,18 @@ class CongeController extends ResourceController
 
             $builder = $db->table('conge')
                 ->select('conge.*, 
-                          employee.emp_nom, 
-                          employee.emp_prenom,
-                          employee.emp_imarmp,
+                          employe.emp_nom, 
+                          employe.emp_prenom,
+                          employe.emp_im_armp,
                           type_conge.typ_appelation as tp_cng_nom,
-                          type_conge.typ_couleur as tp_cng_couleur,
-                          direction.dir_nom')
-                ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+                          COALESCE(d_direct.dir_nom, d_service.dir_nom) AS dir_nom')
+                ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
                 ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
-                ->join('affectation', 'affectation.emp_code = employee.emp_code AND affectation.aff_date_fin IS NULL', 'left')
-                ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
+                ->join('affectation', "affectation.emp_code = employe.emp_code AND affectation.affec_etat = 'active'", 'left')
+                ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
+                ->join('service', 'service.srvc_code = poste.srvc_code', 'left')
+                ->join('direction d_direct', 'd_direct.dir_code = poste.dir_code', 'left')
+                ->join('direction d_service', 'd_service.dir_code = service.dir_code', 'left')
                 ->where('conge.cng_status', true) // Seulement les validés
                 ->groupStart()
                     ->where('conge.cng_debut <=', $endDate)
@@ -251,55 +253,101 @@ class CongeController extends ResourceController
 
     public function getCongeDetail($id)
     {
-        $congeModel = new CongeModel();
-        $detail = $congeModel->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
-            ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
-            ->join('region', 'region.reg_code = conge.reg_code', 'left')
-            ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
-            ->where('conge.cng_code', $id)
-            ->first();
-        if (!$detail) return $this->failNotFound('Congé non trouvé');
+        $type = $this->request->getVar('type'); // 'conge' ou 'permission'
+        $detail = null;
+        $absType = 'conge';
 
-        $interimModel = new \App\Models\conge\InterimCongeModel();
-        $interims = $interimModel->select('interim_conge.*, e.emp_nom AS nom, e.emp_prenom AS prenom')
-            ->join('employee e', 'e.emp_code = interim_conge.emp_code', 'left')
-            ->where('interim_conge.cng_code', $id)
-            ->findAll();
+        // Si le type est spécifié, on va directement sur la bonne table
+        if ($type === 'permission') {
+            $prmModel = new \App\Models\permission\PermissionModel();
+            $detail = $prmModel->select('permission.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule')
+                ->join('employe', 'employe.emp_code = permission.emp_code', 'left')
+                ->where('permission.prm_code', $id)
+                ->first();
+            $absType = 'permission';
+        } else {
+            $congeModel = new CongeModel();
+            $detail = $congeModel->select('conge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+                ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
+                ->join('region', 'region.reg_code = conge.reg_code', 'left')
+                ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
+                ->where('conge.cng_code', $id)
+                ->first();
+            $absType = 'conge';
+        }
 
-        // Décision/année exactes à défalquer: basées sur les mouvements de débit du congé
-        $debitModel = new \App\Models\conge\DebitSoldeCngModel();
-        $soldeModel = new \App\Models\conge\SoldeCongeModel();
-        $decisionModel = new \App\Models\conge\DecisionModel();
-        $mouvs = $debitModel->where('cng_code', $id)->findAll();
-        $decNum = null; $sldAnne = null; $sldRestant = null;
-        if (!empty($mouvs)) {
-           
-            $candidats = [];
-            foreach ($mouvs as $mv) {
-                $solde = $soldeModel->find($mv['sld_code']);
-                if ($solde) {
-                    $dec = $solde['dec_code'] ? $decisionModel->find($solde['dec_code']) : null;
-                    $candidats[] = [
-                        'anne' => $solde['sld_anne'] ?? null,
-                        'restant' => $solde['sld_restant'] ?? null,
-                        'dec_num' => $dec['dec_num'] ?? null,
-                    ];
+        // Si non trouvé par le type suggéré, tenter l'autre table (fallback sécurité)
+        if (!$detail) {
+            if ($absType === 'conge') {
+                $prmModel = new \App\Models\permission\PermissionModel();
+                $detail = $prmModel->select('permission.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule')
+                    ->join('employe', 'employe.emp_code = permission.emp_code', 'left')
+                    ->where('permission.prm_code', $id)
+                    ->first();
+                $absType = 'permission';
+            } else {
+                $congeModel = new CongeModel();
+                $detail = $congeModel->select('conge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+                    ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
+                    ->where('conge.cng_code', $id)
+                    ->first();
+                $absType = 'conge';
+            }
+        }
+
+        if (!$detail) return $this->failNotFound('Absence non trouvée');
+
+        // Mapper les champs si c'est une permission
+        if ($absType === 'permission') {
+            $detail['cng_code'] = $detail['prm_code'];
+            $detail['cng_debut'] = $detail['prm_debut'];
+            $detail['cng_fin'] = $detail['prm_fin'];
+            $detail['cng_nb_jour'] = (float)$detail['prm_duree'] / 8.0;
+            // Correction du cast boolean pour PostgreSQL (évite que 'f' soit vu comme true)
+            $detail['cng_status'] = ($detail['prm_status'] === 't' || $detail['prm_status'] === true || $detail['prm_status'] === 1 || $detail['prm_status'] === '1');
+            $detail['typ_appelation'] = 'Permission exceptionnelle';
+            $detail['nom_region'] = 'N/A';
+        }
+
+        $interims = [];
+        if ($absType === 'conge') {
+            $interimModel = new \App\Models\conge\InterimCongeModel();
+            $interims = $interimModel->select('interim_conge.*, e.emp_nom AS nom, e.emp_prenom AS prenom')
+                ->join('employe e', 'e.emp_code = interim_conge.emp_code', 'left')
+                ->where('interim_conge.cng_code', $id)
+                ->findAll();
+        }
+
+        // Décision/année (uniquement pour congés)
+        $decisionData = ['dec_num' => null, 'sld_anne' => null, 'sld_restant' => null];
+        if ($absType === 'conge') {
+            $debitModel = new \App\Models\conge\DebitSoldeCngModel();
+            $soldeModel = new \App\Models\conge\SoldeCongeModel();
+            $decisionModel = new \App\Models\conge\DecisionModel();
+            $mouvs = $debitModel->where('cng_code', $id)->findAll();
+            if (!empty($mouvs)) {
+                $candidats = [];
+                foreach ($mouvs as $mv) {
+                    $solde = $soldeModel->find($mv['sld_code']);
+                    if ($solde) {
+                        $dec = $solde['dec_code'] ? $decisionModel->find($solde['dec_code']) : null;
+                        $candidats[] = [
+                            'anne' => $solde['sld_anne'] ?? null,
+                            'restant' => $solde['sld_restant'] ?? null,
+                            'dec_num' => $dec['dec_num'] ?? null,
+                        ];
+                    }
                 }
-            }
-            // Choisir celui avec restant > 0, sinon le plus ancien par année
-            $choix = null;
-            foreach ($candidats as $c) { if (($c['restant'] ?? 0) > 0) { $choix = $c; break; } }
-            if ($choix === null) {
-                usort($candidats, function($a,$b){ return strcmp((string)$a['anne'], (string)$b['anne']); });
                 $choix = $candidats[0] ?? null;
+                if ($choix) { $decisionData = [ 'dec_num' => $choix['dec_num'], 'sld_anne' => $choix['anne'], 'sld_restant' => $choix['restant'] ]; }
             }
-            if ($choix) { $decNum = $choix['dec_num']; $sldAnne = $choix['anne']; $sldRestant = $choix['restant']; }
         }
 
         $payload = [
             'conge' => $detail,
             'interims' => $interims,
-            'decision' => [ 'dec_num' => $decNum, 'sld_anne' => $sldAnne, 'sld_restant' => $sldRestant ]
+            'decision' => $decisionData,
+            'absence_type' => $absType
         ];
         $this->response->setHeader('Content-Type', 'application/json; charset=utf-8');
         return $this->respond($payload);
@@ -310,8 +358,8 @@ class CongeController extends ResourceController
         $req = service('request');
         // Réutilise la logique de getCongeDetail
         $congeModel = new CongeModel();
-        $detail = $congeModel->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
-            ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+        $detail = $congeModel->select('conge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, region.reg_nom AS nom_region, type_conge.typ_appelation AS typ_appelation, type_conge.typ_ref AS typ_ref')
+            ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
             ->join('region', 'region.reg_code = conge.reg_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
             ->where('conge.cng_code', $id)
@@ -320,7 +368,7 @@ class CongeController extends ResourceController
 
         $interimModel = new \App\Models\conge\InterimCongeModel();
         $interims = $interimModel->select('interim_conge.*, e.emp_nom AS nom, e.emp_prenom AS prenom')
-            ->join('employee e', 'e.emp_code = interim_conge.emp_code', 'left')
+            ->join('employe e', 'e.emp_code = interim_conge.emp_code', 'left')
             ->where('interim_conge.cng_code', $id)
             ->findAll();
 
@@ -567,7 +615,7 @@ class CongeController extends ResourceController
     {
         $congeModel = new CongeModel();
         $rows = $congeModel->select('conge.cng_code, conge.cng_nb_jour, conge.cng_debut, conge.cng_fin, employee.nom, employee.prenom, type_conge.typ_appelation, type_conge.typ_ref, region.reg_nom')
-            ->join('employee', 'employee.emp_code = conge.emp_code')
+            ->join('employe', 'employe.emp_code = conge.emp_code')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code')
             ->join('region', 'region.reg_code = conge.reg_code')
             ->findAll();

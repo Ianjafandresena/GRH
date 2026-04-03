@@ -23,10 +23,10 @@ class EtatRembController extends ResourceController
         // Sélectionner les états avec les infos de base de l'agent
         $etats = $db->table('etat_remb')
             ->select('etat_remb.*, 
-                      employee.emp_nom AS nom_emp, 
-                      employee.emp_prenom AS prenom_emp, 
-                      employee.emp_imarmp AS matricule')
-            ->join('employee', 'employee.emp_code = etat_remb.emp_code', 'left')
+                      employe.emp_nom AS nom_emp, 
+                      employe.emp_prenom AS prenom_emp, 
+                      employe.emp_im_armp AS matricule')
+            ->join('employe', 'employe.emp_code = etat_remb.emp_code', 'left')
             ->orderBy('etat_remb.eta_date', 'DESC')
             ->get()
             ->getResultArray();
@@ -64,10 +64,10 @@ class EtatRembController extends ResourceController
         $db = \Config\Database::connect();
         $etat = $db->table('etat_remb')
             ->select('etat_remb.*, 
-                      employee.emp_nom AS nom_emp, 
-                      employee.emp_prenom AS prenom_emp, 
-                      employee.emp_imarmp AS matricule')
-            ->join('employee', 'employee.emp_code = etat_remb.emp_code', 'left')
+                      employe.emp_nom AS nom_emp, 
+                      employe.emp_prenom AS prenom_emp, 
+                      employe.emp_im_armp AS matricule')
+            ->join('employe', 'employe.emp_code = etat_remb.emp_code', 'left')
             ->where('etat_remb.eta_code', $id)
             ->get()->getRowArray();
 
@@ -117,11 +117,12 @@ class EtatRembController extends ResourceController
         $db = \Config\Database::connect();
         
         // 1. Déterminer le service de l'agent via affectation -> direction
-        $employee = $db->table('employee')
-            ->select('direction.dir_code, direction.dir_nom')
-            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
-            ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
-            ->where('employee.emp_code', $empCode)
+        $employee = $db->table('employe')
+            ->select('COALESCE(poste.dir_code, service.dir_code) AS dir_code')
+            ->join('affectation', "affectation.emp_code = employe.emp_code AND affectation.affec_etat = 'active'", 'left')
+            ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
+            ->join('service', 'service.srvc_code = poste.srvc_code', 'left')
+            ->where('employe.emp_code', $empCode)
             ->get()->getRowArray();
         
         // Mapping direction -> code service (selon l'organisation ARMP)
@@ -266,7 +267,7 @@ class EtatRembController extends ResourceController
             $db = \Config\Database::connect();
             
             // Récupérer l'employé et son mail
-            $employee = $db->table('employee')
+            $employee = $db->table('employe')
                 ->where('emp_code', $etat['emp_code'])
                 ->get()->getRowArray();
             
@@ -279,11 +280,17 @@ class EtatRembController extends ResourceController
                     ->get()->getResultArray();
                 
                 $emailService = new EmailService();
+                
+                // 3. Générer le PDF pour l'attachement
+                $pdfController = new EtatPdfController();
+                $pdfData = $pdfController->getBinaryPdf($id);
+
                 $emailService->sendEtatComptableNotice(
                     $employee['emp_mail'],
                     $employee['emp_nom'] . ' ' . $employee['emp_prenom'],
                     $etat,
-                    $demandes
+                    $demandes,
+                    $pdfData // Contient 'content' et 'filename'
                 );
             }
         } catch (\Throwable $e) {

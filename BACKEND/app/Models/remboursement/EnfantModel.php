@@ -11,7 +11,8 @@ class EnfantModel extends Model
     protected $allowedFields = [
         'enf_nom',
         'enf_num',
-        'date_naissance'
+        'date_naissance',
+        'emp_code'
     ];
 
     protected $useAutoIncrement = true;

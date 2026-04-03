@@ -25,12 +25,19 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
     });
     
     
+        // Route principale : /api/employe
+        $routes->group('employe', ['namespace' => 'App\Controllers\employee', 'filter' => 'jwtauth'], function($routes) {
+            $routes->get('/', 'EmployeeController::getAllEmployees');
+            $routes->get('(:num)', 'EmployeeController::getEmployee/$1');
+            $routes->post('/', 'EmployeeController::createEmployee');
+        });
+
+        // Alias : /api/employee (compatibilité frontend SI-GPRH)
         $routes->group('employee', ['namespace' => 'App\Controllers\employee', 'filter' => 'jwtauth'], function($routes) {
-        $routes->get('/', 'EmployeeController::getAllEmployees');
-        $routes->get('(:num)', 'EmployeeController::getEmployee/$1');
-        $routes->post('/', 'EmployeeController::createEmployee');
-        
-    });
+            $routes->get('/', 'EmployeeController::getAllEmployees');
+            $routes->get('(:num)', 'EmployeeController::getEmployee/$1');
+            $routes->post('/', 'EmployeeController::createEmployee');
+        });
 
     $routes->group('conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
         $routes->post('/', 'CongeController::createConge');
@@ -73,6 +80,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('/', 'PermissionController::createPermission');
         $routes->get('/', 'PermissionController::getAllPermissions');
         $routes->get('(:num)', 'PermissionController::getPermission/$1');
+        $routes->get('(:num)/pdf', 'PermissionController::exportPermissionPdf/$1');
+        $routes->post('(:num)/validate', 'PermissionController::validatePermission/$1');
     });
 
     $routes->group('interim_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
@@ -91,10 +100,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
     $routes->group('solde_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
         $routes->get('/', 'SoldeCongeController::index');
         $routes->get('(:num)', 'SoldeCongeController::show/$1');
+        $routes->get('last_dispo/(:any)', 'SoldeCongeController::lastDispo/$1');
+        $routes->post('attribuer', 'SoldeCongeController::attribuerManuellement');
         $routes->post('/', 'SoldeCongeController::create');
         $routes->put('(:num)', 'SoldeCongeController::update/$1');
         $routes->delete('(:num)', 'SoldeCongeController::delete/$1');
-        $routes->get('last_dispo/(:any)', 'SoldeCongeController::lastDispo/$1');
     });
 
     // État de Congé (Suivi soldes multi-années)
@@ -216,10 +226,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
 
     // Bénéficiaires (conjoints/enfants)
     $routes->group('beneficiaire', ['namespace' => 'App\Controllers\remboursement', 'filter' => 'jwtauth'], function($routes) {
+        $routes->get('familles', 'BeneficiaireController::getFamilyList');
         $routes->get('conjoints/(:num)', 'BeneficiaireController::getConjointes/$1');
         $routes->get('enfants/(:num)', 'BeneficiaireController::getEnfants/$1');
         $routes->post('conjoint/(:num)', 'BeneficiaireController::addConjoint/$1');
+        $routes->get('conjoint/statuses', 'BeneficiaireController::getStatuses');
+        $routes->put('conjoint/status/(:num)', 'BeneficiaireController::updateStatus/$1');
         $routes->post('enfant/(:num)', 'BeneficiaireController::addEnfant/$1');
+        $routes->delete('enfant/(:num)', 'BeneficiaireController::deleteEnfant/$1');
     });
 
     // États de remboursement
@@ -255,6 +269,143 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
     $routes->group('notifications', ['namespace' => 'App\Controllers\notification', 'filter' => 'jwtauth'], function($routes) {
         $routes->get('/', 'NotificationController::getAll');
         $routes->get('count', 'NotificationController::count');
+    });
+
+    // =====================================================================
+    // MODULE CARRIÈRE-STAGIAIRE (intégré depuis carriere-stagiaire)
+    // =====================================================================
+
+    // Dashboard Carrière
+    $routes->group('', ['namespace' => '\\App\\Controllers\\dashboard', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('dashboard-carriere', 'DashboardController::index');
+    });
+
+    // Postes (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\poste', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('postes', 'PosteController::index');
+        $routes->get('postes/list', 'PosteController::index');
+        $routes->get('postes/stats', 'PosteController::stats');
+        $routes->get('postes/fonctions', 'PosteController::fonctions');
+        $routes->get('postes/(:num)', 'PosteController::show/$1');
+        $routes->post('postes/(:num)/competences', 'PosteController::addCompetence/$1');
+        $routes->delete('postes/(:num)/competences/(:num)', 'PosteController::removeCompetence/$1/$2');
+        $routes->put('postes/(:num)/quota', 'PosteController::updateQuota/$1');
+        $routes->get('postes/by-service/(:num)', 'PosteController::byService/$1');
+    });
+
+    // Référentiels (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\referentiel', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('directions/list', 'DirectionController::index');
+        $routes->get('services/list', 'ServiceController::index');
+        $routes->get('positions/list', 'PositionController::index');
+        $routes->get('rangs/list', 'ReferentielController::rangs');
+        $routes->get('types-entree/list', 'TypeEntreeController::index');
+        $routes->get('types-document/list', 'TypeDocumentController::index');
+        $routes->get('sorties-type/list', 'SortieTypeController::index');
+        $routes->get('types-contrat/list', 'TypeContratController::index');
+        $routes->get('referentiels/statuts-armp', 'StatutArmpController::index');
+    });
+
+    // Employés (Gestion Carrière — table employe)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\employe', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('employes/encadreurs', 'EmployeController::getEncadreurs');
+        $routes->get('employes/export/xlsx', 'EmployeController::exportXlsx');
+        $routes->get('employes/stats', 'EmployeController::stats');
+        $routes->get('employes', 'EmployeController::index');
+        $routes->get('employes/list', 'EmployeController::index');
+        $routes->get('employes/(:num)/parcours', 'EmployeController::parcours/$1');
+        $routes->get('employes/(:num)', 'EmployeController::show/$1');
+        $routes->post('employes', 'EmployeController::create');
+        $routes->put('employes/(:num)', 'EmployeController::update/$1');
+        $routes->get('employes/(:num)/competences', 'EmployeController::getCompetences/$1');
+        $routes->post('employes/(:num)/competences', 'EmployeController::addCompetence/$1');
+        $routes->delete('employes/(:num)/competences/(:num)', 'EmployeController::removeCompetence/$1/$2');
+        $routes->put('employes/(:num)/finir-carriere', 'EmployeController::finirCarriere/$1');
+        $routes->get('employes/(:num)/sorties', 'EmployeController::getSorties/$1');
+        $routes->post('employes/(:num)/reintegration', 'EmployeController::reintegration/$1');
+    });
+
+    // Affectations (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\affectation', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('affectations/stats', 'AffectationController::stats');
+        $routes->get('affectations/list', 'AffectationController::index');
+        $routes->post('affectations', 'AffectationController::create');
+        $routes->get('motifs-affectation', 'AffectationController::motifs');
+        $routes->put('affectations/(:num)/cloturer', 'AffectationController::cloturer/$1');
+    });
+
+    // Stagiaires (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\stage', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('stagiaires/stats', 'StagiaireController::stats');
+        $routes->get('stagiaires', 'StagiaireController::index');
+        $routes->post('stagiaires', 'StagiaireController::create');
+        $routes->get('stagiaires/(:num)', 'StagiaireController::show/$1');
+        $routes->put('stagiaires/(:num)', 'StagiaireController::update/$1');
+        $routes->delete('stagiaires/(:num)', 'StagiaireController::delete/$1');
+    });
+
+    // Stages (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\stage', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('stages/stats', 'StageController::stats');
+        $routes->get('stages', 'StageController::index');
+        $routes->post('stages', 'StageController::create');
+        $routes->get('stages/(:num)', 'StageController::show/$1');
+        $routes->put('stages/(:num)', 'StageController::update/$1');
+        $routes->delete('stages/(:num)', 'StageController::delete/$1');
+        $routes->post('stages/(:num)/carriere', 'StageController::assignCarriere/$1');
+        $routes->get('stages/(:num)/convention', 'StageController::telechargerConvention/$1');
+        $routes->get('stages/(:num)/demande-attestation', 'StageController::telechargerDemandeAttestation/$1');
+        $routes->get('stages/demandes', 'StageController::listerDemandesStage');
+        $routes->get('stages/demandes/stats', 'StageController::statsDemandes');
+        $routes->put('stages/demandes/(:num)/valider', 'StageController::validerDemandeStage/$1');
+    });
+
+    // Établissements (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\stage', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('etablissements', 'EtablissementController::index');
+        $routes->post('etablissements', 'EtablissementController::create');
+        $routes->get('etablissements/(:num)', 'EtablissementController::show/$1');
+        $routes->put('etablissements/(:num)', 'EtablissementController::update/$1');
+        $routes->delete('etablissements/(:num)', 'EtablissementController::delete/$1');
+    });
+
+    // Assiduité (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\stage', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('assiduites', 'AssiduiteController::index');
+        $routes->post('assiduites', 'AssiduiteController::create');
+        $routes->get('assiduites/(:num)', 'AssiduiteController::show/$1');
+        $routes->put('assiduites/(:num)', 'AssiduiteController::update/$1');
+        $routes->delete('assiduites/(:num)', 'AssiduiteController::delete/$1');
+    });
+
+    // Évaluation de stages (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\stage', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('eval-stages', 'EvalStageController::index');
+        $routes->post('eval-stages', 'EvalStageController::create');
+        $routes->get('eval-stages/(:num)', 'EvalStageController::show/$1');
+        $routes->put('eval-stages/(:num)', 'EvalStageController::update/$1');
+        $routes->delete('eval-stages/(:num)', 'EvalStageController::delete/$1');
+        $routes->get('stages/(:num)/eval', 'EvalStageController::getByStage/$1');
+    });
+
+    // Compétences (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\competence', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('competences/stats', 'CompetenceController::stats');
+        $routes->get('competences', 'CompetenceController::index');
+        $routes->post('competences', 'CompetenceController::create');
+        $routes->get('competences/(:num)', 'CompetenceController::show/$1');
+        $routes->put('competences/(:num)', 'CompetenceController::update/$1');
+        $routes->delete('competences/(:num)', 'CompetenceController::delete/$1');
+        $routes->get('competences/domaines', 'CompetenceController::domaines');
+    });
+
+    // Documents (Gestion Carrière)
+    $routes->group('', ['namespace' => '\\App\\Controllers\\document', 'filter' => 'jwtauth'], function ($routes) {
+        $routes->get('documents/stats', 'DocumentController::stats');
+        $routes->post('documents/demande', 'DocumentController::creerDemande');
+        $routes->get('documents/demandes', 'DocumentController::listerDemandes');
+        $routes->put('documents/demandes/(:num)/valider', 'DocumentController::validerDemande/$1');
+        $routes->get('documents/demandes/(:num)/pdf', 'DocumentController::telechargerPdfDemande/$1');
     });
 
 });

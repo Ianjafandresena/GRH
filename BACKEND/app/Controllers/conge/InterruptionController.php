@@ -285,8 +285,8 @@ class InterruptionController extends ResourceController
 
         $congeModel = new CongeModel();
         $conge = $congeModel
-            ->select('conge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule')
-            ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+            ->select('conge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule')
+            ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
             ->where('conge.cng_code', $cngCode)
             ->first();
 

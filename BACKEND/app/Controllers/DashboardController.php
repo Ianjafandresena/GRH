@@ -18,20 +18,29 @@ class DashboardController extends ResourceController
             $db = \Config\Database::connect();
             $today = date('Y-m-d');
             
-            $employees = $db->table('conge')
-                ->select('employee.emp_code, employee.emp_nom, employee.emp_prenom, 
-                          conge.cng_debut, conge.cng_fin,
-                          type_conge.typ_appelation')
-                ->join('employee', 'employee.emp_code = conge.emp_code')
+            $conges = $db->table('conge')
+                ->select("employe.emp_code, employe.emp_nom, employe.emp_prenom, 
+                          conge.cng_debut as debut, conge.cng_fin as fin,
+                          type_conge.typ_appelation as motif, 'Congé' as type")
+                ->join('employe', 'employe.emp_code = conge.emp_code')
                 ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
                 ->where('conge.cng_debut <=', $today)
                 ->where('conge.cng_fin >=', $today)
                 ->where('conge.cng_status', true)
-                ->orderBy('conge.cng_debut', 'DESC')
-                ->limit(5)
+                ->get()->getResultArray();
+
+            $permissions = $db->table('permission')
+                ->select("employe.emp_code, employe.emp_nom, employe.emp_prenom, 
+                          permission.prm_debut as debut, permission.prm_fin as fin,
+                          'Permission exceptionnelle' as motif, 'Permission' as type")
+                ->join('employe', 'employe.emp_code = permission.emp_code')
+                ->where('permission.prm_debut <=', $today . ' 23:59:59')
+                ->where('permission.prm_fin >=', $today . ' 00:00:00')
+                ->where('permission.prm_status', true)
                 ->get()->getResultArray();
             
-            return $this->respond($employees);
+            $employees = array_merge($conges, $permissions);
+            return $this->respond(array_slice($employees, 0, 10));
         } catch (\Throwable $e) {
             log_message('error', '[getEmployeesOnLeave] Error: ' . $e->getMessage());
             return $this->respond([]);
@@ -72,42 +81,46 @@ class DashboardController extends ResourceController
             $startDate = $this->request->getVar('start_date');
             $endDate = $this->request->getVar('end_date');
             
+            $last24h = date('Y-m-d H:i:s', strtotime('-24 hours'));
+            
             // Recent leaves
             $congesBuilder = $db->table('conge')
-                ->select("'conge' as type, employee.emp_nom, employee.emp_prenom, 
+                ->select("'conge' as type, employe.emp_nom, employe.emp_prenom, 
                           conge.cng_demande as date, 
                           CASE WHEN conge.cng_status = true THEN 'VALIDE' ELSE 'EN_ATTENTE' END as status,
                           type_conge.typ_appelation as label")
-                ->join('employee', 'employee.emp_code = conge.emp_code')
-                ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left');
+                ->join('employe', 'employe.emp_code = conge.emp_code')
+                ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
+                ->where('conge.cng_demande >=', $last24h);
 
             if ($startDate) $congesBuilder->where('conge.cng_demande >=', $startDate);
             if ($endDate) $congesBuilder->where('conge.cng_demande <=', $endDate);
             
             $conges = $congesBuilder->orderBy('conge.cng_demande', 'DESC')
-                ->limit(5)
+                ->limit(20)
                 ->get()->getResultArray();
             
             // Recent reimbursements
             $rembBuilder = $db->table('demande_remb')
-                ->select("'remboursement' as type, employee.emp_nom, employee.emp_prenom,
+                ->select("'remboursement' as type, employe.emp_nom, employe.emp_prenom,
                           demande_remb.rem_date as date, 
                           CASE WHEN rem_status = true THEN 'TRAITE' ELSE 'EN_ATTENTE' END as status,
-                          objet_facture.obj_article as label")
-                ->join('employee', 'employee.emp_code = demande_remb.emp_code')
-                ->join('objet_facture', 'objet_facture.obj_code = demande_remb.obj_code', 'left');
+                          objet_remboursement.obj_article as label")
+                ->join('employe', 'employe.emp_code = demande_remb.emp_code')
+                ->join('objet_remboursement', 'objet_remboursement.obj_code = demande_remb.obj_code', 'left')
+                ->where('demande_remb.rem_date >=', $last24h);
 
             if ($startDate) $rembBuilder->where('demande_remb.rem_date >=', $startDate);
             if ($endDate) $rembBuilder->where('demande_remb.rem_date <=', $endDate);
             
             $remb = $rembBuilder->orderBy('demande_remb.rem_date', 'DESC')
-                ->limit(5)
+                ->limit(20)
                 ->get()->getResultArray();
             
             $activities = array_merge($conges, $remb);
             usort($activities, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
             
-            return $this->respond(array_slice($activities, 0, 5));
+            return $this->respond($activities);
         } catch (\Throwable $e) {
             log_message('error', '[getRecentActivity] Error: ' . $e->getMessage());
             return $this->respond([]);
@@ -165,7 +178,7 @@ class DashboardController extends ResourceController
         $db = \Config\Database::connect();
         
         // Count active employees
-        $totalEmployees = $db->table('employee')->countAllResults();
+        $totalEmployees = $db->table('employe')->countAllResults();
         $activeEmployees = $totalEmployees; // Can add WHERE clause for active status
         
         // Count current leaves
@@ -211,14 +224,14 @@ class DashboardController extends ResourceController
             $endDate = $this->request->getVar('end_date');
             
             $builder = $db->table('conge')
-                ->select('employee.emp_nom, employee.emp_prenom, SUM(conge.cng_nb_jour) as total_jours')
-                ->join('employee', 'employee.emp_code = conge.emp_code')
+                ->select('employe.emp_nom, employe.emp_prenom, SUM(conge.cng_nb_jour) as total_jours')
+                ->join('employe', 'employe.emp_code = conge.emp_code')
                 ->where('conge.cng_status', true);
 
             if ($startDate) $builder->where('conge.cng_debut >=', $startDate);
             if ($endDate) $builder->where('conge.cng_fin <=', $endDate);
 
-            $results = $builder->groupBy(['employee.emp_code', 'employee.emp_nom', 'employee.emp_prenom', 'employee.emp_code'])
+            $results = $builder->groupBy(['employe.emp_code', 'employe.emp_nom', 'employe.emp_prenom', 'employe.emp_code'])
                 ->orderBy('total_jours', 'DESC')
                 ->limit(5)
                 ->get()->getResultArray();
@@ -241,13 +254,13 @@ class DashboardController extends ResourceController
             $endDate = $this->request->getVar('end_date');
             
             $builder = $db->table('demande_remb')
-                ->select('employee.emp_nom, employee.emp_prenom, COUNT(*) as nb_demandes, SUM(rem_montant) as total_montant')
-                ->join('employee', 'employee.emp_code = demande_remb.emp_code');
+                ->select('employe.emp_nom, employe.emp_prenom, COUNT(*) as nb_demandes, SUM(rem_montant) as total_montant')
+                ->join('employe', 'employe.emp_code = demande_remb.emp_code');
 
             if ($startDate) $builder->where('rem_date >=', $startDate);
             if ($endDate) $builder->where('rem_date <=', $endDate);
 
-            $results = $builder->groupBy(['employee.emp_code', 'employee.emp_nom', 'employee.emp_prenom', 'employee.emp_code'])
+            $results = $builder->groupBy(['employe.emp_code', 'employe.emp_nom', 'employe.emp_prenom', 'employe.emp_code'])
                 ->orderBy('nb_demandes', 'DESC')
                 ->limit(5)
                 ->get()->getResultArray();
