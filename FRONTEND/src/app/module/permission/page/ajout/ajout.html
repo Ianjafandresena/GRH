@@ -27,24 +27,18 @@
               *ngIf="filteredEmployees.length && form.get('emp_search')?.value && !selectedEmployee">
               <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
                 <strong>{{ emp.emp_nom }}</strong> {{ emp.emp_prenom }}
-                <small class="text-muted">{{ emp.emp_imarmp }}</small>
+                <small class="text-muted">{{ emp.emp_im_armp }}</small>
               </li>
             </ul>
           </div>
 
-          <!-- Employé sélectionné + Solde -->
-          <div class="employee-info-card" *ngIf="selectedEmployee">
-            <div class="employee-badge">
-              <mat-icon>person</mat-icon>
-              <div>
-                <strong>{{ selectedEmployee.emp_nom }} {{ selectedEmployee.emp_prenom }}</strong>
-                <small>{{ selectedEmployee.emp_imarmp }}</small>
-              </div>
-            </div>
-            <div class="solde-badge" [class.warning]="soldeRestant !== null && soldeRestant < 4">
-              <mat-icon>schedule</mat-icon>
-              <span *ngIf="soldeRestant !== null">Solde: <strong>{{ soldeRestant }}h</strong></span>
-              <span *ngIf="soldeRestant === null">Chargement...</span>
+          <!-- Employé sélectionné -->
+          <div *ngIf="selectedEmployee" class="selected-employee-info">
+            <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_im_armp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+            <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
+            <div class="info-row" *ngIf="soldeRestant !== null">
+              <strong>Solde:</strong> {{ soldeRestant }}h
             </div>
           </div>
         </div>

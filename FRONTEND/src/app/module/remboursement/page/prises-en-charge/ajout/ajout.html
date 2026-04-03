@@ -27,17 +27,17 @@
                         <ul class="suggestions" *ngIf="showDropdown && filteredEmployees.length > 0">
                             <li *ngFor="let emp of filteredEmployees" (mousedown)="selectEmployee(emp)">
                                 <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
-                                <div class="suggestion-sub">{{ emp.emp_imarmp }}</div>
+                                <div class="suggestion-sub">{{ emp.emp_im_armp }}</div>
                             </li>
                         </ul>
                     </div>
                     <div class="field-error-msg" *ngIf="errorField === 'emp'">{{ errorMsg }}</div>
                 </div>
 
-                <div *ngIf="selectedEmployee" class="selected-tag mb-4">
-                    <span><i class="fas fa-user-check"></i> {{ selectedEmployee.emp_nom }} {{
-                        selectedEmployee.emp_prenom }} ({{
-                        selectedEmployee.emp_imarmp }})</span>
+                <div *ngIf="selectedEmployee" class="selected-employee-info">
+                    <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_im_armp }}</div>
+                    <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+                    <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
                 </div>
 
                 <!-- Beneficiary Selection -->

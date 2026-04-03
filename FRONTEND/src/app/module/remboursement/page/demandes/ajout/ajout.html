@@ -41,17 +41,16 @@
                         <ul class="suggestions"
                             *ngIf="showEmpDropdown && filteredEmployees.length > 0 && !isAgentLocked">
                             <li *ngFor="let emp of filteredEmployees" (click)="selectEmployee(emp)">
-                                {{ emp.emp_nom }} {{ emp.emp_prenom }} ({{ emp.emp_imarmp }})
+                                {{ emp.emp_nom }} {{ emp.emp_prenom }} ({{ emp.emp_im_armp }})
                             </li>
                         </ul>
                     </div>
                     <div class="hint" *ngIf="isAgentLocked"><i class="fas fa-lock"></i> Agent verrouillé (demandes en
                         attente)</div>
-                    <div *ngIf="selectedEmployee" class="employee-info">
-                        <div class="info-row"><strong>Matricule :</strong> {{ selectedEmployee.emp_imarmp }}</div>
-                        <div class="info-row"><strong>Fonction :</strong> {{ selectedEmployee.pst_fonction || '-' }}
-                        </div>
-                        <div class="info-row"><strong>Direction :</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
+                    <div *ngIf="selectedEmployee" class="selected-employee-info">
+                        <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_im_armp }}</div>
+                        <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
+                        <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
                     </div>
                 </div>
             </div>
@@ -79,9 +78,9 @@
                     </div>
                     <div class="hint" *ngIf="isCentreLocked"><i class="fas fa-lock"></i> Centre verrouillé (demandes en
                         attente)</div>
-                    <div *ngIf="selectedCentre" class="employee-info">
-                        <div class="info-row"><strong>Établissement :</strong> {{ selectedCentre.cen_nom }}</div>
-                        <div class="info-row"><strong>Type :</strong> {{ selectedCentre.tp_cen || '-' }}</div>
+                    <div *ngIf="selectedCentre" class="selected-employee-info">
+                        <div class="info-row"><strong>Établissement:</strong> {{ selectedCentre.cen_nom }}</div>
+                        <div class="info-row"><strong>Type:</strong> {{ selectedCentre.tp_cen || '-' }}</div>
                     </div>
                 </div>
             </div>
@@ -116,10 +115,13 @@
                 <h3 class="section-title">Objet du remboursement</h3>
                 <div class="form-group required">
                     <label>Article / Prestation</label>
-                    <div class="search-container">
+                    <div class="search-container with-action">
                         <input type="text" [(ngModel)]="articleSearchText" (input)="filterArticles()"
                             (focus)="onArticleFocus()" (blur)="onArticleBlur()" name="articleSearch"
                             placeholder="Rechercher un article..." autocomplete="off" class="form-control">
+                        <button type="button" class="btn-add-inline" (click)="promptAddArticle()" title="Nouvel article">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
                         <ul class="suggestions" *ngIf="showArticleDropdown && filteredArticles.length > 0">
                             <li *ngFor="let obj of filteredArticles" (click)="selectArticle(obj)">
                                 {{ obj.obj_article }}
@@ -235,7 +237,7 @@
                     {{ demandeMode === 'agent' ? (selectedEmployee?.emp_nom + ' ' + selectedEmployee?.emp_prenom) :
                     (selectedPec?.nom_emp + ' ' + selectedPec?.prenom_emp) }}
                 </p>
-                <p *ngIf="demandeMode === 'agent'"><strong>Matricule :</strong> {{ selectedEmployee?.emp_imarmp }}
+                <p *ngIf="demandeMode === 'agent'"><strong>Matricule :</strong> {{ selectedEmployee?.emp_im_armp }}
                 </p>
                 <p><strong>PEC :</strong> {{ selectedPec?.pec_num }}</p>
                 <p><strong>Bénéficiaire :</strong> {{ selectedPec?.beneficiaire_nom }} ({{

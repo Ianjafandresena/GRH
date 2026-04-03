@@ -32,7 +32,7 @@
                     </div>
                     <ul class="suggestions" *ngIf="showEmployeeDropdown && filteredEmployees.length > 0">
                         <li *ngFor="let emp of filteredEmployees" (mousedown)="selectEmployee(emp)">
-                            {{ emp.emp_prenom }} {{ emp.emp_nom }} ({{ emp.emp_imarmp }})
+                            {{ emp.emp_prenom }} {{ emp.emp_nom }} ({{ emp.emp_im_armp }})
                         </li>
                     </ul>
                 </div>

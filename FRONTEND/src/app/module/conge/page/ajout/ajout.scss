@@ -213,26 +213,7 @@ form {
   }
 }
 
-.selected-employee-info {
-  margin-top: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 8px;
-  border-left: 3px solid $primary;
-
-  .info-row {
-    display: flex;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #374151;
-    padding: 0.15rem 0;
-
-    strong {
-      color: #0369a1;
-      min-width: 80px;
-    }
-  }
-}
+// Utilise .selected-employee-info de shared-styles.scss
 
 // Compact Summary Box
 .summary-box {
@@ -517,21 +498,23 @@ form {
       color: $dark;
     }
   }
-}// ========== MODE TOGGLE (Congé/Permission) ==========
+}
+
+// ========== MODE TOGGLE (Congé/Permission) ==========
 .mode-toggle {
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: #f8fafc; // Match $bg-input from shared styles
   border-radius: 8px;
 
   button {
     flex: 1;
     padding: 0.75rem 1.5rem;
-    border: 2px solid #dee2e6;
+    border: 2px solid #e2e8f0; // Match $border-light
     background: white;
-    color: #6c757d;
+    color: #6c757d; // Match $secondary
     font-size: 1rem;
     font-weight: 600;
     border-radius: 6px;
@@ -539,7 +522,7 @@ form {
     transition: all 0.2s;
 
     &:hover {
-      border-color: #04acc2;
+      border-color: #04acc2; // Match $primary-cyan
       color: #04acc2;
     }
 
@@ -550,4 +533,70 @@ form {
       box-shadow: 0 2px 8px rgba(4, 172, 194, 0.3);
     }
   }
+}
+
+// ========== PERMISSION NEW FORMAT STYLES ==========
+.datetime-simplified {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  input[type="date"] {
+    width: 100%;
+  }
+}
+
+.moment-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 6px;
+
+  .toggle-item {
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+    margin: 0 !important;
+
+    input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    span {
+      display: block;
+      padding: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      border-radius: 4px;
+      transition: all 0.2s;
+      background: transparent;
+      user-select: none;
+    }
+
+    input:checked + span {
+      background: #ffffff;
+      color: #00A3FF;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.duration-warning {
+  color: #dc3545;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.value.over-limit {
+  color: #dc3545 !important;
 }

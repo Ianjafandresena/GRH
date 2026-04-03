@@ -1,0 +1,250 @@
+<div class="lister-employes-container" @fadeIn>
+    <div class="header-section">
+        <h1>
+            <mat-icon>people</mat-icon>
+            Liste des Employés
+        </h1>
+        <div class="actions-header">
+            <button mat-raised-button color="accent" class="export-btn" (click)="exportExcel()" [disabled]="exporting">
+                <mat-icon *ngIf="!exporting">download</mat-icon>
+                <mat-spinner *ngIf="exporting" diameter="20"></mat-spinner>
+                {{ exporting ? 'Exportation...' : 'Exporter XLSX' }}
+            </button>
+            <button mat-raised-button color="primary" routerLink="/employes/creer">
+                <mat-icon>add</mat-icon>
+                Nouvel Employé
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+        <mat-spinner></mat-spinner>
+        <p>Chargement des employés...</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+    </div>
+
+    <div class="stats-grid" *ngIf="stats" @fadeIn>
+        <mat-card class="stats-card total">
+            <div class="stats-icon">
+                <mat-icon>people</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Total Employés</span>
+                <span class="stats-value">{{ stats.total }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card service">
+            <div class="stats-icon">
+                <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">En Service</span>
+                <span class="stats-value">{{ stats.en_service }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card cessation">
+            <div class="stats-icon">
+                <mat-icon>pause_circle</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">En Cessation</span>
+                <span class="stats-value">{{ stats.en_cessation }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card sortie">
+            <div class="stats-icon">
+                <mat-icon>exit_to_app</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Sorties</span>
+                <span class="stats-value">{{ stats.sortie }}</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <mat-card *ngIf="!loading && !errorMessage">
+        <div class="filters" [formGroup]="filterForm">
+            <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Recherche</mat-label>
+                <input matInput formControlName="q" placeholder="Matricule, nom, prénom, email...">
+                <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Statut</mat-label>
+                <input type="text" matInput [formControl]="statutControl" [matAutocomplete]="autoStatut"
+                    placeholder="Tous">
+                <mat-icon matPrefix>verified_user</mat-icon>
+                <mat-autocomplete #autoStatut="matAutocomplete" [displayWith]="displayStatut"
+                    (optionSelected)="onStatutSelected($event)">
+                    <mat-option *ngFor="let option of filteredStatuts$ | async" [value]="option">
+                        <span>{{ option.label }}</span>
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Service</mat-label>
+                <input type="text" matInput [formControl]="serviceControl" [matAutocomplete]="autoService"
+                    placeholder="Rechercher un service...">
+                <mat-icon matPrefix>business</mat-icon>
+                <mat-autocomplete #autoService="matAutocomplete" [displayWith]="displayService"
+                    (optionSelected)="onServiceSelected($event)">
+                    <mat-option *ngFor="let option of filteredServices$ | async" [value]="option">
+                        <mat-icon>corporate_fare</mat-icon>
+                        <span>{{ option.srvc_nom }}</span>
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Poste</mat-label>
+                <input type="text" matInput [formControl]="posteControl" [matAutocomplete]="autoPoste"
+                    placeholder="Rechercher un poste...">
+                <mat-icon matPrefix>work</mat-icon>
+                <mat-autocomplete #autoPoste="matAutocomplete" [displayWith]="displayPoste"
+                    (optionSelected)="onPosteSelected($event)">
+                    <mat-option *ngFor="let option of filteredPostes$ | async" [value]="option">
+                        <span>{{ option.pst_fonction }}</span>
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Position</mat-label>
+                <input type="text" matInput [formControl]="positionControl" [matAutocomplete]="autoPosition"
+                    placeholder="Rechercher une position...">
+                <mat-icon matPrefix>badge</mat-icon>
+                <mat-autocomplete #autoPosition="matAutocomplete" [displayWith]="displayPosition"
+                    (optionSelected)="onPositionSelected($event)">
+                    <mat-option *ngFor="let option of filteredPositions$ | async" [value]="option">
+                        <span>{{ option.pos_type }}</span>
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="button" (click)="onFilterChange()">
+                <mat-icon>search</mat-icon>
+                Rechercher
+            </button>
+
+            <button mat-stroked-button type="button" (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon>
+                Réinitialiser
+            </button>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <table mat-table [dataSource]="employes" class="employes-table">
+            <ng-container matColumnDef="emp_matricule">
+                <th mat-header-cell *matHeaderCellDef>Matricule</th>
+                <td mat-cell *matCellDef="let employe">
+                    <span class="code-highlight">{{ employe.emp_matricule || 'N/A' }}</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="emp_nom">
+                <th mat-header-cell *matHeaderCellDef>
+                    <div class="sort-header">
+                        <span>Nom</span>
+                        <button mat-icon-button (click)="toggleSortByName($event)" type="button"
+                            [attr.aria-label]="'Trier par nom ' + (sortOrder === 'asc' ? 'Z à A' : sortOrder === 'desc' ? 'A à Z' : 'A à Z')"
+                            matTooltip="Trier par nom (A→Z / Z→A)">
+                            <mat-icon *ngIf="sortOrder === 'asc'">arrow_upward</mat-icon>
+                            <mat-icon *ngIf="sortOrder === 'desc'">arrow_downward</mat-icon>
+                            <mat-icon *ngIf="!sortOrder">sort</mat-icon>
+                        </button>
+                    </div>
+                </th>
+                <td mat-cell *matCellDef="let employe" style="font-weight: 600; color: #1e293b;">{{ employe.emp_nom }}
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="emp_prenom">
+                <th mat-header-cell *matHeaderCellDef>Prénom</th>
+                <td mat-cell *matCellDef="let employe">{{ employe.emp_prenom }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="pos_type">
+                <th mat-header-cell *matHeaderCellDef>Position</th>
+                <td mat-cell *matCellDef="let employe">
+                    <span class="status-badge" [ngClass]="{
+                        'status-success': employe.pos_type?.toLowerCase()?.includes('service') || employe.pos_code === 1,
+                        'status-warning': employe.pos_type?.toLowerCase()?.includes('cessation') || employe.pos_code === 2,
+                        'status-error': employe.pos_type?.toLowerCase()?.includes('sortie') || employe.pos_code === 3
+                    }">
+                        {{ employe.pos_type || 'N/A' }}
+                    </span>
+                </td>
+            </ng-container>
+
+
+
+
+
+
+            <ng-container matColumnDef="emp_im_armp">
+                <th mat-header-cell *matHeaderCellDef>IM ARMP</th>
+                <td mat-cell *matCellDef="let employe">
+                    <span class="code-highlight" style="background: #ecfdf5; color: #059669;">{{ employe.emp_im_armp
+                        }}</span>
+                </td>
+            </ng-container>
+
+
+            <ng-container matColumnDef="date_entree">
+                <th mat-header-cell *matHeaderCellDef>Date d'Entrée</th>
+                <td mat-cell *matCellDef="let employe">{{ employe.date_entree | date:'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let employe">
+                    <button mat-icon-button color="primary" [routerLink]="['/employes', employe.emp_code]"
+                        [attr.aria-label]="'Voir détails de ' + employe.emp_nom" [disabled]="!employe.emp_code">
+                        <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button color="accent" (click)="openModifierDialog(employe)"
+                        [attr.aria-label]="'Modifier ' + employe.emp_nom" [disabled]="!employe.emp_code"
+                        matTooltip="Modifier l'employé">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button *ngIf="isEnCessation(employe)" mat-icon-button color="warn"
+                        (click)="openFinirCarriereDialog(employe)" matTooltip="Finir la carrière">
+                        <mat-icon>work_off</mat-icon>
+                    </button>
+                    <button *ngIf="isPosteSortie(employe)" mat-icon-button color="accent"
+                        (click)="openReintegrationDialog(employe)" matTooltip="Réintégrer l'employé">
+                        <mat-icon>restore_page</mat-icon>
+                    </button>
+                    <span *ngIf="hasSortie(employe) && !isPosteSortie(employe)" class="non-disponible"
+                        matTooltip="Carrière terminée">
+                        <mat-icon>block</mat-icon>
+                        <span>Non disponible</span>
+                    </span>
+                    <span *ngIf="isPosteSortie(employe)" class="non-disponible"
+                        style="background: #fef3c7; color: #d97706;" matTooltip="En attente de réintégration">
+                        <mat-icon>pending_actions</mat-icon>
+                        <span>Sortie</span>
+                    </span>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div *ngIf="employes.length === 0" class="no-data">
+            <mat-icon>inbox</mat-icon>
+            <p>Aucun employé trouvé</p>
+        </div>
+    </mat-card>
+</div>

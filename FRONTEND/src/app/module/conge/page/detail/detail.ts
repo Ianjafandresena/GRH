@@ -29,18 +29,18 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
   loading = false;
   errorMsg = '';
   congeId: number = 0;
+  absenceType: string = '';
 
   // For validation actions
   validating = false;
   validationMsg = '';
   validationError = false;
   showRejectModal = false;
+  showValidateModal = false;
   rejectObservation = '';
 
   // Auto-refresh interval
   private refreshInterval: any = null;
-
-  // Map removed - dynamic lookup now
 
   ngOnInit() {
     this.layoutService.setTitle('Gestion des Absences');
@@ -51,16 +51,18 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
     }
 
     this.congeId = id;
+    this.absenceType = this.route.snapshot.queryParamMap.get('type') || '';
     this.loading = true;
 
-    // Load leave details
-    this.service.getCongeDetail(id).subscribe({
+    // Load leave/permission details
+    this.service.getCongeDetail(id, this.absenceType).subscribe({
       next: d => {
         this.data = d;
-        // Load validation status
-        this.loadValidationStatus(id);
-        // Check for existing interruption
-        this.loadInterruption(id);
+        // Si c'est un conge, charger validations et interruptions
+        if (this.data?.absence_type === 'conge') {
+          this.loadValidationStatus(id);
+          this.loadInterruption(id);
+        }
       },
       error: err => {
         this.errorMsg = err?.message || 'Erreur de chargement';
@@ -92,7 +94,7 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
 
   reloadCongeData() {
     if (!this.congeId) return;
-    this.service.getCongeDetail(this.congeId).subscribe({
+    this.service.getCongeDetail(this.congeId, this.absenceType).subscribe({
       next: d => {
         this.data = d;
       }
@@ -111,16 +113,11 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
 
   /**
    * Check if the leave can be interrupted
-   * A leave can be interrupted if:
-   * - It is fully validated (cng_status = true)
-   * - It is not already interrupted
-   * - The leave end date has not passed
    */
   canInterrupt(): boolean {
     if (!this.data?.conge || this.interruptionData) return false;
     if (!this.isValidated()) return false;
 
-    // Vérifier que le congé n'est pas terminé
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const endDate = new Date(this.data.conge.cng_fin);
@@ -135,8 +132,10 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
   }
 
   openPdfViewer() {
-    if (!this.congeId) return;
-    this.router.navigate(['/conge/viewer', this.congeId]);
+    if (!this.congeId || !this.data) return;
+    this.router.navigate(['/conge/viewer', this.congeId], { 
+      queryParams: { type: this.data.absence_type } 
+    });
   }
 
   getCurrentSignCode(): number {
@@ -146,7 +145,15 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
   }
 
   approveStep() {
-    if (!this.congeId || !this.validationStatus?.current_step) return;
+    if (!this.congeId) return;
+
+    // Si c'est une permission, on valide directement via le modal
+    if (this.data?.absence_type === 'permission') {
+      this.openValidateModal();
+      return;
+    }
+
+    if (!this.validationStatus?.current_step) return;
 
     const signCode = this.getCurrentSignCode();
     this.validating = true;
@@ -157,7 +164,6 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
         this.validationMsg = res.message || 'Validation effectuée';
         this.validationError = false;
         this.validating = false;
-        // Reload validation status AND conge data for dynamic button update
         this.loadValidationStatus(this.congeId);
         this.reloadCongeData();
       },
@@ -192,7 +198,6 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
         this.validationError = false;
         this.validating = false;
         this.closeRejectModal();
-        // Reload validation status
         this.loadValidationStatus(this.congeId);
       },
       error: (err) => {
@@ -203,34 +208,41 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Start automatic refresh of validation status every 10 seconds
-   * This allows the UI to update reactively when validation happens via email
-   */
-  private startAutoRefresh() {
-    // Clear any existing interval
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
-
-    // Refresh every 10 seconds
-    this.refreshInterval = setInterval(() => {
-      if (this.congeId) {
-        // Only refresh if not already validated
-        if (!this.isValidated()) {
-          this.loadValidationStatus(this.congeId);
-          this.reloadCongeData();
-        }
-      }
-    }, 10000); // 10 seconds
+  openValidateModal() {
+    this.showValidateModal = true;
   }
 
-  /**
-   * Cleanup interval on component destroy
-   */
+  closeValidateModal() {
+    this.showValidateModal = false;
+  }
+
+  confirmValidation() {
+    this.validating = true;
+    this.service.validatePermission(this.congeId).subscribe({
+      next: () => {
+        this.layoutService.showSuccessMessage('Permission validée avec succès');
+        this.closeValidateModal();
+        this.reloadCongeData();
+        this.validating = false;
+      },
+      error: (err) => {
+        this.layoutService.showErrorMessage(err?.error?.message || 'Erreur lors de la validation');
+        this.validating = false;
+      }
+    });
+  }
+
+  private startAutoRefresh() {
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
+    this.refreshInterval = setInterval(() => {
+      if (this.congeId && !this.isValidated()) {
+        this.loadValidationStatus(this.congeId);
+        this.reloadCongeData();
+      }
+    }, 10000);
+  }
+
   ngOnDestroy() {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
   }
 }

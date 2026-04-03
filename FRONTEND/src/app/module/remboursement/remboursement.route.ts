@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { centresListResolver } from './resolvers/centres-list.resolver';
 import { demandesListResolver } from './resolvers/demandes-list.resolver';
+import { pecListResolver } from './resolvers/pec-list.resolver';
 import { EtatRembService } from './service/etat-remb.service';
 
 export const remboursementRoutes: Routes = [
@@ -58,6 +59,7 @@ export const remboursementRoutes: Routes = [
     {
         path: 'prises-en-charge',
         loadComponent: () => import('./page/prises-en-charge/index/index').then(m => m.PrisesEnChargeIndexComponent),
+        resolve: { pecList: pecListResolver },
         data: { breadcrumb: 'Prises en charge' }
     },
     {

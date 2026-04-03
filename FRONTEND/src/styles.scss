@@ -1,3 +1,5 @@
+@use './styles/shared-styles.scss';
+
 /* GPRH Global Styles - Design System */
 
 :root {
@@ -416,16 +418,18 @@ body.dark-theme {
     }
   }
 
-  /* Material Dialogs & Menus */
+  /* Material Dialogs & Menus & Autocomplete */
   .mat-mdc-dialog-container .mdc-dialog__surface,
   .mat-mdc-dialog-content,
   .mat-mdc-dialog-actions,
   .mat-mdc-dialog-title,
   .mat-mdc-menu-panel,
-  .mdc-menu-surface {
+  .mdc-menu-surface,
+  .mat-mdc-autocomplete-panel,
+  .mat-mdc-select-panel {
     background: var(--bg-card) !important;
     background-color: var(--bg-card) !important;
-    border-color: var(--border-medium) !important;
+    border: 1px solid var(--border-medium) !important;
     box-shadow: var(--shadow-lg) !important;
 
     li,
@@ -733,13 +737,36 @@ label {
 }
 
 .mat-mdc-select-panel,
-.mdc-menu-surface.mat-mdc-select-panel {
+.mdc-menu-surface.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel {
   background-color: var(--bg-white) !important;
   background: var(--bg-white) !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   border: 1px solid var(--border-light) !important;
   border-radius: 8px !important;
-  padding: 8px 0 !important;
+  padding: 4px 0 !important;
+}
+
+/* Global utility for compact and aligned filters across Career/Intern modules */
+.gprh-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+
+  .mat-mdc-form-field {
+    width: 100%;
+    
+    .mat-mdc-text-field-wrapper {
+      background-color: var(--bg-input) !important;
+      height: 48px !important; // More compact
+    }
+    
+    .mat-mdc-form-field-flex {
+      height: 48px !important;
+    }
+  }
 }
 
 body.dark-theme .mat-mdc-select-panel,

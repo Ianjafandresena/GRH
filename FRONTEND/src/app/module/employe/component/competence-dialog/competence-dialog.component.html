@@ -1,0 +1,75 @@
+<h2 mat-dialog-title>
+    Compétences de {{ data.employe.emp_prenom }} {{ data.employe.emp_nom }}
+</h2>
+
+<mat-dialog-content>
+    <div class="container">
+        <!-- Section Ajout -->
+        <div class="add-section" [formGroup]="addForm">
+            <h3>Ajouter une compétence</h3>
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="flex-grow">
+                    <mat-label>Rechercher une compétence</mat-label>
+                    <input type="text" matInput formControlName="competence" [matAutocomplete]="auto" 
+                           #trigger="matAutocompleteTrigger" (focus)="trigger.openPanel()">
+                    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+                        <mat-option *ngFor="let option of filteredCompetences$ | async" [value]="option">
+                            {{ option.comp_intitule }}
+                            <span *ngIf="option.comp_domaine" class="domaine-tag">({{ option.comp_domaine }})</span>
+                        </mat-option>
+                    </mat-autocomplete>
+                    <mat-error *ngIf="addForm.get('competence')?.hasError('required')">
+                        Requis
+                    </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-150">
+                    <mat-label>Niveau</mat-label>
+                    <mat-select formControlName="niveau">
+                        <mat-option *ngFor="let n of niveaux" [value]="n.value">
+                            {{ n.label }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <button mat-raised-button color="primary" (click)="addCompetence()" 
+                        [disabled]="addForm.invalid || loading" class="add-btn">
+                    <mat-icon>add</mat-icon> Ajouter
+                </button>
+            </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Liste des compétences -->
+        <div class="list-section">
+            <h3>Compétences acquises</h3>
+            
+            <div *ngIf="loading" class="spinner-container">
+                <mat-spinner diameter="40"></mat-spinner>
+            </div>
+
+            <div *ngIf="!loading && competencesEmploye.length === 0" class="no-data">
+                <p>Aucune compétence assignée.</p>
+            </div>
+
+            <mat-list *ngIf="!loading && competencesEmploye.length > 0">
+                <mat-list-item *ngFor="let comp of competencesEmploye" class="comp-item">
+                    <div matListItemIcon class="level-badge" [class.high-level]="comp.niveau_acquis >= 4">
+                        {{ comp.niveau_acquis }}
+                    </div>
+                    <div matListItemTitle>{{ comp.comp_intitule }}</div>
+                    <div matListItemLine>{{ comp.comp_domaine }}</div>
+                    
+                    <button mat-icon-button color="warn" (click)="removeCompetence(comp)" matListItemMeta>
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </mat-list-item>
+            </mat-list>
+        </div>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Fermer</button>
+</mat-dialog-actions>

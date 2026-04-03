@@ -81,11 +81,13 @@ export class AjoutCongeComponent implements OnInit {
       })])
     });
 
-    // Formulaire Permission (nouveau)
+    // Formulaire Permission (nouveau format Matin/Après-midi)
     this.permissionForm = this.fb.group({
       emp_search: ['', Validators.required],
-      prm_debut: [null, Validators.required],
-      prm_fin: [null, Validators.required]
+      prm_date_debut: [new Date().toISOString().split('T')[0], Validators.required],
+      prm_moment_debut: ['matin', Validators.required],
+      prm_date_fin: [new Date().toISOString().split('T')[0], Validators.required],
+      prm_moment_fin: ['matin', Validators.required]
     });
   }
 
@@ -151,7 +153,7 @@ export class AjoutCongeComponent implements OnInit {
     const filterVal = value ? value.toLowerCase() : '';
     this.filteredEmployees = this.employees.filter(emp =>
     (`${emp.emp_nom} ${emp.emp_prenom}`.toLowerCase().includes(filterVal) ||
-      emp.emp_imarmp.toLowerCase().includes(filterVal))
+      emp.emp_im_armp.toLowerCase().includes(filterVal))
     );
     this.showEmpDropdown = true;
   }
@@ -234,7 +236,7 @@ export class AjoutCongeComponent implements OnInit {
         .filter(e =>
           (!this.selectedEmployee || e.emp_code !== this.selectedEmployee.emp_code) &&
           (`${e.emp_nom} ${e.emp_prenom}`.toLowerCase().includes(filterVal) ||
-            e.emp_imarmp.toLowerCase().includes(filterVal))
+            e.emp_im_armp.toLowerCase().includes(filterVal))
         );
       this.showInterimDropdowns[idx] = true;
     });
@@ -282,7 +284,7 @@ export class AjoutCongeComponent implements OnInit {
       typ_code: this.congeForm.value.typ_code,
       emp_code: this.selectedEmployee.emp_code,
       nom_emp: this.selectedEmployee.emp_nom + ' ' + this.selectedEmployee.emp_prenom,
-      matricule: this.selectedEmployee.emp_imarmp,
+      matricule: this.selectedEmployee.emp_im_armp,
       id_region: this.selectedRegion.reg_code,
       nom_region: this.selectedRegion.reg_nom,
       cng_debut: this.congeForm.value.cng_debut,
@@ -325,7 +327,7 @@ export class AjoutCongeComponent implements OnInit {
       typ_code: this.congeForm.value.typ_code,
       emp_code: this.selectedEmployee?.emp_code,
       nom_emp: this.selectedEmployee?.emp_nom + ' ' + this.selectedEmployee?.emp_prenom,
-      matricule: this.selectedEmployee?.emp_imarmp,
+      matricule: this.selectedEmployee?.emp_im_armp,
       id_region: this.selectedRegion?.reg_code,
       nom_region: this.selectedRegion?.reg_nom,
       cng_debut: this.congeForm.value.cng_debut,
@@ -396,14 +398,8 @@ export class AjoutCongeComponent implements OnInit {
    * Changement de type d'absence (Congé/Permission)
    */
   onTypeChange() {
-    // Réinitialiser les formulaires lors du switch
-    if (this.absenceType === 'conge') {
-      this.permissionForm.reset();
-      this.permissionSelectedEmployee = null;
-      this.permissionCalculatedHours = null;
-      this.permissionCalculatedDays = null;
-    } else {
-      // Reset conge logic if switch to permission
+    if (this.absenceType === 'permission') {
+      this.updatePermissionDurations();
     }
   }
 
@@ -414,7 +410,7 @@ export class AjoutCongeComponent implements OnInit {
     const filterVal = value ? value.toLowerCase() : '';
     this.permissionFilteredEmployees = this.employees.filter(emp =>
     (`${emp.emp_nom} ${emp.emp_prenom}`.toLowerCase().includes(filterVal) ||
-      emp.emp_imarmp.toLowerCase().includes(filterVal))
+      emp.emp_im_armp.toLowerCase().includes(filterVal))
     );
     this.permissionShowEmpDropdown = true;
   }
@@ -437,25 +433,59 @@ export class AjoutCongeComponent implements OnInit {
   }
 
   /**
-   * Calculer durée permission en heures/jours
+   * Calculer durée permettant basée sur Matin/Après-midi (Heures de travail uniquement)
    */
   updatePermissionDurations() {
-    const debut = this.permissionForm.get('prm_debut')?.value;
-    const fin = this.permissionForm.get('prm_fin')?.value;
+    const dDate = this.permissionForm.get('prm_date_debut')?.value;
+    const dMom = this.permissionForm.get('prm_moment_debut')?.value;
+    const fDate = this.permissionForm.get('prm_date_fin')?.value;
+    const fMom = this.permissionForm.get('prm_moment_fin')?.value;
 
-    if (!debut || !fin) {
+    if (!dDate || !dMom || !fDate || !fMom) {
       this.permissionCalculatedHours = null;
       this.permissionCalculatedDays = null;
       return;
     }
 
-    const d1 = new Date(debut).getTime();
-    const d2 = new Date(fin).getTime();
-    const diffMs = Math.max(0, d2 - d1);
-    const diffH = diffMs / (1000 * 60 * 60);
+    const start = new Date(dDate);
+    const end = new Date(fDate);
 
-    this.permissionCalculatedHours = parseFloat(diffH.toFixed(2));
-    this.permissionCalculatedDays = parseFloat((diffH / 8).toFixed(2));
+    if (end < start) {
+      this.permissionCalculatedHours = 0;
+      this.permissionCalculatedDays = 0;
+      return;
+    }
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    let totalH = 0;
+
+    if (diffDays === 0) {
+      // Même jour
+      if (dMom === 'matin' && fMom === 'matin') totalH = 4;
+      else if (dMom === 'matin' && fMom === 'apres_midi') totalH = 8;
+      else if (dMom === 'apres_midi' && fMom === 'apres_midi') totalH = 4;
+      else totalH = 0; // Apres-midi à Matin sur même jour = invalide (0h)
+    } else {
+      // Jours différents
+      // Heures jour 1
+      totalH += (dMom === 'matin') ? 8 : 4;
+      // Heures jour final
+      totalH += (fMom === 'matin') ? 4 : 8;
+      // Heures jours intermédiaires
+      if (diffDays > 1) {
+        totalH += (diffDays - 1) * 8;
+      }
+    }
+
+    this.permissionCalculatedHours = parseFloat(totalH.toFixed(2));
+    this.permissionCalculatedDays = parseFloat((totalH / 8).toFixed(2));
+  }
+
+  /**
+   * Vérifier si la durée dépasse 8 heures (1 jour de travail)
+   */
+  get isDurationExceeded(): boolean {
+    return (this.permissionCalculatedHours || 0) > 8;
   }
 
   /**
@@ -466,13 +496,39 @@ export class AjoutCongeComponent implements OnInit {
       this.layoutService.showErrorMessage('Veuillez remplir tous les champs');
       return;
     }
-
     this.updatePermissionDurations();
+
+    if (this.isDurationExceeded) {
+      this.layoutService.showErrorMessage('La durée d\'une permission ne peut pas dépasser 3 jours (24 heures)');
+      return;
+    }
+
+    if ((this.permissionCalculatedHours || 0) <= 0) {
+      this.layoutService.showErrorMessage('La date de fin doit être après la date de début');
+      return;
+    }
+
+    // Convertir en format attendu par le backend (ISO string avec heures calculées)
+    const dDate = this.permissionForm.get('prm_date_debut')?.value;
+    const dMom = this.permissionForm.get('prm_moment_debut')?.value;
+    const fDate = this.permissionForm.get('prm_date_fin')?.value;
+    const fMom = this.permissionForm.get('prm_moment_fin')?.value;
+
+    const startH = (dMom === 'matin') ? 8 : 12;
+    const endH = (fMom === 'matin') ? 12 : 16;
+
+    const startDate = new Date(dDate);
+    startDate.setHours(startH, 0, 0, 0);
+
+    const endDate = new Date(fDate);
+    endDate.setHours(endH, 0, 0, 0);
 
     const payload = {
       emp_code: this.permissionSelectedEmployee.emp_code,
-      prm_debut: this.permissionForm.value.prm_debut,
-      prm_fin: this.permissionForm.value.prm_fin
+      prm_debut: startDate.toISOString(),
+      prm_fin: endDate.toISOString(),
+      prm_moment_debut: dMom,
+      prm_moment_fin: fMom
     };
 
     this.permissionLoading = true;

@@ -19,10 +19,10 @@ export class PermissionService {
   }
 
   getSoldesPermission(emp_code: number): Observable<any[]> {
-    return this.http.get<any[]>(this.soldeUrl + '?emp_code=' + emp_code, { withCredentials: true });
+    return this.http.get<any[]>(`${this.soldeUrl}?emp_code=${emp_code}`, { withCredentials: true });
   }
 
   getLastSoldeDispo(emp_code: number): Observable<any> {
-    return this.http.get<any>(this.soldeUrl + '/last_dispo/' + emp_code, { withCredentials: true });
+    return this.http.get<any>(`${this.soldeUrl}/last_dispo/${emp_code}`, { withCredentials: true });
   }
 }

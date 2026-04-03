@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CongeService } from '../../service/conge.service';
 import { EmployeeService } from '../../../employee/service/employee.service';
 import { Subject, Subscription } from 'rxjs';
@@ -45,6 +45,7 @@ export class CongeCalendarComponent implements OnDestroy {
     private congeService = inject(CongeService);
     private employeeService = inject(EmployeeService);
     private router = inject(Router);
+    private route = inject(ActivatedRoute);
 
     // Signals
     currentMonth = signal(new Date());
@@ -125,7 +126,7 @@ export class CongeCalendarComponent implements OnDestroy {
         this.initializeYears();
         this.loadEmployees();
         this.loadTypesConge();
-        this.loadPermissions();
+        // Plus besoin de loadPermissions séparé si on gère bien les types
 
         this.filterSubscription = this.filterSubject.pipe(
             debounceTime(400),
@@ -134,7 +135,14 @@ export class CongeCalendarComponent implements OnDestroy {
             this.applyFilters();
         });
 
-        this.loadConges();
+        // Utiliser les données du resolver pour le chargement initial
+        const initialData = this.route.snapshot.data['initialConges'] as any;
+        if (initialData) {
+            this.allConges.set(initialData as CongeCalendar[]);
+            this.applyFilters();
+        } else {
+            this.loadConges();
+        }
     }
 
     ngOnDestroy() {
@@ -210,7 +218,7 @@ export class CongeCalendarComponent implements OnDestroy {
         this.filteredEmployees = this.employees.filter(e =>
             e.emp_nom?.toLowerCase().includes(search) ||
             e.emp_prenom?.toLowerCase().includes(search) ||
-            e.emp_imarmp?.includes(search)
+            e.emp_im_armp?.includes(search)
         );
         this.showEmployeeDropdown = true;
         this.onFilterChange();
@@ -270,19 +278,36 @@ export class CongeCalendarComponent implements OnDestroy {
         const year = current.getFullYear();
         const month = current.getMonth();
 
-        const startDate = new Date(year, month, 1);
-        const endDate = new Date(year, month + 1, 0);
+        // On prend une marge pour voir les jours des mois adjacents dans le calendrier (vue 42 jours)
+        const startDate = new Date(year, month - 1, 20); // 20 du mois précédent
+        const endDate = new Date(year, month + 1, 10);  // 10 du mois suivant
 
-        this.congeService.getConges({}).subscribe({
+        const params = {
+            start: this.formatDate(startDate),
+            end: this.formatDate(endDate)
+        };
+
+        this.congeService.getConges(params).subscribe({
             next: (data: any[]) => {
-                const filtered = data.filter(conge => {
-                    if (!conge.cng_status) return false;
-                    const debutConge = new Date(conge.cng_debut);
-                    const finConge = new Date(conge.cng_fin);
-                    return debutConge <= endDate && finConge >= startDate;
-                });
+                // On garde tous les congés retournés par le serveur (déjà filtrés par date)
+                this.allConges.set(data as CongeCalendar[]);
 
-                this.allConges.set(filtered as CongeCalendar[]);
+                // Si des types "permission" existent, on les ajoute à la liste des types si pas déjà présents
+                const permTypes = data
+                    .filter(c => c.typ_ref && c.typ_ref.startsWith('PERM'))
+                    .map(c => ({ typ_code: c.typ_code, typ_appelation: c.typ_appelation }));
+
+                if (permTypes.length > 0) {
+                    const existingCodes = this.typesConge.map(t => t.typ_code);
+                    const newTypes = permTypes.filter((p, index, self) =>
+                        !existingCodes.includes(p.typ_code) &&
+                        index === self.findIndex(t => t.typ_code === p.typ_code)
+                    );
+                    if (newTypes.length > 0) {
+                        this.typesConge = [...this.typesConge, ...newTypes];
+                    }
+                }
+
                 this.applyFilters();
                 this.loading.set(false);
             },
@@ -336,14 +361,30 @@ export class CongeCalendarComponent implements OnDestroy {
         }
     }
 
+    // Map des congés par date (indexé pour performance)
+    congesByDate = computed(() => {
+        const rawConges = this.conges();
+        const map = new Map<string, CongeCalendar[]>();
+
+        rawConges.forEach(conge => {
+            const start = new Date(conge.cng_debut);
+            const end = new Date(conge.cng_fin);
+
+            // Parcourir chaque jour du congé pour l'ajouter à la map
+            let current = new Date(start);
+            while (current <= end) {
+                const dateStr = this.formatDate(current);
+                if (!map.has(dateStr)) map.set(dateStr, []);
+                map.get(dateStr)!.push(conge);
+                current.setDate(current.getDate() + 1);
+            }
+        });
+        return map;
+    });
+
     getCongesForDay(day: Date): CongeCalendar[] {
         const dayStr = this.formatDate(day);
-        return this.conges().filter(conge => {
-            const debut = new Date(conge.cng_debut + ' 00:00:00');
-            const fin = new Date(conge.cng_fin + ' 23:59:59');
-            const current = new Date(dayStr + ' 12:00:00');
-            return current >= debut && current <= fin;
-        });
+        return this.congesByDate().get(dayStr) || [];
     }
 
     formatDate(date: Date): string {

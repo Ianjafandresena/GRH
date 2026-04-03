@@ -9,7 +9,7 @@ interface EmployeeSoldeState {
     emp_code: number;
     emp_nom: string;
     emp_prenom: string;
-    emp_imarmp: string;
+    emp_im_armp: string;
     direction: string;
     fonction: string;
     soldes: {

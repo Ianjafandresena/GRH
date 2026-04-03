@@ -28,4 +28,37 @@ export class EmployeeService {
       })
     );
   }
+
+  // ========== FAMILY METHODS ==========
+  getFamilyList(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/beneficiaire/familles`, { withCredentials: true });
+  }
+
+  getSpouses(empCode: number): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/beneficiaire/conjoints/${empCode}`, { withCredentials: true });
+  }
+
+  getChildren(empCode: number): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/beneficiaire/enfants/${empCode}`, { withCredentials: true });
+  }
+
+  addSpouse(empCode: number, data: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/beneficiaire/conjoint/${empCode}`, data, { withCredentials: true });
+  }
+
+  updateSpouseStatus(conjId: number, cjs_id: number): Observable<any> {
+    return this.http.put(`${environment.apiUrl}/beneficiaire/conjoint/status/${conjId}`, { cjs_id }, { withCredentials: true });
+  }
+
+  getSpouseStatuses(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/beneficiaire/conjoint/statuses`, { withCredentials: true });
+  }
+
+  addChild(empCode: number, data: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/beneficiaire/enfant/${empCode}`, data, { withCredentials: true });
+  }
+
+  removeChild(childId: number): Observable<any> {
+    return this.http.delete(`${environment.apiUrl}/beneficiaire/enfant/${childId}`, { withCredentials: true });
+  }
 }

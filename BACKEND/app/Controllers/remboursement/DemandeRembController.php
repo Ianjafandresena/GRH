@@ -24,11 +24,12 @@ class DemandeRembController extends ResourceController
         $db = \Config\Database::connect();
         
         // 1. Déterminer le service de l'agent
-        $employee = $db->table('employee')
-            ->select('direction.dir_code')
-            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
-            ->join('direction', 'direction.dir_code = affectation.dir_code', 'left')
-            ->where('employee.emp_code', $empCode)
+        $employee = $db->table('employe')
+            ->select('COALESCE(poste.dir_code, service.dir_code) AS dir_code')
+            ->join('affectation', "affectation.emp_code = employe.emp_code AND affectation.affec_etat = 'active'", 'left')
+            ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
+            ->join('service', 'service.srvc_code = poste.srvc_code', 'left')
+            ->where('employe.emp_code', $empCode)
             ->get()->getRowArray();
         
         // Mapping direction -> code service
@@ -165,7 +166,7 @@ class DemandeRembController extends ResourceController
         $db = \Config\Database::connect();
 
         if ($type === 'agent') {
-            $emp = $db->table('employee')->where('emp_code', $empCode)->get()->getRowArray();
+            $emp = $db->table('employe')->where('emp_code', $empCode)->get()->getRowArray();
             if (!$emp) {
                 throw new \Exception('Employé introuvable');
             }
@@ -285,13 +286,12 @@ class DemandeRembController extends ResourceController
     public function getAllDemandes()
     {
         $model = new DemandeRembModel();
-        $builder = $model->select('DISTINCT ON (demande_remb.rem_code) demande_remb.*, demande_remb.rem_is_centre, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, poste.pst_fonction AS fonction, direction.dir_nom AS direction, etat_remb.etat_num')
-            ->join('employee', 'employee.emp_code = demande_remb.emp_code', 'left')
-            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
+        $builder = $model->select('DISTINCT ON (demande_remb.rem_code) demande_remb.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, poste.pst_fonction AS fonction, direction.dir_nom AS direction, etat_remb.etat_num')
+            ->join('employe', 'employe.emp_code = demande_remb.emp_code', 'left')
+            ->join('affectation', 'affectation.emp_code = employe.emp_code', 'left')
             ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
-            ->join('fonction_direc', 'fonction_direc.pst_code = poste.pst_code', 'left')
             ->join('etat_remb', 'etat_remb.eta_code = demande_remb.eta_code', 'left')
-            ->join('direction', 'direction.dir_code = fonction_direc.dir_code', 'left')
+            ->join('direction', 'direction.dir_code = poste.dir_code', 'left')
             ->orderBy('demande_remb.rem_code', 'DESC');
 
         // Filtres optionnels
@@ -309,7 +309,7 @@ class DemandeRembController extends ResourceController
         
         // Normaliser les booléens PostgreSQL pour JavaScript
         foreach ($demandes as &$demande) {
-            $demande['rem_is_centre'] = ($demande['rem_is_centre'] === true || $demande['rem_is_centre'] === 't');
+            $demande['rem_is_centre'] = !empty($demande['cen_code']);
             $demande['rem_status'] = ($demande['rem_status'] === true || $demande['rem_status'] === 't');
         }
         
@@ -325,14 +325,14 @@ class DemandeRembController extends ResourceController
         try {
         $model = new DemandeRembModel();
         $demande = $model->select('demande_remb.*, 
-                              employee.emp_nom AS nom_emp, 
-                              employee.emp_prenom AS prenom_emp, 
-                              employee.emp_imarmp AS matricule, 
+                              employe.emp_nom AS nom_emp, 
+                              employe.emp_prenom AS prenom_emp, 
+                              employe.emp_im_armp AS matricule, 
                               poste.pst_fonction AS fonction, 
                               direction.dir_nom AS direction, 
                               etat_remb.etat_num,
                               pris_en_charge.pec_num,
-                              COALESCE(pec_employee.emp_nom || \' \' || pec_employee.emp_prenom, pec_conj.conj_nom, pec_enf.enf_nom) AS beneficiaire_nom,
+                              COALESCE(pec_employe.emp_nom || \' \' || pec_employe.emp_prenom, pec_conj.conj_nom, pec_enf.enf_nom) AS beneficiaire_nom,
                               CASE 
                                 WHEN pris_en_charge.emp_code IS NOT NULL THEN \'Agent\'
                                 WHEN pris_en_charge.conj_code IS NOT NULL THEN \'Conjoint\'
@@ -340,14 +340,13 @@ class DemandeRembController extends ResourceController
                                 ELSE NULL
                               END AS beneficiaire_lien,
                               centre_sante.cen_nom')
-            ->join('employee', 'employee.emp_code = demande_remb.emp_code', 'left')
-            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
+            ->join('employe', 'employe.emp_code = demande_remb.emp_code', 'left')
+            ->join('affectation', 'affectation.emp_code = employe.emp_code', 'left')
             ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
-            ->join('fonction_direc', 'fonction_direc.pst_code = poste.pst_code', 'left')
-            ->join('direction', 'direction.dir_code = fonction_direc.dir_code', 'left')
+            ->join('direction', 'direction.dir_code = poste.dir_code', 'left')
             ->join('etat_remb', 'etat_remb.eta_code = demande_remb.eta_code', 'left')
             ->join('pris_en_charge', 'pris_en_charge.pec_code = demande_remb.pec_code', 'left')
-            ->join('employee pec_employee', 'pec_employee.emp_code = pris_en_charge.emp_code', 'left')
+            ->join('employe pec_employe', 'pec_employe.emp_code = pris_en_charge.emp_code', 'left')
             ->join('conjointe pec_conj', 'pec_conj.conj_code = pris_en_charge.conj_code', 'left')
             ->join('enfant pec_enf', 'pec_enf.enf_code = pris_en_charge.enf_code', 'left')
             ->join('centre_sante', 'centre_sante.cen_code = demande_remb.cen_code', 'left')
@@ -905,12 +904,11 @@ class DemandeRembController extends ResourceController
     public function exportPdf($id = null)
     {
         $model = new DemandeRembModel();
-        $demande = $model->select('demande_remb.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, poste.pst_fonction AS fonction, direction.dir_nom AS direction')
-            ->join('employee', 'employee.emp_code = demande_remb.emp_code', 'left')
-            ->join('affectation', 'affectation.emp_code = employee.emp_code', 'left')
+        $demande = $model->select('demande_remb.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, poste.pst_fonction AS fonction, direction.dir_nom AS direction')
+            ->join('employe', 'employe.emp_code = demande_remb.emp_code', 'left')
+            ->join('affectation', 'affectation.emp_code = employe.emp_code', 'left')
             ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
-            ->join('fonction_direc', 'fonction_direc.pst_code = poste.pst_code', 'left')
-            ->join('direction', 'direction.dir_code = fonction_direc.dir_code', 'left')
+            ->join('direction', 'direction.dir_code = poste.dir_code', 'left')
             ->where('demande_remb.rem_code', $id)
             ->first();
 
@@ -1041,12 +1039,11 @@ class DemandeRembController extends ResourceController
         $db = \Config\Database::connect();
         
         // Récupérer l'employé avec fonction et direction
-        $emp = $db->table('employee e')
+        $emp = $db->table('employe e')
             ->select('e.*, p.pst_fonction, d.dir_nom')
             ->join('affectation a', 'a.emp_code = e.emp_code', 'left')
             ->join('poste p', 'p.pst_code = a.pst_code', 'left')
-            ->join('fonction_direc fd', 'fd.pst_code = p.pst_code', 'left')
-            ->join('direction d', 'd.dir_code = fd.dir_code', 'left')
+            ->join('direction d', 'd.dir_code = poste.dir_code', 'left')
             ->where('e.emp_code', $empCode)
             ->orderBy('a.affec_date_debut', 'DESC')
             ->limit(1)
@@ -1068,8 +1065,8 @@ class DemandeRembController extends ResourceController
 
         // Récupérer les demandes validées pour cette période
         $model = new DemandeRembModel();
-        $builder = $model->select('demande_remb.*, employee.emp_imarmp AS matricule')
-            ->join('employee', 'employee.emp_code = demande_remb.emp_code', 'left')
+        $builder = $model->select('demande_remb.*, employe.emp_im_armp AS matricule')
+            ->join('employe', 'employe.emp_code = demande_remb.emp_code', 'left')
             ->where('demande_remb.emp_code', $empCode)
             ->where('EXTRACT(YEAR FROM rem_date) =', $annee, false)
             ->where('EXTRACT(MONTH FROM rem_date) =', $mois, false)

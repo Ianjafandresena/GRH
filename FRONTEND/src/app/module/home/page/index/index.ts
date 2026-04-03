@@ -73,8 +73,26 @@ export class HomeComponent implements OnInit {
       this.admin = JSON.parse(adminStr);
     }
 
-    // Default to current month
-    this.changePeriod('month');
+    // Récupérer les données du resolver
+    const resolvedData = this.route.snapshot.data['dashboardData'] as any;
+    if (resolvedData) {
+      this.processStats(resolvedData.stats);
+      this.processChartData(resolvedData.evolution);
+      this.employeesOnLeave.set(resolvedData.employeesOnLeave);
+      this.pendingRequests.set(resolvedData.pendingRequests);
+      this.recentActivity.set(resolvedData.recentActivity);
+      this.donutData.set(resolvedData.donutData);
+
+      // On initialise les dates par défaut pour l'UI même si on a les données
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      this.startDate.set(this.formatDate(start));
+      this.endDate.set(this.formatDate(end));
+    } else {
+      // Fallback si pas de resolver
+      this.changePeriod('month');
+    }
   }
 
   changePeriod(period: string) {

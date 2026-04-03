@@ -1,4 +1,4 @@
-﻿// Variables
+// Variables
 $primary: #00A3FF;
 $secondary: #6c757d;
 $success: #28a745;
@@ -14,6 +14,7 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
     padding: 2rem;
     background-color: #f7f9fc;
     min-height: 100vh;
+    max-width: none !important;
 }
 
 .card-header-internal {
@@ -76,6 +77,9 @@ $shadow: 0 8px 24px rgba(0, 0, 0, .08);
     box-shadow: $shadow-sm;
     margin-bottom: 1.5rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 
     &.filter-card {
         padding: 1.5rem;
@@ -244,12 +248,12 @@ table[mat-table] {
 
     .mat-mdc-header-cell {
         padding: 0 1.5rem;
-        font-weight: 700;
+        font-weight: 600;
         font-size: 0.85rem;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 2px solid #e2e8f0;
     }
 
     .mat-mdc-row {
@@ -263,7 +267,7 @@ table[mat-table] {
     }
 
     .mat-mdc-cell {
-        padding: 0 1.5rem;
+        padding: 0.75rem 1.5rem;
         font-size: 0.95rem;
         color: $dark;
         vertical-align: middle;
@@ -291,7 +295,7 @@ table[mat-table] {
     padding: 0.35rem 0.75rem;
     border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 500;
 
     &.badge-info {
         background-color: rgba($primary, 0.1);
@@ -300,10 +304,10 @@ table[mat-table] {
 }
 
 .status-badge {
-    padding: 0.25rem 0.6rem;
-    border-radius: 12px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 500;
     display: inline-block;
 
     &.pending {
@@ -331,21 +335,7 @@ table[mat-table] {
     color: #475569;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 3rem !important;
-    color: $secondary;
 
-    i {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-
-    p {
-        margin: 0;
-    }
-}
 
 // Utilities
 .text-center {

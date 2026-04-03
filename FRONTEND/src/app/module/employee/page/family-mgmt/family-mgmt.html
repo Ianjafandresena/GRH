@@ -1,0 +1,148 @@
+<div class="page-container" *ngIf="!loading && employee">
+    <!-- Header -->
+    <div class="header-actions">
+        <div class="breadcrumb">
+            <button mat-icon-button (click)="goBack()" class="back-btn">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <span class="root" (click)="router.navigate(['/employee'])">Employés</span>
+            <mat-icon>chevron_right</mat-icon>
+            <span class="parent" (click)="goBack()">{{ employee.emp_nom }} {{ employee.emp_prenom }}</span>
+            <mat-icon>chevron_right</mat-icon>
+            <span class="current">Famille</span>
+        </div>
+    </div>
+
+    <div class="loading-overlay" *ngIf="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div class="content-grid" *ngIf="!loading">
+        <!-- SECTION CONJOINT -->
+        <div class="details-card spouse-card">
+            <div class="card-header">
+                <mat-icon>favorite</mat-icon>
+                <h2>Conjoint(e)</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="active-spouse" *ngIf="activeSpouse">
+                    <div class="spouse-info">
+                        <div class="gender-circle">
+                            <mat-icon [color]="activeSpouse.conj_sexe ? 'primary' : 'accent'">
+                                {{ activeSpouse.conj_sexe ? 'male' : 'female' }}
+                            </mat-icon>
+                        </div>
+                        <div class="details">
+                            <span class="label">Conjoint actutuel</span>
+                            <span class="name">{{ activeSpouse.conj_nom }} {{ activeSpouse.conj_prenom }}</span>
+                            <span class="status-badge current">Marié(e) le {{ activeSpouse.conj_date_statut |
+                                date:'dd/MM/yyyy' }}</span>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button mat-stroked-button color="warn" (click)="updateSpouseStatus(activeSpouse, 'DIVORCÉ')">
+                            <mat-icon>broken_image</mat-icon> Divorcer
+                        </button>
+                        <button mat-stroked-button color="accent" (click)="updateSpouseStatus(activeSpouse, 'DÉCÉDÉ')">
+                            <mat-icon>sentiment_very_dissatisfied</mat-icon> Décédé(e)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="no-active-spouse" *ngIf="!activeSpouse">
+                    <p class="info-msg">Aucun(e) conjoint(e) actuellement marié(e).</p>
+                    <form [formGroup]="spouseForm" (ngSubmit)="addSpouse()" class="form-container">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nom</label>
+                                <input type="text" formControlName="conj_nom" class="form-control"
+                                    placeholder="Nom de famille">
+                            </div>
+                            <div class="form-group">
+                                <label>Prénom</label>
+                                <input type="text" formControlName="conj_prenom" class="form-control"
+                                    placeholder="Prénom">
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <div class="sex-hint">
+                                Sexe auto : <mat-icon class="gender-mini">{{ getGenderIcon() }}</mat-icon>
+                            </div>
+                            <button mat-flat-button color="primary" class="btn-add" [disabled]="spouseForm.invalid">
+                                <mat-icon>add_circle_outline</mat-icon> Ajouter le conjoint
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <mat-divider *ngIf="spouses.length > (activeSpouse ? 1 : 0)"></mat-divider>
+
+                <div class="history" *ngIf="spouses.length > 0">
+                    <h3>Historique</h3>
+                    <div class="history-item" *ngFor="let s of spouses">
+                        <ng-container *ngIf="s.cjs_id !== 1">
+                            <span>{{ s.conj_nom }} {{ s.conj_prenom }}</span>
+                            <span class="status-badge" [class.divorced]="s.cjs_id === 2"
+                                [class.deceased]="s.cjs_id === 3">
+                                {{ s.cjs_libelle }} ({{ s.conj_date_statut | date:'MM/yyyy' }})
+                            </span>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION ENFANTS -->
+        <div class="details-card children-card">
+            <div class="card-header">
+                <mat-icon>child_care</mat-icon>
+                <h2>Enfants ({{ children.length }})</h2>
+            </div>
+
+            <div class="card-body">
+                <form [formGroup]="childForm" (ngSubmit)="addChild()" class="form-container">
+                    <div class="form-grid">
+                        <div class="form-group flex-2">
+                            <label>Nom complet</label>
+                            <input type="text" formControlName="enf_nom" class="form-control"
+                                placeholder="Ex: Jean Dupont">
+                        </div>
+
+                        <div class="form-group flex-1">
+                            <label>Date de naissance</label>
+                            <input type="date" formControlName="date_naissance" class="form-control">
+                        </div>
+                    </div>
+
+                    <button mat-flat-button color="primary" class="btn-add-full" [disabled]="childForm.invalid">
+                        <mat-icon>add_circle_outline</mat-icon> Ajouter l'enfant
+                    </button>
+                </form>
+
+                <div class="children-list">
+                    <div class="child-item" *ngFor="let c of children">
+                        <div class="child-info">
+                            <div class="child-name-row">
+                                <mat-icon class="child-icon">face</mat-icon>
+                                <span class="name">{{ c.enf_nom }}</span>
+                            </div>
+                            <span class="dob" *ngIf="c.date_naissance">
+                                <mat-icon>cake</mat-icon> Né(e) le {{ c.date_naissance | date:'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+                        <button mat-icon-button color="warn" (click)="removeChild(c)"
+                            matTooltip="Supprimer de la liste">
+                            <mat-icon>delete_outline</mat-icon>
+                        </button>
+                    </div>
+                    <div class="empty-msg" *ngIf="children.length === 0">
+                        <mat-icon>info_outline</mat-icon>
+                        <span>Aucun enfant enregistré pour cet employé.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

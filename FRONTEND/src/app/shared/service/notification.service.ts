@@ -29,22 +29,31 @@ export class NotificationService {
     isLoading = signal<boolean>(false);
     showDropdown = signal<boolean>(false);
 
+    private readonly STORAGE_KEY = 'gprh_notifications_history';
+
     // Computed
     hasNotifications = computed(() => this.count() > 0);
+
+    private getHistory(): Record<string, { firstSeen: number, deleted: boolean }> {
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+    }
+
+    private saveHistory(history: Record<string, { firstSeen: number, deleted: boolean }>) {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(history));
+    }
 
     /**
      * Démarrer le polling des notifications (toutes les 30 secondes)
      */
     startPolling() {
-        // Charger immédiatement
         this.loadNotifications();
         this.loadCount();
 
-        // Puis toutes les 30 secondes
         interval(30000)
             .pipe(takeUntil(this.destroy$))
             .subscribe(() => {
-                this.loadCount();
+                this.loadNotifications(); // Reload all to filter properly
             });
     }
 
@@ -58,31 +67,59 @@ export class NotificationService {
     }
 
     /**
-     * Charger le nombre de notifications
+     * Charger le nombre de notifications (après filtrage local)
      */
     loadCount() {
-        this.http.get<{ count: number }>(`${this.baseUrl}/count`)
-            .subscribe({
-                next: (res) => {
-                    this.count.set(res.count);
-                },
-                error: (err) => {
-                    console.error('Erreur chargement count notifications:', err);
-                }
-            });
+        this.loadNotifications(); // We rely on loadNotifications to refresh the count after local filtering
     }
 
     /**
      * Charger toutes les notifications
      */
     loadNotifications() {
-        this.isLoading.set(true);
+        if (this.showDropdown() === false && this.notifications().length > 0) {
+            // If dropdown is closed, just update count from backend for the bell badge
+            // But to be accurate with deletions, we better load and filter
+        }
 
+        this.isLoading.set(true);
         this.http.get<{ notifications: Notification[], count: number }>(`${this.baseUrl}`)
             .subscribe({
                 next: (res) => {
-                    this.notifications.set(res.notifications);
-                    this.count.set(res.count);
+                    const history = this.getHistory();
+                    const now = Date.now();
+                    const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+                    let hasChanges = false;
+
+                    const filtered = res.notifications.filter(notif => {
+                        const h = history[notif.id];
+
+                        // New notification
+                        if (!h) {
+                            history[notif.id] = { firstSeen: now, deleted: false };
+                            hasChanges = true;
+                            return true;
+                        }
+
+                        // Already deleted manually
+                        if (h.deleted) return false;
+
+                        // Auto-delete after 5 days
+                        if (now - h.firstSeen > fiveDaysInMs) {
+                            h.deleted = true;
+                            hasChanges = true;
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+                    if (hasChanges) {
+                        this.saveHistory(history);
+                    }
+
+                    this.notifications.set(filtered);
+                    this.count.set(filtered.length);
                     this.isLoading.set(false);
                 },
                 error: (err) => {
@@ -90,6 +127,25 @@ export class NotificationService {
                     this.isLoading.set(false);
                 }
             });
+    }
+
+    /**
+     * Supprimer manuellement une notification
+     */
+    removeNotification(id: string) {
+        const history = this.getHistory();
+        if (history[id]) {
+            history[id].deleted = true;
+        } else {
+            history[id] = { firstSeen: Date.now(), deleted: true };
+        }
+        this.saveHistory(history);
+
+        // Update state locally for immediate feedback
+        const current = this.notifications();
+        const updated = current.filter(n => n.id !== id);
+        this.notifications.set(updated);
+        this.count.set(updated.length);
     }
 
     /**

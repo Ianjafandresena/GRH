@@ -73,14 +73,28 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
   // Helper for status display
   getStatusLabel(status: any): string {
     if (status === true || status === 't' || status === 1) return 'Validé';
-    if (status === false || status === 'f' || status === 0) return 'Rejeté';
+    if (status === false || status === 'f' || status === 0) return 'En attente';
     return 'En attente';
   }
 
   getStatusClass(status: any): string {
     if (status === true || status === 't' || status === 1) return 'validated';
-    if (status === false || status === 'f' || status === 0) return 'rejected';
+    if (status === false || status === 'f' || status === 0) return 'pending';
     return 'pending';
+  }
+
+  validatePermission(id: number) {
+    if (!confirm('Voulez-vous vraiment valider cette permission ? Le solde de l\'employé sera débité.')) return;
+    
+    this.congeService.validatePermission(id).subscribe({
+      next: () => {
+        this.layoutService.showSuccessMessage('Permission validée avec succès');
+        this.loadData();
+      },
+      error: (err: any) => {
+        this.layoutService.showErrorMessage(err?.error?.message || 'Erreur lors de la validation');
+      }
+    });
   }
 
   ngOnInit() {
@@ -95,12 +109,13 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.route.data.subscribe(data => {
-      this.conges = data['conges'] || [];
-      if (!this.conges.length) {
-        this.loadData();
+      const resolvedAbsences = data['conges'] as any[];
+      if (resolvedAbsences && resolvedAbsences.length) {
+        this.absences = resolvedAbsences;
+        this.conges = this.absences.filter(a => a.absence_type === 'conge');
+        this.applyClientSideFilter();
       } else {
-        this.absences = this.conges.map(c => ({ ...c, absence_type: 'conge' }));
-        this.dataSource.data = this.absences;
+        this.loadData();
       }
     });
 
@@ -175,6 +190,7 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.end) params.end = this.end;
     if (this.typ_code) params.typ_code = this.typ_code;
     if (this.lieu) params.lieu = this.lieu;
+    params.all = true; // IMPORTANT: On montre tout pour que l'admin puisse valider
 
     this.loading = true;
     this.errorMsg = '';
@@ -226,8 +242,10 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  openDetail(id: number) {
-    this.router.navigate(['/conge/detail', id]);
+  openDetail(item: any) {
+    const id = item.cng_code || item.prm_code;
+    const type = item.absence_type;
+    this.router.navigate(['/conge/detail', id], { queryParams: { type } });
   }
 
   create() {

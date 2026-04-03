@@ -11,7 +11,7 @@ interface PendingLeave {
     cng_code: number;
     emp_nom: string;
     emp_prenom: string;
-    emp_imarmp: string;
+    emp_im_armp: string;
     cng_debut: string;
     cng_fin: string;
     cng_nb_jour: number;

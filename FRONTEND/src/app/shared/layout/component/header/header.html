@@ -49,14 +49,21 @@
                     </div>
                     } @else {
                     @for (notif of notificationService.notifications(); track notif.id) {
-                    <a class="notification-item {{ notificationService.getColorClass(notif.color) }}"
-                        [routerLink]="notif.link" (click)="notificationService.closeDropdown()">
-                        <mat-icon class="notif-icon">{{ notif.icon }}</mat-icon>
-                        <div class="notif-content">
-                            <span class="notif-title">{{ notif.titre }}</span>
-                            <span class="notif-message">{{ notif.message }}</span>
-                        </div>
-                    </a>
+                    <div class="notification-item-wrapper">
+                        <a class="notification-item {{ notificationService.getColorClass(notif.color) }}"
+                            [routerLink]="notif.link" (click)="notificationService.closeDropdown()">
+                            <mat-icon class="notif-icon">{{ notif.icon }}</mat-icon>
+                            <div class="notif-content">
+                                <span class="notif-title">{{ notif.titre }}</span>
+                                <span class="notif-message">{{ notif.message }}</span>
+                            </div>
+                        </a>
+                        <button class="btn-remove"
+                            (click)="notificationService.removeNotification(notif.id); $event.stopPropagation()"
+                            title="Supprimer">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
                     }
                     }
                 </div>

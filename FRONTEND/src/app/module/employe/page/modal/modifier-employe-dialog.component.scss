@@ -1,0 +1,196 @@
+:host {
+    display: block;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.dialog-container {
+    display: flex;
+    flex-direction: column;
+}
+
+h2[mat-dialog-title] {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 1.5rem 2.5rem 0.5rem 2.5rem;
+    background: #fff;
+    color: #1e293b;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    border-bottom: none;
+
+    mat-icon {
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 8px;
+        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.user-subtitle {
+    padding: 0 2.5rem 1rem 2.5rem;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+mat-dialog-content {
+    padding: 2rem 2.5rem !important;
+    min-width: 550px;
+    max-width: 650px;
+    max-height: 70vh;
+    background: #fff;
+}
+
+.modifier-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1.5rem 0 1rem 0;
+    color: #3b82f6;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+        margin-left: 0.5rem;
+    }
+
+    &:first-child {
+        margin-top: 0;
+    }
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    &.single-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+mat-form-field {
+    width: 100%;
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: #f8fafc !important;
+        border-radius: 12px !important;
+        transition: all 0.2s;
+    }
+
+    &:hover ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: #f1f5f9 !important;
+    }
+}
+
+.sexe-field {
+    grid-column: 1 / -1;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+
+    .field-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+    }
+
+    .sexe-radio-group {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .sexe-option {
+        flex: 1;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        transition: all 0.3s;
+
+        &.mat-mdc-radio-checked {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+    }
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #fff1f2;
+    color: #be185d;
+    border-radius: 12px;
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid #fecdd3;
+}
+
+mat-dialog-actions {
+    padding: 1.25rem 2.5rem;
+    background: #f8fafc;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+
+    button {
+        border-radius: 12px;
+        padding: 0 1.5rem;
+        font-weight: 600;
+        height: 48px;
+        transition: all 0.3s;
+    }
+
+    .save-btn {
+        background: #3b82f6;
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+
+        &:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+    }
+
+    .cancel-btn {
+        color: #64748b;
+
+        &:hover {
+            background: #f1f5f9;
+        }
+    }
+}

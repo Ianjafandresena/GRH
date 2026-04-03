@@ -19,10 +19,15 @@ export class ViewerCongeComponent implements OnInit {
 
     ngOnInit() {
         const id = this.route.snapshot.paramMap.get('id');
+        const type = this.route.snapshot.queryParamMap.get('type') || 'conge';
         if (!id) return;
 
         const apiUrl = environment.apiUrl;
-        const url = `${apiUrl}/conge/attestation/${id}`;
+        let url = `${apiUrl}/conge/attestation/${id}`;
+        if (type === 'permission') {
+            url = `${apiUrl}/permission/${id}/pdf`;
+        }
+        
         this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
     }
 }

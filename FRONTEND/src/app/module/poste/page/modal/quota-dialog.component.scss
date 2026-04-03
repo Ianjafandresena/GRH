@@ -1,0 +1,107 @@
+.quota-info {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-weight: 500;
+    color: #666;
+  }
+
+  .value {
+    font-weight: 600;
+    font-size: 1.1rem;
+
+    &.occupied {
+      color: #1976d2;
+    }
+
+    &.vacant {
+      color: #4caf50;
+    }
+
+    &.cessation {
+      color: #ff9800;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #ffebee;
+  border-left: 4px solid #f44336;
+  border-radius: 4px;
+  margin-top: 1rem;
+  color: #c62828;
+
+  mat-icon {
+    color: #f44336;
+  }
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  border-radius: 4px;
+  margin-top: 1rem;
+  color: #2e7d32;
+
+  mat-icon {
+    color: #4caf50;
+  }
+}
+
+mat-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1976d2;
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+mat-dialog-actions {
+  padding: 1rem 0;
+  gap: 0.5rem;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

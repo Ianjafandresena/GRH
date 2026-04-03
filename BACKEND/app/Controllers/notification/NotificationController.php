@@ -24,8 +24,8 @@ class NotificationController extends ResourceController
         
         // 1. Congés qui se terminent aujourd'hui
         $congesTerminant = $db->table('conge')
-            ->select('conge.*, employee.emp_nom, employee.emp_prenom, type_conge.typ_appelation')
-            ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+            ->select('conge.*, employe.emp_nom, employe.emp_prenom, type_conge.typ_appelation')
+            ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
             ->where('DATE(conge.cng_fin)', $today)
             ->where('conge.cng_status', true)
@@ -47,8 +47,8 @@ class NotificationController extends ResourceController
         
         // 2. Demandes de congé non validées à 1 jour du départ
         $congesNonValides = $db->table('conge')
-            ->select('conge.*, employee.emp_nom, employee.emp_prenom, type_conge.typ_appelation')
-            ->join('employee', 'employee.emp_code = conge.emp_code', 'left')
+            ->select('conge.*, employe.emp_nom, employe.emp_prenom, type_conge.typ_appelation')
+            ->join('employe', 'employe.emp_code = conge.emp_code', 'left')
             ->join('type_conge', 'type_conge.typ_code = conge.typ_code', 'left')
             ->where('DATE(conge.cng_debut)', $tomorrow)
             ->where('conge.cng_status IS NULL')
@@ -148,6 +148,27 @@ class NotificationController extends ResourceController
             ];
         }
         
+        // ===== NOTIFICATIONS PERMISSIONS =====
+        
+        // 6. Permissions en attente de validation
+        $prmsEnAttente = $db->table('permission')
+            ->select('COUNT(*) as count')
+            ->where('prm_status', false)
+            ->get()->getRowArray();
+        
+        if (($prmsEnAttente['count'] ?? 0) > 0) {
+            $notifications[] = [
+                'id' => 'prm_attente',
+                'type' => 'prm_attente',
+                'titre' => 'Permissions en attente',
+                'message' => $prmsEnAttente['count'] . ' permission(s) exceptionnelle(s) en attente',
+                'date' => $today,
+                'icon' => 'rule',
+                'color' => 'default',
+                'link' => '/conge/index?type=permission'
+            ];
+        }
+
         // Trier par priorité (urgent en premier)
         usort($notifications, function($a, $b) {
             $priority = ['warning' => 1, 'info' => 2, 'default' => 3];
@@ -214,6 +235,12 @@ class NotificationController extends ResourceController
             ->orWhere('pec_approuver', false)
             ->countAllResults();
         if ($pecAttente > 0) $count++;
+        
+        // ===== PERMISSIONS =====
+        $attentePrm = $db->table('permission')
+            ->where('prm_status', false)
+            ->countAllResults();
+        if ($attentePrm > 0) $count++;
         
         return $this->respond(['count' => $count]);
     }

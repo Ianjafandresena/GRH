@@ -1,101 +1,290 @@
 <div class="layout" [class.collapsed]="isCollapsed">
   <aside class="sidebar">
-    <div class="sidebar-header">
+    <div class="sidebar-header" [class.clickable]="!isCollapsed" (click)="toggleAppSwitcher($event)">
       <div class="logo-container" *ngIf="!isCollapsed"
         style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
-        <img src="assets/logo.png" alt="Logo" style="height: 40px;">
-        <span class="logo-text" style="font-size: 1.5rem; font-weight: bold; color: white;">GRH</span>
+        <img src="assets/logo.png" alt="Logo" style="height: 38px;">
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span class="logo-text" style="font-size: 1.25rem; font-weight: 800; color: white; letter-spacing: 0.5px;">
+              {{ currentApp === 'grh' ? 'GRH' : 'Carrière' }}
+            </span>
+            <mat-icon
+              style="font-size: 16px; width: 16px; height: 16px; color: rgba(255,255,255,0.5);">unfold_more</mat-icon>
+          </div>
+          <span
+            style="font-size: 0.65rem; color: rgba(255,255,255,0.5); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">ARMP
+            Madagascar</span>
+        </div>
       </div>
       <div class="logo-icon" *ngIf="isCollapsed">
         <img src="assets/logo.png" alt="G" style="height: 30px;">
       </div>
-      <button class="toggle-btn" (click)="toggleSidebar()">
+      <button class="toggle-btn" (click)="toggleSidebar(); $event.stopPropagation()">
         <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
       </button>
+
+      <!-- App Switcher Dropdown (ERPNext style) -->
+      <div class="app-switcher-dropdown" *ngIf="showAppSwitcher && !isCollapsed" (click)="$event.stopPropagation()">
+        <div class="switcher-header">Changer d'application</div>
+        <div class="switcher-item" (click)="switchApp(currentApp === 'grh' ? 'carriere' : 'grh')">
+          <div class="app-icon" [class.grh]="currentApp !== 'grh'" [class.carriere]="currentApp === 'grh'">
+            <mat-icon>{{ currentApp === 'grh' ? 'badge' : 'dashboard' }}</mat-icon>
+          </div>
+          <div class="app-info">
+            <span class="app-name">{{ currentApp === 'grh' ? 'Gestion Carrière' : 'Plateforme GRH' }}</span>
+            <span class="app-desc">Basculer vers {{ currentApp === 'grh' ? 'Carrière' : 'GRH' }}</span>
+          </div>
+        </div>
+        <div class="switcher-divider"></div>
+        <div class="switcher-item" (click)="goToChooser()">
+          <div class="app-icon platform">
+            <mat-icon>apps</mat-icon>
+          </div>
+          <div class="app-info">
+            <span class="app-name">Menu Principal</span>
+            <span class="app-desc">Retour au choix du module</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <nav>
-      <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" title="Tableau de bord">
-        <mat-icon>dashboard</mat-icon>
-        <span *ngIf="!isCollapsed">Tableau de bord</span>
-      </a>
 
-      <div>
-        <a (click)="toggleConge()" [class.active]="showConge" style="cursor:pointer;" title="Gestion des Absences">
-          <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>event_available</mat-icon> <!-- 🔄 MODIFIÉ: calendar → event_available -->
-            <span *ngIf="!isCollapsed">Gestion des Absences</span>
-          </div>
-          <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showConge ? 'expand_less' : 'expand_more' }}</mat-icon>
+      <!-- ============================================================ -->
+      <!-- ==================== SIDEBAR GRH ========================== -->
+      <!-- ============================================================ -->
+      <ng-container *ngIf="currentApp === 'grh'">
+        <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+          title="Tableau de bord">
+          <mat-icon>dashboard</mat-icon>
+          <span *ngIf="!isCollapsed">Tableau de bord</span>
         </a>
-        <div *ngIf="showConge && !isCollapsed" class="submenu">
-          <a routerLink="/conge/index" routerLinkActive="active">
-            <mat-icon class="small-icon">history</mat-icon>
-            <span>Historique</span>
-          </a>
-          <a routerLink="/conge/create" routerLinkActive="active">
-            <mat-icon class="small-icon">add_circle_outline</mat-icon>
-            <span>Création</span>
-          </a>
-        </div>
-      </div>
 
-      <!-- Remboursements -->
-      <div>
-        <a (click)="toggleRemb()" [class.active]="showRemb" style="cursor:pointer;" title="Remboursements">
-          <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>payments</mat-icon> <!-- 🔄 MODIFIÉ: favorite_border → payments -->
-            <span *ngIf="!isCollapsed">Remboursements</span>
+        <div>
+          <a (click)="toggleConge()" [class.active]="showConge" style="cursor:pointer;" title="Absences">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>calendar_today</mat-icon>
+              <span *ngIf="!isCollapsed">Absences</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showConge ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </a>
+          <div *ngIf="showConge" class="submenu">
+            <a routerLink="/conge/index" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">history</mat-icon>
+              <span>Historique</span>
+            </a>
+            <a routerLink="/conge/create" routerLinkActive="active">
+              <mat-icon class="small-icon">add_circle_outline</mat-icon>
+              <span>Création</span>
+            </a>
           </div>
-          <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showRemb ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </a>
-        <div *ngIf="showRemb && !isCollapsed" class="submenu">
-          <a routerLink="/remboursement/demandes" routerLinkActive="active">
-            <mat-icon class="small-icon">history</mat-icon>
-            <span>Demandes (liste)</span>
-          </a>
-          <a routerLink="/remboursement/demandes/create" routerLinkActive="active">
-            <mat-icon class="small-icon">add_circle_outline</mat-icon>
-            <span>Nouvelle demande</span>
-          </a>
-          <a routerLink="/remboursement/etats" routerLinkActive="active">
-            <mat-icon class="small-icon">receipt_long</mat-icon>
-            <span>États</span>
-          </a>
         </div>
-      </div>
-      <div>
-        <a (click)="togglePec()" [class.active]="showPec" style="cursor:pointer;" title="Pris en charge">
-          <div style="display:flex; align-items:center; gap:0.75rem;">
-            <mat-icon>local_hospital</mat-icon> <!-- 🔄 MODIFIÉ: favorite_border → local_hospital -->
-            <span *ngIf="!isCollapsed">Pris en charge</span>
+
+        <!-- Remboursements -->
+        <div>
+          <a (click)="toggleRemb()" [class.active]="showRemb" style="cursor:pointer;" title="Remboursements">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>payments</mat-icon>
+              <span *ngIf="!isCollapsed">Remboursements</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showRemb ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </a>
+          <div *ngIf="showRemb" class="submenu">
+            <a routerLink="/remboursement/demandes" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">history</mat-icon>
+              <span>Demandes (liste)</span>
+            </a>
+            <a routerLink="/remboursement/demandes/create" routerLinkActive="active">
+              <mat-icon class="small-icon">add_circle_outline</mat-icon>
+              <span>Nouvelle demande</span>
+            </a>
+            <a routerLink="/remboursement/etats" routerLinkActive="active">
+              <mat-icon class="small-icon">receipt_long</mat-icon>
+              <span>États</span>
+            </a>
           </div>
-          <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showPec ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </a>
-        <div *ngIf="showPec && !isCollapsed" class="submenu">
-          <a routerLink="/remboursement/prises-en-charge" routerLinkActive="active">
-            <mat-icon class="small-icon">assignment</mat-icon>
-            <span>Prises en charge</span>
-          </a>
-          <a routerLink="/remboursement/prises-en-charge/create" routerLinkActive="active">
-            <mat-icon class="small-icon">add_task</mat-icon>
-            <span>Nouvelle PEC</span>
-          </a>
         </div>
-      </div>
-      <a routerLink="/employee" routerLinkActive="active" title="Employés">
-        <mat-icon>people_outline</mat-icon>
-        <span *ngIf="!isCollapsed">Employés</span>
-      </a>
-      <!-- Centres de Santé -->
-      <a routerLink="/remboursement/centres" routerLinkActive="active" title="Centres de Santé">
-        <mat-icon>business</mat-icon>
-        <span *ngIf="!isCollapsed">Centres de Santé</span>
-      </a>
-      <a routerLink="/parametre/index" routerLinkActive="active" title="Paramètres">
-        <mat-icon>settings</mat-icon>
-        <span *ngIf="!isCollapsed">Paramètres</span>
-      </a>
+        <div>
+          <a (click)="togglePec()" [class.active]="showPec" style="cursor:pointer;" title="Pris en charge">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>local_hospital</mat-icon>
+              <span *ngIf="!isCollapsed">Pris en charge</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showPec ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </a>
+          <div *ngIf="showPec" class="submenu">
+            <a routerLink="/remboursement/prises-en-charge" routerLinkActive="active"
+              [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">assignment</mat-icon>
+              <span>Prises en charge</span>
+            </a>
+            <a routerLink="/remboursement/prises-en-charge/create" routerLinkActive="active">
+              <mat-icon class="small-icon">add_task</mat-icon>
+              <span>Nouvelle PEC</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <a (click)="toggleEmployee()" [class.active]="showEmployee" style="cursor:pointer;" title="Employés">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>people_outline</mat-icon>
+              <span *ngIf="!isCollapsed">Employés</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showEmployee ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </a>
+          <div *ngIf="showEmployee" class="submenu">
+            <a routerLink="/employee" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">list</mat-icon>
+              <span>Liste</span>
+            </a>
+            <a routerLink="/employee/family-list" routerLinkActive="active">
+              <mat-icon class="small-icon">family_restroom</mat-icon>
+              <span>Famille</span>
+            </a>
+          </div>
+        </div>
+        <!-- Centres de Santé -->
+        <a routerLink="/remboursement/centres" routerLinkActive="active" title="Centres de Santé">
+          <mat-icon>business</mat-icon>
+          <span *ngIf="!isCollapsed">Centres de Santé</span>
+        </a>
+        <a routerLink="/parametre/index" routerLinkActive="active" title="Paramètres">
+          <mat-icon>settings</mat-icon>
+          <span *ngIf="!isCollapsed">Paramètres</span>
+        </a>
+      </ng-container>
+
+      <!-- ============================================================ -->
+      <!-- =============== SIDEBAR CARRIÈRE-STAGIAIRE ================ -->
+      <!-- ============================================================ -->
+      <ng-container *ngIf="currentApp === 'carriere'">
+        <!-- Tableau de bord Carrière -->
+        <a routerLink="/home-carriere" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+          title="Tableau de bord">
+          <mat-icon>dashboard</mat-icon>
+          <span *ngIf="!isCollapsed">Tableau de bord</span>
+        </a>
+
+        <!-- Employés -->
+        <div>
+          <a (click)="toggleEmployes()" [class.active]="showEmployes" style="cursor:pointer;" title="Employés">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>people</mat-icon>
+              <span *ngIf="!isCollapsed">Employés</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showEmployes ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </a>
+          <div *ngIf="showEmployes" class="submenu">
+            <a routerLink="/employes/creer" routerLinkActive="active">
+              <mat-icon class="small-icon">person_add</mat-icon>
+              <span>Créer</span>
+            </a>
+            <a routerLink="/employes/lister" routerLinkActive="active">
+              <mat-icon class="small-icon">list</mat-icon>
+              <span>Lister</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Postes -->
+        <a routerLink="/postes/lister" routerLinkActive="active" title="Liste des postes">
+          <mat-icon>work</mat-icon>
+          <span *ngIf="!isCollapsed">Liste des postes</span>
+        </a>
+
+        <!-- Affectations -->
+        <div>
+          <a (click)="toggleAffectations()" [class.active]="showAffectations" style="cursor:pointer;"
+            title="Affectations">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>assignment</mat-icon>
+              <span *ngIf="!isCollapsed">Affectations</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showAffectations ? 'expand_less' : 'expand_more'
+              }}</mat-icon>
+          </a>
+          <div *ngIf="showAffectations" class="submenu">
+            <a routerLink="/affectations/creer" routerLinkActive="active">
+              <mat-icon class="small-icon">add_circle</mat-icon>
+              <span>Nouvelle Affectation</span>
+            </a>
+            <a routerLink="/affectations" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">history</mat-icon>
+              <span>Historique</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Stages -->
+        <div>
+          <a (click)="toggleStages()" [class.active]="showStages" style="cursor:pointer;" title="Stages">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>school</mat-icon>
+              <span *ngIf="!isCollapsed">Stages</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showStages ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </a>
+          <div *ngIf="showStages" class="submenu">
+            <a routerLink="/stages" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">event</mat-icon>
+              <span>Stages</span>
+            </a>
+            <a routerLink="/stagiaires" routerLinkActive="active">
+              <mat-icon class="small-icon">person</mat-icon>
+              <span>Stagiaires</span>
+            </a>
+            <a routerLink="/etablissements" routerLinkActive="active">
+              <mat-icon class="small-icon">account_balance</mat-icon>
+              <span>Établissements</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Compétences -->
+        <div>
+          <a (click)="toggleCompetences()" [class.active]="showCompetences" style="cursor:pointer;" title="Compétences">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>psychology</mat-icon>
+              <span *ngIf="!isCollapsed">Compétences</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showCompetences ? 'expand_less' : 'expand_more'
+              }}</mat-icon>
+          </a>
+          <div *ngIf="showCompetences" class="submenu">
+            <a routerLink="/competences/creer" routerLinkActive="active">
+              <mat-icon class="small-icon">add_circle</mat-icon>
+              <span>Créer</span>
+            </a>
+            <a routerLink="/competences" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <mat-icon class="small-icon">list</mat-icon>
+              <span>Lister</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div>
+          <a (click)="toggleDocuments()" [class.active]="showDocuments" style="cursor:pointer;" title="Documents">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex: 1;">
+              <mat-icon>description</mat-icon>
+              <span *ngIf="!isCollapsed">Documents</span>
+            </div>
+            <mat-icon class="chevron" *ngIf="!isCollapsed">{{ showDocuments ? 'expand_less' : 'expand_more'
+              }}</mat-icon>
+          </a>
+          <div *ngIf="showDocuments" class="submenu">
+            <a routerLink="/documents/demande" routerLinkActive="active">
+              <mat-icon class="small-icon">add</mat-icon>
+              <span>Faire une demande</span>
+            </a>
+            <a routerLink="/documents/demandes" routerLinkActive="active">
+              <mat-icon class="small-icon">list</mat-icon>
+              <span>Liste des demandes</span>
+            </a>
+          </div>
+        </div>
+      </ng-container>
 
     </nav>
 

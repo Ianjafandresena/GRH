@@ -1,0 +1,147 @@
+<div class="parcours-container" *ngIf="!loading && !errorMessage" @fadeIn>
+
+    <!-- Header Section -->
+    <div class="header-actions">
+        <div class="breadcrumb">
+            <button mat-icon-button (click)='goBack()' class="back-btn">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <span>Employés</span>
+            <mat-icon>chevron_right</mat-icon>
+            <span class="current">Parcours Professionnel</span>
+        </div>
+
+        <h1>
+            <mat-icon>history_edu</mat-icon>
+            Historique de Carrière
+        </h1>
+    </div>
+
+    <!-- Timeline Wrapper -->
+    <div class="timeline" *ngIf="parcours.length > 0; else emptyState">
+
+        <div class="timeline-item" *ngFor="let item of parcours; let first = first; trackBy: trackByItem">
+
+            <!-- Timeline Marker -->
+            <div class="timeline-marker" [class.current-step]="first && item.type !== 'sortie'"
+                [class.sortie-step]="item.type === 'sortie'">
+                <div class="marker-icon"></div>
+            </div>
+
+            <!-- Step Card -->
+            <div class="step-card" [class.active-step]="first && item.type !== 'sortie'"
+                [class.sortie-step]="item.type === 'sortie'">
+
+                <!-- Card Header -->
+                <div class="card-header">
+                    <div class="main-info">
+                        <h3 *ngIf="item.type !== 'sortie'">{{ item.pst_fonction || 'Affectation sans titre' }}</h3>
+                        <h3 *ngIf="item.type === 'sortie'" class="text-danger">Fin de carrière - {{ item.s_type_motif ||
+                            'Sortie' }}</h3>
+
+                        <div class="srv-badge" *ngIf="item.type !== 'sortie' && item.srvc_nom">
+                            <mat-icon>domain</mat-icon>
+                            {{ item.srvc_nom }}
+                        </div>
+                    </div>
+
+                    <div class="meta-badges">
+                        <div class="date-pill">
+                            <mat-icon>calendar_month</mat-icon>
+                            {{ getPeriode(item) }}
+                        </div>
+
+                        <span class="type-pill" *ngIf="item.type !== 'sortie'"
+                            [ngClass]="getContratClass(item.affec_type_contrat).replace('contrat-', '')">
+                            {{ item.affec_type_contrat || 'Contrat N/A' }}
+                        </span>
+
+                        <span class="type-pill sortie" *ngIf="item.type === 'sortie'">
+                            Départ
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body">
+
+                    <!-- Affectation specific fields -->
+                    <ng-container *ngIf="item.type !== 'sortie'">
+                        <div class="info-group">
+                            <span class="label">Motif d'affectation</span>
+                            <span class="value">{{ item.m_aff_motif || 'Recrutement / Passage interne' }}</span>
+                        </div>
+
+                        <div class="info-group" *ngIf="item.pst_mission">
+                            <span class="label">Mission principale</span>
+                            <span class="value">{{ item.pst_mission }}</span>
+                        </div>
+
+                        <div class="info-group full-width" *ngIf="item.affec_commentaire">
+                            <span class="label">Notes & Observations</span>
+                            <div class="comment-box">
+                                "{{ item.affec_commentaire }}"
+                            </div>
+                        </div>
+
+                        <div class="info-group full-width" *ngIf="item.directions && item.directions.length">
+                            <span class="label">Rattachement hiérarchique</span>
+                            <div class="value">
+                                <mat-chip-listbox>
+                                    <mat-chip *ngFor="let d of item.directions" class="armp-chip">{{ d }}</mat-chip>
+                                </mat-chip-listbox>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <!-- Sortie specific fields -->
+                    <ng-container *ngIf="item.type === 'sortie'">
+                        <div class="info-group">
+                            <span class="label">Nature du départ</span>
+                            <span class="value">{{ item.s_type_motif || item.s_type_code }}</span>
+                        </div>
+                        <div class="info-group full-width" *ngIf="item.commentaire">
+                            <span class="label">Motif détaillé</span>
+                            <div class="comment-box">
+                                "{{ item.commentaire }}"
+                            </div>
+                        </div>
+                    </ng-container>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+        <div class="empty-state">
+            <mat-icon>history</mat-icon>
+            <h3>Aucun historique consolidé</h3>
+            <p>Le parcours professionnel de cet employé n'a pas encore été enregistré dans le système.</p>
+        </div>
+    </ng-template>
+
+    <!-- Footer Action -->
+    <div class="footer-actions" style="margin-top: 3rem; text-align: center;">
+        <button mat-flat-button color="primary" (click)="goBack()" style="border-radius: 8px; padding: 0 2rem;">
+            Retour au profil
+        </button>
+    </div>
+</div>
+
+<!-- Loading state -->
+<div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Reconstitution de la ligne temporelle...</p>
+</div>
+
+<!-- Error state -->
+<div *ngIf="errorMessage && !loading" class="error-container">
+    <mat-icon>error_outline</mat-icon>
+    <h3>Erreur de chargement</h3>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="goBack()">
+        Retour
+    </button>
+</div>

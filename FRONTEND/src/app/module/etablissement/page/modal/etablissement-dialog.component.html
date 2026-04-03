@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>{{ getTitle() }}</h2>
+
+<div mat-dialog-content>
+    <form [formGroup]="form">
+        <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Nom</mat-label>
+            <input matInput formControlName="etab_nom" />
+            <mat-error *ngIf="form.get('etab_nom')?.hasError('required')">Ce champ est obligatoire</mat-error>
+            <mat-error *ngIf="form.get('etab_nom')?.hasError('minlength')">Minimum 2 caractères</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="width: 100%;">
+            <mat-label>Adresse</mat-label>
+            <input matInput formControlName="etab_adresse" />
+        </mat-form-field>
+    </form>
+</div>
+
+<div mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="close()">
+        <mat-icon>close</mat-icon>
+        Annuler
+    </button>
+    <button mat-raised-button color="primary" type="button" (click)="save()" [disabled]="form.invalid">
+        <mat-icon>save</mat-icon>
+        Enregistrer
+    </button>
+</div>

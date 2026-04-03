@@ -73,10 +73,30 @@
     width: 100px;
 }
 
-.filter-actions {
+.filter-actions-simple {
     display: flex;
-    gap: $spacing-sm;
-    align-items: flex-end;
+    align-items: center;
+    padding-bottom: 2px;
+}
+
+.btn-icon-only {
+    background: transparent;
+    border: 1px solid $border-light;
+    color: $secondary;
+    width: 38px;
+    height: 38px;
+    border-radius: $radius-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba($primary-blue, 0.05);
+        color: $primary-blue;
+        border-color: $primary-blue;
+    }
 }
 
 // Custom select for employee search
@@ -328,23 +348,5 @@ table[mat-table] {
         &:hover {
             background: #0077cc;
         }
-    }
-}
-
-// Empty state
-.empty-state {
-    text-align: center;
-    padding: $spacing-xl * 2;
-    color: $secondary;
-
-    i {
-        font-size: 4rem;
-        margin-bottom: $spacing-lg;
-        opacity: 0.3;
-    }
-
-    p {
-        font-size: $font-size-lg;
-        margin: 0;
     }
 }

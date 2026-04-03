@@ -21,7 +21,7 @@
 
                 <div class="custom-dropdown" *ngIf="employeeDropdownOpen && filteredEmployees.length > 0">
                     <div *ngFor="let emp of filteredEmployees" class="dropdown-item" (mousedown)="selectEmployee(emp)">
-                        {{ emp.emp_nom }} {{ emp.emp_prenom }} <span class="matricule">({{ emp.emp_imarmp }})</span>
+                        {{ emp.emp_nom }} {{ emp.emp_prenom }} <span class="matricule">({{ emp.emp_im_armp }})</span>
                     </div>
                 </div>
             </div>
@@ -29,7 +29,7 @@
 
         <div class="filter-group">
             <label>Traitement :</label>
-            <select [(ngModel)]="filter.traitement" class="filter-select" (change)="applyClientSideFilter()">
+            <select [(ngModel)]="filter.traitement" class="filter-select" (ngModelChange)="onFilterChange()">
                 <option value="all">Tous</option>
                 <option value="traite">Traités</option>
                 <option value="non_traite">Non traités</option>
@@ -38,7 +38,7 @@
 
         <div class="filter-group">
             <label>Type :</label>
-            <select [(ngModel)]="filter.type" class="filter-select" (change)="applyClientSideFilter()">
+            <select [(ngModel)]="filter.type" class="filter-select" (ngModelChange)="onFilterChange()">
                 <option value="all">Tous</option>
                 <option value="agent">Agent</option>
                 <option value="centre">Centre</option>
@@ -47,7 +47,7 @@
 
         <div class="filter-group">
             <label>Mois :</label>
-            <select [(ngModel)]="filter.mois" class="filter-select">
+            <select [(ngModel)]="filter.mois" class="filter-select" (ngModelChange)="onFilterChange()">
                 <option [value]="1">Janvier</option>
                 <option [value]="2">Février</option>
                 <option [value]="3">Mars</option>
@@ -65,17 +65,12 @@
 
         <div class="filter-group">
             <label>Année :</label>
-            <input type="number" [(ngModel)]="filter.annee" class="filter-input" />
+            <input type="number" [(ngModel)]="filter.annee" class="filter-input" (ngModelChange)="onFilterChange()" />
         </div>
 
-        <div class="filter-actions">
-            <button class="btn btn-primary" (click)="loadDemandes()">
-                <i class="fas fa-search"></i>
-                Filtrer
-            </button>
-            <button class="btn btn-secondary" (click)="downloadEtatAgent()">
-                <span class="material-icons">picture_as_pdf</span>
-                État Agent
+        <div class="filter-actions-simple">
+            <button class="btn-icon-only" (click)="resetFilters()" title="Réinitialiser les filtres">
+                <i class="fas fa-sync-alt"></i>
             </button>
         </div>
     </div>
@@ -89,7 +84,7 @@
             <!-- ID Column -->
             <ng-container matColumnDef="rem_code">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header> N° </th>
-                <td mat-cell *matCellDef="let d" class="rem-code"> {{ d.rem_code }} </td>
+                <td mat-cell *matCellDef="let d" class="rem-code"> {{ d.rem_num }} </td>
             </ng-container>
 
             <!-- Type Column -->

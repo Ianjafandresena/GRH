@@ -65,7 +65,12 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
             <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell empty" colspan="5">Aucune prise en charge trouvee</td>
+                <td class="mat-cell" colspan="5">
+                    <div class="empty-state">
+                        <i class="fas fa-file-medical-alt"></i>
+                        <p>Aucune prise en charge trouvée</p>
+                    </div>
+                </td>
             </tr>
         </table>
 

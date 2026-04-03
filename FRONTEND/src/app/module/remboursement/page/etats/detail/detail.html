@@ -30,7 +30,7 @@
                 <span class="label">Statut :</span>
                 <span class="value">
                     <span [ngClass]="['status-badge', (etat()?.eta_libelle || 'EN_ATTENTE')]">
-                        {{ etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle ? 'En attente' :
+                        {{ (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle || etat()?.eta_libelle === 'EN_COURS') ? 'En attente' :
                         etat()?.eta_libelle === 'MANDATE' ? 'Mandaté' :
                         etat()?.eta_libelle === 'AGENT_COMPTABLE' ? 'Agent Comptable' : 'Inconnu' }}
                     </span>
@@ -62,7 +62,7 @@
         </div>
 
         <div class="workflow-actions">
-            @if (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle) {
+            @if (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle || etat()?.eta_libelle === 'EN_COURS') {
             <button class="btn btn-primary" (click)="openConfirm('mandater')" [disabled]="processing()">
                 <i class="fas fa-file-signature"></i> Mandater l'État
             </button>

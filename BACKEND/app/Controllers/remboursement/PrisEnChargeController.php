@@ -43,11 +43,11 @@ class PrisEnChargeController extends ResourceController
     {
         $db = \Config\Database::connect();
         $row = $db->table('affectation a')
-            ->select('pst.pst_fonction, dir.dir_nom, dir.dir_abreviation')
+            ->select('pst.pst_fonction, dir.dir_nom, dir.dir_abbreviation')
             ->join('poste pst', 'pst.pst_code = a.pst_code', 'left')
-            ->join('fonction_direc fd', 'fd.pst_code = pst.pst_code', 'left')
-            ->join('direction dir', 'dir.dir_code = fd.dir_code', 'left')
+            ->join('direction dir', 'dir.dir_code = pst.dir_code', 'left')
             ->where('a.emp_code', $empCode)
+            ->where('a.affec_etat', 'active')
             ->orderBy('a.affec_date_debut', 'DESC')
             ->limit(1)
             ->get()->getRowArray();
@@ -69,7 +69,7 @@ class PrisEnChargeController extends ResourceController
         $db = \Config\Database::connect();
 
         if ($type === 'agent') {
-            $emp = $db->table('employee')->where('emp_code', $empCode)->get()->getRowArray();
+            $emp = $db->table('employe')->where('emp_code', $empCode)->get()->getRowArray();
             if (!$emp) throw new \Exception('Employé introuvable');
             return [
                 'lien' => 'AGENT',
@@ -133,8 +133,8 @@ class PrisEnChargeController extends ResourceController
     public function getAll()
     {
         $model = new PrisEnChargeModel();
-        $prises = $model->select('pris_en_charge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom')
-            ->join('employee', 'employee.emp_code = pris_en_charge.emp_code', 'left')
+        $prises = $model->select('pris_en_charge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom')
+            ->join('employe', 'employe.emp_code = pris_en_charge.emp_code', 'left')
             ->join('centre_sante', 'centre_sante.cen_code = pris_en_charge.cen_code', 'left')
             ->join('conjointe', 'conjointe.conj_code = pris_en_charge.conj_code', 'left')
             ->join('enfant', 'enfant.enf_code = pris_en_charge.enf_code', 'left')
@@ -167,11 +167,11 @@ class PrisEnChargeController extends ResourceController
         
         $model = new PrisEnChargeModel();
         // On récupère TOUTES les PECs de l'employé avec infos bénéficiaire
-        $prises = $model->select('pris_en_charge.*, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom, employee.emp_nom, employee.emp_prenom')
+        $prises = $model->select('pris_en_charge.*, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom, employe.emp_nom, employe.emp_prenom')
             ->join('centre_sante', 'centre_sante.cen_code = pris_en_charge.cen_code', 'left')
             ->join('conjointe', 'conjointe.conj_code = pris_en_charge.conj_code', 'left')
             ->join('enfant', 'enfant.enf_code = pris_en_charge.enf_code', 'left')
-            ->join('employee', 'employee.emp_code = pris_en_charge.emp_code', 'left')
+            ->join('employe', 'employe.emp_code = pris_en_charge.emp_code', 'left')
             ->where('pris_en_charge.emp_code', $empCode)
             ->orderBy('pris_en_charge.pec_code', 'DESC')
             ->findAll();
@@ -199,8 +199,8 @@ class PrisEnChargeController extends ResourceController
     public function get($id = null)
     {
         $model = new PrisEnChargeModel();
-        $prise = $model->select('pris_en_charge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom')
-            ->join('employee', 'employee.emp_code = pris_en_charge.emp_code', 'left')
+        $prise = $model->select('pris_en_charge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom')
+            ->join('employe', 'employe.emp_code = pris_en_charge.emp_code', 'left')
             ->join('centre_sante', 'centre_sante.cen_code = pris_en_charge.cen_code', 'left')
             ->join('conjointe', 'conjointe.conj_code = pris_en_charge.conj_code', 'left')
             ->join('enfant', 'enfant.enf_code = pris_en_charge.enf_code', 'left')
@@ -338,8 +338,8 @@ class PrisEnChargeController extends ResourceController
         try {
             $model = new PrisEnChargeModel();
             
-            $prise = $model->select('pris_en_charge.*, employee.emp_nom AS nom_emp, employee.emp_prenom AS prenom_emp, employee.emp_imarmp AS matricule, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom, enfant.enf_num')
-                ->join('employee', 'employee.emp_code = pris_en_charge.emp_code', 'left')
+            $prise = $model->select('pris_en_charge.*, employe.emp_nom AS nom_emp, employe.emp_prenom AS prenom_emp, employe.emp_im_armp AS matricule, centre_sante.cen_nom, conjointe.conj_nom, enfant.enf_nom, enfant.enf_num')
+                ->join('employe', 'employe.emp_code = pris_en_charge.emp_code', 'left')
                 ->join('centre_sante', 'centre_sante.cen_code = pris_en_charge.cen_code', 'left')
                 ->join('conjointe', 'conjointe.conj_code = pris_en_charge.conj_code', 'left')
                 ->join('enfant', 'enfant.enf_code = pris_en_charge.enf_code', 'left')

@@ -1,0 +1,242 @@
+<div class="lister-stages-container" @fadeIn>
+    <div class="header-section">
+        <h1>
+            <mat-icon ripple>assignment</mat-icon>
+            Suivi des Stages
+        </h1>
+        <div class="header-actions">
+            <button mat-stroked-button (click)="toggleView()" class="view-toggle-btn">
+                <mat-icon>{{ viewMode === 'table' ? 'bar_chart' : 'table_view' }}</mat-icon>
+                {{ viewMode === 'table' ? 'Vue sur diagramme' : 'Vue sur tableau' }}
+            </button>
+            <button mat-stroked-button routerLink="/etablissements">
+                <mat-icon>business</mat-icon>
+                Établissements
+            </button>
+            <button mat-raised-button color="primary" routerLink="/stages/creer">
+                <mat-icon>add</mat-icon>
+                Nouveau Stage
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards Summary -->
+    <div class="stats-grid" *ngIf="stats && viewMode === 'table'">
+        <mat-card class="stats-card total">
+            <div class="stats-icon"><mat-icon>assignment</mat-icon></div>
+            <div class="stats-content">
+                <span class="stats-label">Total Stages</span>
+                <span class="stats-value">{{ stats.total }}</span>
+            </div>
+        </mat-card>
+        <mat-card class="stats-card info">
+            <div class="stats-icon"><mat-icon>history_edu</mat-icon></div>
+            <div class="stats-content">
+                <span class="stats-label">En Cours</span>
+                <span class="stats-value">{{ stats.en_cours }}</span>
+            </div>
+        </mat-card>
+        <mat-card class="stats-card success">
+            <div class="stats-icon"><mat-icon>verified</mat-icon></div>
+            <div class="stats-content">
+                <span class="stats-label">Terminés</span>
+                <span class="stats-value">{{ stats.termines }}</span>
+            </div>
+        </mat-card>
+        <mat-card class="stats-card warning">
+            <div class="stats-icon"><mat-icon>upcoming</mat-icon></div>
+            <div class="stats-content">
+                <span class="stats-label">À Venir</span>
+                <span class="stats-value">{{ stats.a_venir }}</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Actualisation des données...</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+    </div>
+
+    <mat-card class="filters-card" *ngIf="!loading && !errorMessage">
+        <form [formGroup]="filterForm" class="filters-grid">
+            <mat-form-field appearance="outline">
+                <mat-label>Stagiaire</mat-label>
+                <input type="text" matInput [formControl]="stagiaireCtrl" [matAutocomplete]="autoStgr"
+                    placeholder="Rechercher...">
+                <mat-autocomplete #autoStgr="matAutocomplete" [displayWith]="displayStagiaire"
+                    (optionSelected)="onStagiaireSelected($event)">
+                    <mat-option *ngFor="let s of filteredStagiaires$ | async" [value]="s">
+                        {{ s.stgr_nom }} {{ s.stgr_prenom }}
+                    </mat-option>
+                </mat-autocomplete>
+                <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Encadreur</mat-label>
+                <input type="text" matInput [formControl]="encadreurCtrl" [matAutocomplete]="autoEnc"
+                    placeholder="Rechercher...">
+                <mat-autocomplete #autoEnc="matAutocomplete" [displayWith]="displayEncadreur"
+                    (optionSelected)="onEncadreurSelected($event)">
+                    <mat-option *ngFor="let e of filteredEncadreurs$ | async" [value]="e">
+                        {{ e.emp_nom }} {{ e.emp_prenom }}
+                    </mat-option>
+                </mat-autocomplete>
+                <mat-icon matPrefix>supervisor_account</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Thème</mat-label>
+                <input matInput formControlName="theme" placeholder="Thème" />
+                <mat-icon matPrefix>topic</mat-icon>
+            </mat-form-field>
+
+            <div class="filter-actions">
+                <button mat-raised-button color="primary" type="button" (click)="loadStages()" [disabled]="loading">
+                    <mat-icon>search</mat-icon>
+                    Rechercher
+                </button>
+                <button mat-stroked-button type="button" (click)="resetFilters()" [disabled]="loading">
+                    <mat-icon>refresh</mat-icon>
+                    Réinitialiser
+                </button>
+            </div>
+        </form>
+    </mat-card>
+
+    <!-- Table View -->
+    <mat-card *ngIf="!loading && !errorMessage && viewMode === 'table'" class="content-card">
+        <table mat-table [dataSource]="stages" class="stages-table">
+            <ng-container matColumnDef="stagiaire">
+                <th mat-header-cell *matHeaderCellDef>Stagiaire</th>
+                <td mat-cell *matCellDef="let s" style="font-weight: 600;">
+                    {{ (s.stgr_nom_prenom || (s.stgr_nom + ' ' + s.stgr_prenom)) | uppercase }}
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="encadreur">
+                <th mat-header-cell *matHeaderCellDef>Encadreur</th>
+                <td mat-cell *matCellDef="let s">
+                    <span *ngIf="s.encadreur_nom" class="status-badge info">
+                        {{ s.encadreur_nom + ' ' + s.encadreur_prenom }}
+                    </span>
+                    <span *ngIf="!s.encadreur_nom" class="status-badge error">Non assigné</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="theme">
+                <th mat-header-cell *matHeaderCellDef>Thème</th>
+                <td mat-cell *matCellDef="let s" class="theme-cell">{{ s.stg_theme || '--' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="etablissement">
+                <th mat-header-cell *matHeaderCellDef>Établissement</th>
+                <td mat-cell *matCellDef="let s">
+                    <span class="etab-badge">{{ s.etab_nom || 'N/A' }}</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="date_debut">
+                <th mat-header-cell *matHeaderCellDef>Début</th>
+                <td mat-cell *matCellDef="let s" class="date-cell start">{{ s.stg_date_debut | date:'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="date_fin">
+                <th mat-header-cell *matHeaderCellDef>Fin</th>
+                <td mat-cell *matCellDef="let s" class="date-cell end">{{ s.stg_date_fin | date:'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="duree">
+                <th mat-header-cell *matHeaderCellDef>Durée</th>
+                <td mat-cell *matCellDef="let s">
+                    <span class="duree-badge">{{ s.stg_duree || '-' }} j</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let s" class="actions-cell">
+                    <button mat-icon-button (click)="openDetails(s)"
+                        matTooltip="Détails"><mat-icon>visibility</mat-icon></button>
+                    <button mat-icon-button color="primary" [routerLink]="['/stages/modifier', s.stg_code]"
+                        matTooltip="Modifier"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="accent" (click)="openEvaluation(s)"
+                        matTooltip="Évaluation"><mat-icon>rate_review</mat-icon></button>
+                    <button mat-icon-button (click)="telechargerConvention(s)"
+                        matTooltip="Convention"><mat-icon>description</mat-icon></button>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <div *ngIf="stages.length === 0" class="no-data">
+            <mat-icon>inbox</mat-icon>
+            <p>Aucun dossier trouvé pour ces critères.</p>
+        </div>
+    </mat-card>
+
+    <!-- Gantt Chart View -->
+    <mat-card *ngIf="!loading && !errorMessage && viewMode === 'gantt'" class="gantt-card">
+        <div class="gantt-header">
+            <div class="gantt-nav">
+                <button mat-icon-button (click)="prevMonth()"><mat-icon>chevron_left</mat-icon></button>
+                <h2>{{ monthNames[currentDate.getMonth()] }} {{ currentDate.getFullYear() }}</h2>
+                <button mat-icon-button (click)="nextMonth()"><mat-icon>chevron_right</mat-icon></button>
+            </div>
+            <div class="spacer"></div>
+            <div class="gantt-legend">
+                <span class="legend-item"><span class="dot active"></span> En cours</span>
+                <span class="legend-item"><span class="dot success"></span> Terminé</span>
+                <span class="legend-item"><span class="dot warning"></span> À venir</span>
+            </div>
+        </div>
+
+        <div class="gantt-container">
+            <div class="gantt-grid">
+                <!-- Header: Tasks on left, Days on right -->
+                <div class="gantt-row header">
+                    <div class="gantt-label-col">Stagiaire / Thème</div>
+                    <div class="gantt-timeline-col">
+                        <div class="days-row">
+                            <div *ngFor="let day of ganttDays" class="day-cell">{{ day }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rows -->
+                <div *ngFor="let s of ganttStages" class="gantt-row item">
+                    <div class="gantt-label-col" (click)="openDetails(s)">
+                        <div class="stgr-name">{{ s.stgr_nom }} {{ s.stgr_prenom }}</div>
+                        <div class="stgr-theme">{{ s.stg_theme }}</div>
+                    </div>
+                    <div class="gantt-timeline-col">
+                        <!-- Grid lines -->
+                        <div class="grid-lines">
+                            <div *ngFor="let day of ganttDays" class="grid-line"></div>
+                        </div>
+                        <!-- Bar -->
+                        <div class="gantt-bar-container">
+                            <div class="gantt-bar" [ngStyle]="s.ganttStyle" [class.cut-start]="s.isStartCut"
+                                [class.cut-end]="s.isEndCut"
+                                [matTooltip]="s.stgr_nom + ': ' + s.stg_date_debut + ' au ' + s.stg_date_fin"
+                                (click)="openDetails(s)">
+                                <span class="bar-label">{{ s.stgr_nom }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="ganttStages.length === 0" class="no-data">
+                    <mat-icon>event_busy</mat-icon>
+                    <p>Aucun stage sur ce mois.</p>
+                </div>
+            </div>
+        </div>
+    </mat-card>
+</div>

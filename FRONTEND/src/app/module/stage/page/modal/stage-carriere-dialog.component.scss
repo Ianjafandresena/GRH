@@ -1,0 +1,23 @@
+:host {
+    display: block;
+}
+
+.dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 8px;
+}

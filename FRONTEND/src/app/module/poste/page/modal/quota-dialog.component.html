@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>
+    <mat-icon>settings</mat-icon>
+    Paramètres du Quota - {{ data.pst_fonction }}
+</h2>
+
+<mat-dialog-content>
+    <div class="quota-info">
+        <div class="info-row">
+            <span class="label">Quota actuel:</span>
+            <span class="value">{{ data.quota }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Postes occupés:</span>
+            <span class="value occupied">{{ data.nb_occupe }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Postes vacants:</span>
+            <span class="value vacant">{{ data.nb_vacant }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">En cessation:</span>
+            <span class="value cessation">{{ data.nb_encessation }}</span>
+        </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nouveau Quota</mat-label>
+        <input matInput type="number" [(ngModel)]="nouveauQuota" [min]="minQuota" />
+        <mat-icon matPrefix>format_list_numbered</mat-icon>
+        <mat-hint>Minimum: {{ minQuota }} ({{ data.nb_occupe }} occupés + {{ data.nb_encessation }} en
+            cessation)</mat-hint>
+    </mat-form-field>
+
+    <div *ngIf="nouveauQuota < minQuota" class="error-message">
+        <mat-icon>warning</mat-icon>
+        <span>Le quota ne peut pas être inférieur à {{ minQuota }} ({{ data.nb_occupe }} occupés + {{
+            data.nb_encessation }} en cessation)</span>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage }}</span>
+    </div>
+
+    <div *ngIf="nouveauQuota > data.quota" class="success-message">
+        <mat-icon>check_circle</mat-icon>
+        <span>Le nombre de postes vacants passera de {{ data.nb_vacant }} à {{ nouveauQuota - data.nb_occupe -
+            data.nb_encessation }}</span>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="loading">
+        <mat-icon>cancel</mat-icon>
+        Annuler
+    </button>
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!isValid || loading">
+        <mat-icon *ngIf="!loading">save</mat-icon>
+        <mat-icon *ngIf="loading" class="spinning">sync</mat-icon>
+        {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+    </button>
+</mat-dialog-actions>

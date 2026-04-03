@@ -1,0 +1,130 @@
+<div class="lister-competences-container" @fadeIn>
+    <div class="header-section">
+        <h1>
+            <mat-icon>psychology</mat-icon>
+            Liste des Compétences
+        </h1>
+        <div class="header-actions">
+            <button mat-raised-button color="primary" routerLink="/competences/creer">
+                <mat-icon>add</mat-icon>
+                Nouvelle Compétence
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards Summary -->
+    <div class="stats-grid" *ngIf="stats" @fadeIn>
+        <mat-card class="stats-card total">
+            <div class="stats-icon">
+                <mat-icon>psychology</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Total Compétences</span>
+                <span class="stats-value">{{ stats.total }}</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card info" *ngIf="stats.par_domaine && stats.par_domaine.length > 0">
+            <div class="stats-icon">
+                <mat-icon>category</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Domaine Principal</span>
+                <span class="stats-value">{{ stats.par_domaine[0].label }}</span>
+                <span class="stats-subvalue">{{ stats.par_domaine[0].value }} compétences</span>
+            </div>
+        </mat-card>
+
+        <mat-card class="stats-card success" *ngIf="stats.par_domaine && stats.par_domaine.length > 1">
+            <div class="stats-icon">
+                <mat-icon>analytics</mat-icon>
+            </div>
+            <div class="stats-content">
+                <span class="stats-label">Secteur porteur</span>
+                <span class="stats-value">{{ stats.par_domaine[1].label }}</span>
+                <span class="stats-subvalue">{{ stats.par_domaine[1].value }} compétences</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <mat-card class="filters-card" *ngIf="!loading">
+        <form [formGroup]="filterForm" class="filters-grid">
+            <mat-form-field appearance="outline">
+                <mat-label>Recherche</mat-label>
+                <input matInput formControlName="q" placeholder="Intitulé, domaine, description..." />
+                <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Domaine</mat-label>
+                <input matInput formControlName="domaine" placeholder="Ex: Management" />
+                <mat-icon matPrefix>category</mat-icon>
+            </mat-form-field>
+
+            <div class="filter-actions">
+                <button mat-raised-button color="primary" type="button" (click)="load()" [disabled]="loading">
+                    <mat-icon>search</mat-icon>
+                    Rechercher
+                </button>
+                <button mat-stroked-button type="button" (click)="resetFilters()" [disabled]="loading">
+                    <mat-icon>refresh</mat-icon>
+                    Réinitialiser
+                </button>
+            </div>
+        </form>
+    </mat-card>
+
+    <div *ngIf="loading" class="loading-container">
+        <mat-spinner></mat-spinner>
+        <p>Chargement des compétences...</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+    </div>
+
+    <mat-card *ngIf="!loading && !errorMessage">
+        <table mat-table [dataSource]="competences" class="competences-table">
+            <ng-container matColumnDef="intitule">
+                <th mat-header-cell *matHeaderCellDef>Intitulé</th>
+                <td mat-cell *matCellDef="let c" style="font-weight: 600; color: #1e293b;">{{ c.comp_intitule }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="domaine">
+                <th mat-header-cell *matHeaderCellDef>Domaine</th>
+                <td mat-cell *matCellDef="let c">
+                    <span class="status-badge info">{{ c.comp_domaine || '-' }}</span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Description</th>
+                <td mat-cell *matCellDef="let c" style="color: #64748b; font-size: 0.9rem;">{{ c.comp_description || '-'
+                    }}</td>
+            </ng-container>
+
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let c" class="actions-cell">
+                    <button mat-icon-button color="primary" [routerLink]="['/competences/modifier', c.comp_code]"
+                        matTooltip="Modifier">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="deleteCompetence(c)" matTooltip="Supprimer">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div *ngIf="competences.length === 0" class="no-data">
+            <mat-icon>inbox</mat-icon>
+            <p>Aucune compétence trouvée</p>
+        </div>
+    </mat-card>
+</div>

@@ -113,22 +113,3 @@
     }
   }
 }
-
-// Empty state
-.empty-state {
-  text-align: center !important;
-  padding: $spacing-xl * 2 !important;
-  color: $secondary;
-
-  i {
-    font-size: 3rem;
-    margin-bottom: $spacing-md;
-    opacity: 0.3;
-    display: block;
-  }
-
-  p {
-    margin: 0;
-    font-size: $font-size-base;
-  }
-}

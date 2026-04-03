@@ -75,13 +75,88 @@ class SoldeCongeController extends ResourceController
         return $this->fail('Erreur modification solde');
     }
 
-    // DELETE /solde_conge/{id}
-    public function delete($id = null)
+    // POST /solde_conge/attribuer
+    public function attribuerManuellement()
     {
-        $model = new SoldeCongeModel();
-        if ($model->delete($id)) {
-            return $this->respondDeleted(['id' => $id]);
+        $data = $this->request->getJSON(true);
+        $empCode = $data['emp_code'] ?? null;
+        $type = $data['type'] ?? 'conge'; // 'conge' or 'permission'
+        $jours = (float)($data['jours'] ?? 0);
+        $annee = (int)($data['annee'] ?? date('Y'));
+
+        if (!$empCode) return $this->fail('emp_code requis');
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+            if ($type === 'conge') {
+                // Règle Décision: [seq]/ARMP/DG-[annee+1 % 100]
+                // 044/ARMP/DG-22 pour l'année 2021
+                $anneeSignature = ($annee + 1) % 100;
+                $pattern = "/ARMP/DG-" . sprintf("%02d", $anneeSignature);
+                
+                // On cherche le dernier séquentiel pour cet acte
+                $lastDec = $db->table('decision')
+                    ->like('dec_num', $pattern, 'before')
+                    ->orderBy('dec_code', 'DESC')
+                    ->get()->getRowArray();
+                
+                $seq = 1;
+                if ($lastDec) {
+                    $parts = explode('/', $lastDec['dec_num']);
+                    if (is_numeric($parts[0])) {
+                        $seq = (int)$parts[0] + 1;
+                    }
+                }
+                
+                $decNum = sprintf("%03d/ARMP/DG-%02d", $seq, $anneeSignature);
+                
+                // 1. Créer la décision
+                $db->table('decision')->insert(['dec_num' => $decNum]);
+                $decCode = $db->insertID();
+                
+                // 2. Créer le solde
+                $db->table('solde_conge')->insert([
+                    'emp_code' => $empCode,
+                    'sld_anne' => $annee,
+                    'sld_initial' => $jours,
+                    'sld_restant' => $jours,
+                    'sld_dispo' => 1,
+                    'dec_code' => $decCode,
+                    'sld_maj' => date('Y-m-d H:i:s')
+                ]);
+            } else {
+                // Permission : on vérifie si un solde existe déjà pour cette année
+                $existing = $db->table('solde_permission')
+                    ->where('emp_code', $empCode)
+                    ->where('sld_prm_anne', $annee)
+                    ->get()->getRowArray();
+
+                if ($existing) {
+                    $db->table('solde_permission')
+                        ->where('sld_prm_code', $existing['sld_prm_code'])
+                        ->update(['sld_prm_dispo' => $jours]);
+                } else {
+                    $db->table('solde_permission')->insert([
+                        'emp_code' => $empCode,
+                        'sld_prm_anne' => $annee,
+                        'sld_prm_dispo' => $jours
+                    ]);
+                }
+            }
+
+            $db->transComplete();
+            
+            if ($db->transStatus() === false) {
+                return $this->fail('Erreur lors de la transaction');
+            }
+
+            return $this->respond(['status' => 'success', 'message' => 'Solde attribué avec succès']);
+
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return $this->fail($e->getMessage());
         }
-        return $this->fail('Erreur suppression solde');
     }
 }

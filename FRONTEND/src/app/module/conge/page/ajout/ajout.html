@@ -39,12 +39,12 @@
             <ul class="suggestions" *ngIf="showEmpDropdown && filteredEmployees.length > 0">
               <li *ngFor="let emp of filteredEmployees" (mousedown)="selectEmployee(emp)">
                 <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
-                <div class="suggestion-sub">{{ emp.emp_imarmp }}</div>
+                <div class="suggestion-sub">{{ emp.emp_im_armp }}</div>
               </li>
             </ul>
           </div>
           <div *ngIf="selectedEmployee" class="selected-employee-info">
-            <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_imarmp }}</div>
+            <div class="info-row"><strong>Matricule:</strong> {{ selectedEmployee.emp_im_armp }}</div>
             <div class="info-row"><strong>Poste:</strong> {{ selectedEmployee.pst_fonction || '-' }}</div>
             <div class="info-row"><strong>Direction:</strong> {{ selectedEmployee.dir_nom || '-' }}</div>
           </div>
@@ -187,13 +187,14 @@
             <ul class="suggestions" *ngIf="permissionShowEmpDropdown && permissionFilteredEmployees.length > 0">
               <li *ngFor="let emp of permissionFilteredEmployees" (mousedown)="selectPermissionEmployee(emp)">
                 <div class="suggestion-main">{{ emp.emp_nom }} {{ emp.emp_prenom }}</div>
-                <div class="suggestion-sub">{{ emp.emp_imarmp }}</div>
+                <div class="suggestion-sub">{{ emp.emp_im_armp }}</div>
               </li>
             </ul>
           </div>
           <div *ngIf="permissionSelectedEmployee" class="selected-employee-info">
-            <div class="info-row"><strong>Matricule:</strong> {{ permissionSelectedEmployee.emp_imarmp }}</div>
+            <div class="info-row"><strong>Matricule:</strong> {{ permissionSelectedEmployee.emp_im_armp }}</div>
             <div class="info-row"><strong>Poste:</strong> {{ permissionSelectedEmployee.pst_fonction || '-' }}</div>
+            <div class="info-row"><strong>Direction:</strong> {{ permissionSelectedEmployee.dir_nom || '-' }}</div>
           </div>
         </div>
       </div>
@@ -202,16 +203,40 @@
       <div class="form-section">
         <h3 class="section-title">Détails de la Permission</h3>
         <div class="form-grid">
+          <!-- Début -->
           <div class="form-group required">
-            <label for="prm_debut">Début</label>
-            <input type="datetime-local" id="prm_debut" formControlName="prm_debut" class="form-control"
-              (change)="updatePermissionDurations()">
+            <label>Début</label>
+            <div class="datetime-simplified">
+              <input type="date" formControlName="prm_date_debut" class="form-control" (change)="updatePermissionDurations()">
+              <div class="moment-toggle">
+                <label class="toggle-item">
+                  <input type="radio" value="matin" formControlName="prm_moment_debut" (change)="updatePermissionDurations()">
+                  <span>Matin</span>
+                </label>
+                <label class="toggle-item">
+                  <input type="radio" value="apres_midi" formControlName="prm_moment_debut" (change)="updatePermissionDurations()">
+                  <span>Après-midi</span>
+                </label>
+              </div>
+            </div>
           </div>
 
+          <!-- Fin -->
           <div class="form-group required">
-            <label for="prm_fin">Fin</label>
-            <input type="datetime-local" id="prm_fin" formControlName="prm_fin" class="form-control"
-              (change)="updatePermissionDurations()">
+            <label>Fin</label>
+            <div class="datetime-simplified">
+              <input type="date" formControlName="prm_date_fin" class="form-control" (change)="updatePermissionDurations()">
+              <div class="moment-toggle">
+                <label class="toggle-item">
+                  <input type="radio" value="matin" formControlName="prm_moment_fin" (change)="updatePermissionDurations()">
+                  <span>Matin</span>
+                </label>
+                <label class="toggle-item">
+                  <input type="radio" value="apres_midi" formControlName="prm_moment_fin" (change)="updatePermissionDurations()">
+                  <span>Après-midi</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -220,11 +245,14 @@
       <div class="summary-box">
         <div class="summary-item duration">
           <span class="label">Durée calculée</span>
-          <span class="value">
+          <span class="value" [class.over-limit]="(permissionCalculatedHours || 0) > 8">
             <span *ngIf="permissionCalculatedDays !== null">
               {{ permissionCalculatedDays }} jour(s) <small>({{ permissionCalculatedHours }}h)</small>
             </span>
-            <span *ngIf="permissionCalculatedDays === null">-</span>
+            <span *ngIf="permissionCalculatedHours === null">--</span>
+            <span class="limit-warning" *ngIf="(permissionCalculatedHours || 0) > 8">
+              <i class="pi pi-exclamation-triangle"></i> Dépasse la limite d'une journée (8h)
+            </span>
           </span>
         </div>
       </div>

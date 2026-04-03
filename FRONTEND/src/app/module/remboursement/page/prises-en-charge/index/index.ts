@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { PrisEnChargeService } from '../../../service/prise-en-charge.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
@@ -23,6 +23,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
     styleUrls: ['./index.scss']
 })
 export class PrisesEnChargeIndexComponent implements OnInit, AfterViewInit {
+    private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly pecService = inject(PrisEnChargeService);
     private readonly layoutService = inject(LayoutService);
@@ -54,7 +55,14 @@ export class PrisesEnChargeIndexComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
         this.layoutService.setTitle('Prises en Charge');
-        this.loadData();
+
+        const resolvedData = this.route.snapshot.data['pecList'] as PrisEnCharge[];
+        if (resolvedData) {
+            this.prises = resolvedData;
+            this.dataSource.data = this.prises;
+        } else {
+            this.loadData();
+        }
     }
 
     ngAfterViewInit() {

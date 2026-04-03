@@ -6,7 +6,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { EmployeeService } from '../../service/employee.service';
 import { CongeService } from '../../../conge/service/conge.service';
 import { LayoutService } from '../../../../shared/layout/service/layout.service';
@@ -38,7 +38,7 @@ export class EmployeeComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
 
   dataSource = new MatTableDataSource<Employee>([]);
-  displayedColumns: string[] = ['emp_nom', 'emp_prenom', 'emp_imarmp', 'pst_fonction', 'dir_abreviation', 'status', 'actions'];
+  displayedColumns: string[] = ['emp_nom', 'emp_prenom', 'emp_im_armp', 'pst_fonction', 'dir_abbreviation', 'status', 'actions'];
 
   private _paginator!: MatPaginator;
   private _sort!: MatSort;
@@ -70,9 +70,18 @@ export class EmployeeComponent implements OnInit, AfterViewInit {
   availableDirections: string[] = [];
   availablePostes: string[] = [];
 
+  private readonly route = inject(ActivatedRoute);
+
   ngOnInit() {
     this.layoutService.setTitle('Gestion des Employés');
-    this.loadEmployees();
+
+    // Récupérer les données du resolver
+    const resolvedData = this.route.snapshot.data['employees'] as { employees: any[], absences: any[] };
+    if (resolvedData && resolvedData.employees) {
+      this.processEmployeeResults(resolvedData);
+    } else {
+      this.loadEmployees();
+    }
 
     // Setup custom filter predicate
     this.dataSource.filterPredicate = (data: Employee, filter: string): boolean => {
@@ -80,7 +89,7 @@ export class EmployeeComponent implements OnInit, AfterViewInit {
 
       const searchMatch = !filters.search ||
         `${data.emp_nom} ${data.emp_prenom}`.toLowerCase().includes(filters.search.toLowerCase()) ||
-        !!(data.emp_imarmp && data.emp_imarmp.toLowerCase().includes(filters.search.toLowerCase()));
+        !!(data.emp_im_armp && data.emp_im_armp.toLowerCase().includes(filters.search.toLowerCase()));
 
       const dirMatch = !filters.direction || data.dir_nom === filters.direction;
       const posteMatch = !filters.poste || data.pst_fonction === filters.poste;
@@ -105,56 +114,60 @@ export class EmployeeComponent implements OnInit, AfterViewInit {
       absences: this.congeService.getAbsences().pipe(catchError(() => of([])))
     }).subscribe({
       next: (result) => {
-        const now = new Date();
-        const employees = result.employees as Employee[];
-        const absences = result.absences as any[];
-
-        // Process availability status client-side
-        employees.forEach(emp => {
-          // Find if employee has a currently active validated absence
-          const activeAbsence = absences.find(a => {
-            if (a.emp_code !== emp.emp_code) return false;
-
-            // Only consider validated absences
-            const isValidated = (a.cng_status === true || a.cng_status === 't' || a.cng_status === 1 ||
-              a.prm_status === true || a.prm_status === 't' || a.prm_status === 1 ||
-              a.absence_type === 'permission'); // Permissions are often assumed auto-validated
-
-            if (!isValidated && a.absence_type === 'conge') return false;
-
-            const start = new Date(a.cng_debut || a.prm_debut);
-            const end = new Date(a.cng_fin || a.prm_fin);
-
-            // Extend end date for leaves to cover the full day
-            if (a.absence_type === 'conge') {
-              end.setHours(23, 59, 59, 999);
-            }
-
-            return now >= start && now <= end;
-          });
-
-          if (activeAbsence) {
-            emp.is_available = false;
-            emp.absence_type = activeAbsence.absence_type;
-            emp.absence_end = activeAbsence.cng_fin || activeAbsence.prm_fin;
-          } else {
-            emp.is_available = true;
-          }
-        });
-
-        this.dataSource.data = employees;
-
-        // Extract unique directions and postes for filters
-        this.availableDirections = [...new Set(employees.map(e => e.dir_nom).filter(Boolean) as string[])];
-        this.availablePostes = [...new Set(employees.map(e => e.pst_fonction).filter(Boolean) as string[])];
-
-        this.applyFilters();
+        this.processEmployeeResults(result);
         this.loading = false;
       },
       error: () => {
         this.loading = false;
       }
     });
+  }
+
+  private processEmployeeResults(result: { employees: any[], absences: any[] }) {
+    const now = new Date();
+    const employees = result.employees as Employee[];
+    const absences = result.absences as any[];
+
+    // Process availability status client-side
+    employees.forEach(emp => {
+      // Find if employee has a currently active validated absence
+      const activeAbsence = absences.find(a => {
+        if (a.emp_code !== emp.emp_code) return false;
+
+        // Only consider validated absences
+        const isValidated = (a.cng_status === true || a.cng_status === 't' || a.cng_status === 1 ||
+          a.prm_status === true || a.prm_status === 't' || a.prm_status === 1 ||
+          a.absence_type === 'permission'); // Permissions are often assumed auto-validated
+
+        if (!isValidated && a.absence_type === 'conge') return false;
+
+        const start = new Date(a.cng_debut || a.prm_debut);
+        const end = new Date(a.cng_fin || a.prm_fin);
+
+        // Extend end date for leaves to cover the full day
+        if (a.absence_type === 'conge') {
+          end.setHours(23, 59, 59, 999);
+        }
+
+        return now >= start && now <= end;
+      });
+
+      if (activeAbsence) {
+        emp.is_available = false;
+        emp.absence_type = activeAbsence.absence_type;
+        emp.absence_end = activeAbsence.cng_fin || activeAbsence.prm_fin;
+      } else {
+        emp.is_available = true;
+      }
+    });
+
+    this.dataSource.data = employees;
+
+    // Extract unique directions and postes for filters
+    this.availableDirections = [...new Set(employees.map(e => e.dir_nom).filter(Boolean) as string[])];
+    this.availablePostes = [...new Set(employees.map(e => e.pst_fonction).filter(Boolean) as string[])];
+
+    this.applyFilters();
   }
 
   applyFilters() {
@@ -180,11 +193,7 @@ export class EmployeeComponent implements OnInit, AfterViewInit {
   }
 
   openDetail(employee: Employee) {
-    this.dialog.open(EmployeeDetailComponent, {
-      width: '800px',
-      maxHeight: '90vh',
-      data: { emp_code: employee.emp_code }
-    });
+    this.router.navigate(['/employee', employee.emp_code]);
   }
 
   getStatusClass(employee: Employee): string {

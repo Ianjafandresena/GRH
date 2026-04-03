@@ -56,7 +56,7 @@ class Database extends Config
         'hostname' => 'localhost',
         'username' => 'postgres', 
         'password' => '3435',   
-        'database' => 'grh',     
+        'database' => 'armpgrh',     
         'DBDriver' => 'Postgre',
         'DBPrefix' => '',
         'pConnect' => false,

@@ -1,233 +1,244 @@
-<div class="container">
-  <div class="card" *ngIf="data">
-    <!-- Header inside card -->
-    <div class="card-header">
-      <h2 style="margin: 0;">Détail du Congé</h2>
+<div class="detail-wrapper">
+  <div class="card-container" *ngIf="data && !loading">
+    <!-- Card Header -->
+    <div class="card-header border-bottom">
+      <h2>{{ data.absence_type === 'permission' ? 'Détail de la Permission' : 'Détail du Congé' }}</h2>
       <div class="header-actions">
-        <button class="btn btn-warning" (click)="goToInterruption()" *ngIf="canInterrupt()">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-          </svg>
-          <span>Interrompre</span>
-        </button>
-        <button class="btn btn-primary" (click)="openPdfViewer()" *ngIf="isValidated()">
-          <mat-icon>picture_as_pdf</mat-icon>
-          <span>Exporter PDF</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="info-section">
-      <h3>Informations de l'employé</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">Nom et prénoms</span>
-          <span class="value">{{ data.conge.nom_emp }} {{ data.conge.prenom_emp }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Matricule</span>
-          <span class="value">{{ data.conge.matricule || '-' }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="info-section">
-      <h3>Détails du congé</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">Type</span>
-          <span class="value">{{ data.conge.typ_appelation }} ({{ data.conge.typ_ref }})</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Nombre de jours</span>
-          <span class="value">{{ data.conge.cng_nb_jour | number:'1.0-2' }} jour(s)</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Date de début</span>
-          <span class="value">{{ data.conge.cng_debut | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Date de fin</span>
-          <span class="value">{{ data.conge.cng_fin | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Région</span>
-          <span class="value">{{ data.conge.nom_region }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="info-section" *ngIf="data.interims && data.interims.length > 0">
-      <h3>Suppléants</h3>
-      <div class="interim-list">
-        <div class="interim-item" *ngFor="let interim of data.interims">
-          <mat-icon>person</mat-icon>
-          <span>{{ interim.nom }} {{ interim.prenom }}</span>
-          <span class="dates">({{ interim.int_debut | date:'dd/MM/yyyy' }} → {{ interim.int_fin | date:'dd/MM/yyyy'
-            }})</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="info-section" *ngIf="data.decision && data.conge.cng_status === true">
-      <h3>Décision à défalquer</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">Numéro de décision</span>
-          <span class="value">{{ data.decision.dec_num || '-' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Année</span>
-          <span class="value">{{ data.decision.sld_anne || '-' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Jours restants</span>
-          <span class="value">{{ data.decision.sld_restant ?? '-' }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Validation Status Section -->
-    <div class="info-section validation-section" *ngIf="validationStatus">
-      <h3>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"
-          style="fill: currentColor; vertical-align: middle; margin-right: 0.5rem;">
-          <path
-            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-        </svg>
-        Statut de Validation
-        <span class="status-badge" [class.validated]="validationStatus.is_fully_validated"
-          [class.rejected]="validationStatus.is_rejected"
-          [class.pending]="!validationStatus.is_fully_validated && !validationStatus.is_rejected">
-          {{ validationStatus.is_fully_validated ? 'Validé' : validationStatus.is_rejected ? 'Rejeté' : 'En attente' }}
+        <span class="status-badge" [ngClass]="isValidated() ? 'validated' : 'pending'">
+          {{ isValidated() ? 'Validé' : 'En attente' }}
         </span>
-      </h3>
-
-      <div class="validation-steps">
-        <div class="step" *ngFor="let step of validationStatus.steps" [class.validated]="step.status === 'validated'"
-          [class.rejected]="step.status === 'rejected'" [class.pending]="step.status === 'pending'"
-          [class.current]="step.step === validationStatus.current_step">
-          <div class="step-icon">
-            <svg *ngIf="step.status === 'validated'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20"
-              height="20">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-            </svg>
-            <svg *ngIf="step.status === 'rejected'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20"
-              height="20">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-            </svg>
-            <svg *ngIf="step.status === 'pending'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20"
-              height="20">
-              <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-            </svg>
-          </div>
-          <div class="step-info">
-            <span class="step-name">{{ step.step }}</span>
-            <span class="step-date" *ngIf="step.val_date">{{ step.val_date }}</span>
-            <span class="step-obs" *ngIf="step.val_observation">{{ step.val_observation }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Info message for pending -->
-      <div class="validation-info" *ngIf="validationStatus.current_step && !validationStatus.is_rejected">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-        </svg>
-        En attente de validation par: <strong>{{ validationStatus.current_step }}</strong>
-      </div>
-
-      <!-- Validation Actions -->
-      <div class="validation-actions"
-        *ngIf="validationStatus.current_step && !validationStatus.is_rejected && !validationStatus.is_fully_validated">
-        <div class="action-header">
-          <span>Validation par:</span>
-          <span class="current-signer">{{ validationStatus.current_step }}</span>
-        </div>
-        <div class="action-buttons">
-          <button class="btn btn-success" (click)="approveStep()" [disabled]="validating">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-            </svg>
-            Valider
-          </button>
-          <button class="btn btn-danger" (click)="openRejectModal()" [disabled]="validating">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-            </svg>
-            Rejeter
-          </button>
-        </div>
-        <div class="action-feedback" *ngIf="validationMsg">
-          <span [class.success]="!validationError" [class.error]="validationError">{{ validationMsg }}</span>
-        </div>
+        <button class="btn btn-warning shadow-sm" (click)="openPdfViewer()" *ngIf="isValidated()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+            <path
+              d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+          Voir PDF
+        </button>
       </div>
     </div>
 
-    <!-- Rejection Modal -->
-    <div class="modal-overlay" *ngIf="showRejectModal" (click)="closeRejectModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>Motif du rejet</h3>
-          <button class="modal-close" (click)="closeRejectModal()">×</button>
-        </div>
-        <div class="modal-body">
-          <p>Vous rejetez cette demande en tant que <strong>{{ validationStatus?.current_step }}</strong></p>
-          <div class="form-group">
-            <label for="rejectReason">Motif du rejet *</label>
-            <textarea id="rejectReason" [(ngModel)]="rejectObservation" rows="4"
-              placeholder="Expliquez la raison du rejet..." required></textarea>
+    <!-- Content -->
+    <div class="card-body">
+      <!-- Employee Info Section -->
+      <div class="info-section">
+        <h3>Informations de l'employé</h3>
+        <div class="info-grid mt-3">
+          <div class="info-item">
+            <span class="label">NOM ET PRÉNOMS</span>
+            <span class="value">{{ data.conge.nom_emp }} {{ data.conge.prenom_emp }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">MATRICULE</span>
+            <span class="value">{{ data.conge.matricule }}</span>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeRejectModal()">Annuler</button>
-          <button class="btn btn-danger" (click)="confirmReject()" [disabled]="!rejectObservation.trim() || validating">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-            </svg>
-            Confirmer le rejet
-          </button>
-        </div>
       </div>
-    </div>
 
-    <!-- Interruption info if exists -->
-    <div class="info-section interruption-section" *ngIf="interruptionData">
-      <h3>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"
-          style="fill: #dc3545; vertical-align: middle; margin-right: 0.5rem;">
-          <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
-        </svg>
-        Congé Interrompu
-      </h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">Date d'interruption</span>
-          <span class="value">{{ interruptionData.interup_date }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Motif</span>
-          <span class="value">{{ interruptionData.interup_motif }}</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Jours restitués</span>
-          <span class="value highlight-success">{{ interruptionData.interup_restant }} jour(s)</span>
+      <hr class="section-divider">
+
+      <!-- Leave Details Section -->
+      <div class="info-section">
+        <h3>{{ data.absence_type === 'permission' ? 'Détails de la permission' : 'Détails du congé' }}</h3>
+        <div class="info-grid mt-3">
+          <div class="info-item">
+            <span class="label">TYPE</span>
+            <span class="value">{{ data.conge.typ_appelation }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">NOMBRE DE JOURS</span>
+            <span class="value highlight-success fw-bold">{{ data.conge.cng_nb_jour }} jour(s)</span>
+          </div>
+          <div class="info-item">
+            <span class="label">DATE DE DÉBUT</span>
+            <span class="value">{{ data.conge.cng_debut | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">DATE DE FIN</span>
+            <span class="value">{{ data.conge.cng_fin | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="info-item" *ngIf="data.absence_type === 'conge'">
+            <span class="label">RÉGION</span>
+            <span class="value">{{ data.conge.nom_region }}</span>
+          </div>
         </div>
       </div>
+
+      <hr class="section-divider">
+
+      <!-- Substitutes Section -->
+      <div class="info-section" *ngIf="data.interims && data.interims.length > 0">
+        <h3>Suppléants durant l'absence</h3>
+        <div class="interim-list mt-3">
+          <div class="interim-item" *ngFor="let interim of data.interims">
+            <mat-icon>person</mat-icon>
+            <span class="value">{{ interim.nom_emp }} {{ interim.prenom_emp }}</span>
+            <span class="dates">(Région: {{ interim.nom_region }})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Validation Section (For Leaves) -->
+      <div class="info-section" *ngIf="data.absence_type === 'conge' && validationStatus">
+        <div class="d-flex align-items-center mb-3">
+          <mat-icon class="me-2 text-primary">verified_user</mat-icon>
+          <h3 class="mb-0 border-0">Statut de Validation</h3>
+        </div>
+
+        <div class="validation-steps mt-4 mb-4">
+          <div class="step" *ngFor="let step of validationStatus.steps" [class.validated]="step.status === 'validated'"
+            [class.current]="step.step === validationStatus.current_step">
+            <div class="step-icon shadow-sm">
+              <svg *ngIf="step.status === 'validated'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20"
+                height="20">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+              <svg *ngIf="step.status !== 'validated'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20"
+                height="20">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+              </svg>
+            </div>
+            <div class="step-info">
+              <span class="step-name">{{ step.step }}</span>
+              <span class="step-date" *ngIf="step.val_date">{{ step.val_date | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Required for Leave -->
+        <div class="validation-actions"
+          *ngIf="validationStatus.current_step && !validationStatus.is_rejected && !validationStatus.is_fully_validated">
+          <div class="action-header">
+            <span>Action requise par :</span>
+            <span class="current-signer">{{ validationStatus.current_step }}</span>
+          </div>
+          <div class="action-buttons mt-3">
+            <button class="btn btn-success" (click)="approveStep()" [disabled]="validating">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+              Valider
+            </button>
+            <button class="btn btn-danger" (click)="openRejectModal()" [disabled]="validating">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                <path
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+              </svg>
+              Rejeter
+            </button>
+          </div>
+          <div class="action-feedback mt-2" *ngIf="validationMsg">
+            <span [class.success]="!validationError" [class.error]="validationError">{{ validationMsg }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Required for Permission (Admin) -->
+      <div class="info-section validation-section" *ngIf="data.absence_type === 'permission' && !isValidated()">
+        <h3>Action requise</h3>
+        <div class="validation-actions mt-3">
+          <div class="d-flex align-items-center mb-3">
+            <mat-icon class="text-success me-2">verified</mat-icon>
+            <span class="fw-bold">Validation directe par l'Administrateur</span>
+          </div>
+          <p class="text-muted small mb-4">Cette demande de permission doit être validée pour être décomptée du solde
+            annuel de l'employé.</p>
+          <div class="action-buttons">
+            <button class="btn btn-success px-4 shadow-sm" (click)="openValidateModal()" [disabled]="validating">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+              Valider
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
+<!-- Modal Reject -->
+<div class="modal-overlay" *ngIf="showRejectModal" (click)="closeRejectModal()">
+  <div class="modal-content shadow-lg border-0" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Motif du rejet</h3>
+      <button class="modal-close" (click)="closeRejectModal()">×</button>
+    </div>
+    <div class="modal-body py-4">
+      <p>Indiquez la raison pour laquelle vous rejetez cette demande.</p>
+      <div class="form-group">
+        <textarea [(ngModel)]="rejectObservation" rows="4" 
+                  placeholder="Expliquez la raison du rejet ici..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary px-4" (click)="closeRejectModal()">Annuler</button>
+      <button class="btn btn-danger px-4" (click)="confirmReject()" 
+              [disabled]="validating || !rejectObservation.trim()">
+        <span class="spinner-border spinner-border-sm me-1" *ngIf="validating"></span>
+        Confirmer le rejet
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Validate (Professional - Centered) -->
+<div class="modal-overlay" *ngIf="showValidateModal" (click)="closeValidateModal()">
+  <div class="modal-content shadow-lg border-0" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="fw-bold">Confirmer la validation</h3>
+      <button class="modal-close" (click)="closeValidateModal()">×</button>
+    </div>
+    <div class="modal-body py-5 text-center">
+      <div class="bg-success-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" 
+           style="width: 80px; height: 80px; background: #ecfdf5;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" fill="#10b981">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+        </svg>
+      </div>
+      <h4 class="mb-3 text-dark fw-bold">Valider la permission ?</h4>
+      <p class="text-muted mb-0">L'absence sera enregistrée et le solde sera débité de :</p>
+      <div class="display-6 fw-bold text-success mt-1">{{ data.conge.cng_nb_jour }} jour(s)</div>
+    </div>
+    <div class="modal-footer justify-content-center bg-white border-0 pb-4">
+      <button class="btn btn-secondary px-4 mx-2" (click)="closeValidateModal()">Annuler</button>
+      <button class="btn btn-success px-4 mx-2 shadow-sm" (click)="confirmValidation()" [disabled]="validating">
+        <span class="spinner-border spinner-border-sm me-1" *ngIf="validating"></span>
+        Confirmer la validation
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loader -->
 <div *ngIf="loading" class="loading">
   <mat-icon class="spinner">hourglass_empty</mat-icon>
   <span>Chargement...</span>
 </div>
 
+<!-- Error -->
 <div *ngIf="errorMsg" class="error-msg">
   <mat-icon>error_outline</mat-icon>
   <span>{{ errorMsg }}</span>
 </div>
+
+<style>
+  .detail-wrapper {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+  }
+
+  .card-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e5e7eb;
+  }
+
+  .section-divider { border: 0; border-top: 1px solid #edf2f7; margin: 2rem 0; }
+  .extra-small { font-size: 0.75rem; }
+  .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .bg-success-light { background-color: #ecfdf5; }
+</style>

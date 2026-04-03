@@ -14,7 +14,6 @@ class DemandeRembModel extends Model
         'rem_montant',
         'rem_montant_lettre',
         'rem_status',
-        'rem_is_centre',
         'fac_code',
         'obj_code',
         'cen_code',

@@ -231,7 +231,7 @@ class ChatbotService
                 ->groupStart()
                     ->like('emp_nom', $searchTerm)
                     ->orLike('emp_prenom', $searchTerm)
-                    ->orLike('emp_imarmp', $searchTerm)
+                    ->orLike('emp_im_armp', $searchTerm)
                 ->groupEnd()
                 ->first();
             
@@ -253,7 +253,7 @@ class ChatbotService
             if (empty($soldes)) {
                 return [
                     'text' => "📋 **{$employee['emp_nom']} {$employee['emp_prenom']}**\n" .
-                             "Matricule: {$employee['emp_imarmp']}\n\n" .
+                             "Matricule: {$employee['emp_im_armp']}\n\n" .
                              "❌ Aucun solde de congé enregistré.",
                     'suggestions' => ['Demandes de cet employé', 'Aide']
                 ];
@@ -272,7 +272,7 @@ class ChatbotService
             }
             
             $text = "👤 **{$employee['emp_nom']} {$employee['emp_prenom']}**\n";
-            $text .= "Matricule: {$employee['emp_imarmp']}\n\n";
+            $text .= "Matricule: {$employee['emp_im_armp']}\n\n";
             $text .= "📊 **Soldes disponibles (FIFO)**\n\n{$details}\n";
             $text .= "**Total: {$totalRestant} jours**";
             
@@ -297,8 +297,8 @@ class ChatbotService
     {
         try {
             $builder = $this->congeModel
-                ->select('conge.*, employee.emp_nom, employee.emp_prenom, type_conge.typ_appelation')
-                ->join('employee', 'employee.emp_code = conge.emp_code')
+                ->select('conge.*, employe.emp_nom, employe.emp_prenom, type_conge.typ_appelation')
+                ->join('employe', 'employe.emp_code = conge.emp_code')
                 ->join('type_conge', 'type_conge.typ_code = conge.typ_code');
             
             // Appliquer filtre statut
@@ -441,7 +441,7 @@ class ChatbotService
                 ->groupStart()
                     ->like('emp_nom', $searchTerm)
                     ->orLike('emp_prenom', $searchTerm)
-                    ->orLike('emp_imarmp', $searchTerm)
+                    ->orLike('emp_im_armp', $searchTerm)
                 ->groupEnd()
                 ->limit(5)
                 ->findAll();
@@ -454,7 +454,7 @@ class ChatbotService
             
             foreach ($employees as $emp) {
                 $text .= "• {$emp['emp_nom']} {$emp['emp_prenom']}\n";
-                $text .= "  Matricule: {$emp['emp_imarmp']}\n\n";
+                $text .= "  Matricule: {$emp['emp_im_armp']}\n\n";
             }
             
             return [

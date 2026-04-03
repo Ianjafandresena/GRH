@@ -1,0 +1,153 @@
+<div class="dialog-container">
+    <h2 mat-dialog-title>
+        <mat-icon>person_outline</mat-icon>
+        Modifier le profil de l'employé
+    </h2>
+    <div class="user-subtitle" *ngIf="data.employe">
+        {{ data.employe.emp_prenom }} {{ data.employe.emp_nom }}
+    </div>
+
+    <mat-dialog-content>
+        <form [formGroup]="form" class="modifier-form">
+
+            <!-- Informations Personnelles -->
+            <div class="form-group-title">Informations Personnelles</div>
+            <div class="form-grid">
+                <mat-form-field appearance="outline">
+                    <mat-label>Titre</mat-label>
+                    <mat-select formControlName="emp_titre">
+                        <mat-option value="M.">M.</mat-option>
+                        <mat-option value="Mme">Mme</mat-option>
+                        <mat-option value="Dr.">Dr.</mat-option>
+                        <mat-option value="Pr.">Pr.</mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>badge</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Date de naissance *</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="emp_datenaissance" (click)="picker.open()"
+                        (focus)="picker.open()" readonly />
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                    <mat-icon matPrefix>cake</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Nom *</mat-label>
+                    <input matInput formControlName="emp_nom" placeholder="Nom de famille" />
+                    <mat-icon matPrefix>person</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Prénom *</mat-label>
+                    <input matInput formControlName="emp_prenom" placeholder="Prénom" />
+                    <mat-icon matPrefix>person_outline</mat-icon>
+                </mat-form-field>
+
+                <div class="sexe-field full-width">
+                    <label class="field-label">Sexe *</label>
+                    <mat-radio-group formControlName="emp_sexe" class="sexe-radio-group">
+                        <mat-radio-button [value]="true" class="sexe-option">
+                            <mat-icon>male</mat-icon> <span>Homme</span>
+                        </mat-radio-button>
+                        <mat-radio-button [value]="false" class="sexe-option">
+                            <mat-icon>female</mat-icon> <span>Femme</span>
+                        </mat-radio-button>
+                    </mat-radio-group>
+                </div>
+            </div>
+
+            <!-- Identifiants -->
+            <div class="form-group-title">Identifiants</div>
+            <div class="form-grid">
+                <mat-form-field appearance="outline">
+                    <mat-label>IM ARMP *</mat-label>
+                    <input matInput formControlName="emp_im_armp" />
+                    <mat-icon matPrefix>fingerprint</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>IM État</mat-label>
+                    <input matInput formControlName="emp_im_etat" />
+                    <mat-icon matPrefix>verified</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>CIN *</mat-label>
+                    <input matInput formControlName="emp_cin" placeholder="XXX XXX XXX XXX" (input)="formatCin($event)"
+                        maxlength="15" />
+                    <mat-icon matPrefix>perm_identity</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Matricule</mat-label>
+                    <input matInput formControlName="emp_matricule" />
+                    <mat-icon matPrefix>confirmation_number</mat-icon>
+                </mat-form-field>
+            </div>
+
+            <!-- Contact & Carrière -->
+            <div class="form-group-title">Contact & Carrière</div>
+            <div class="form-grid">
+                <mat-form-field appearance="outline">
+                    <mat-label>Email *</mat-label>
+                    <input matInput type="email" formControlName="emp_mail" />
+                    <mat-icon matPrefix>email</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Contact *</mat-label>
+                    <input matInput formControlName="emp_contact" />
+                    <mat-icon matPrefix>phone</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Date d'entrée *</mat-label>
+                    <input matInput [matDatepicker]="pickerEntree" formControlName="date_entree"
+                        (click)="pickerEntree.open()" (focus)="pickerEntree.open()" readonly />
+                    <mat-datepicker-toggle matSuffix [for]="pickerEntree"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerEntree></mat-datepicker>
+                    <mat-icon matPrefix>event</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Type d'entrée *</mat-label>
+                    <mat-select formControlName="e_type_code">
+                        <mat-option *ngFor="let type of typesEntree" [value]="type.e_type_code">
+                            {{ type.e_type_motif }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>login</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Statut ARMP</mat-label>
+                    <mat-select formControlName="stt_armp_code">
+                        <mat-option *ngFor="let statut of statutsArmp" [value]="statut.stt_armp_code">
+                            {{ statut.stt_armp_statut }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>folder_shared</mat-icon>
+                </mat-form-field>
+            </div>
+
+            <div class="error-message" *ngIf="errorMessage">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ errorMessage }}</span>
+            </div>
+        </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions>
+        <button mat-stroked-button (click)="onCancel()" [disabled]="loading" class="cancel-btn">
+            Annuler
+        </button>
+        <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || loading"
+            class="save-btn">
+            <mat-spinner *ngIf="loading" diameter="18"
+                style="margin-right: 8px; display: inline-block; vertical-align: middle;"></mat-spinner>
+            <span *ngIf="!loading">Enregistrer les modifications</span>
+        </button>
+    </mat-dialog-actions>
+</div>

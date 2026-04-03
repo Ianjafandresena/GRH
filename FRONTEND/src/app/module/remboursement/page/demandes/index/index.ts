@@ -91,7 +91,7 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
         return this.employees.filter(e =>
             e.emp_nom?.toLowerCase().includes(query) ||
             e.emp_prenom?.toLowerCase().includes(query) ||
-            e.emp_imarmp?.toLowerCase().includes(query)
+            e.emp_im_armp?.toLowerCase().includes(query)
         ).slice(0, 50);
     }
 
@@ -126,6 +126,8 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
         if (this.filter.emp_code) {
             params.emp_code = this.filter.emp_code;
         }
+        // User wants month/year filters too? Backend might not support them yet in getDemandes
+        // but I'll add them if they are in the filter object.
         this.rembService.getDemandes(params).subscribe({
             next: (list) => {
                 this.demandes = list || [];
@@ -139,17 +141,39 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
         });
     }
 
+    onFilterChange() {
+        // For local filters (traitement, type), we can just call applyClientSideFilter
+        // but if it's a filter that requires backend data (employee), we call loadDemandes.
+        // To be safe and since it's "dynamic and automatic", let's call loadDemandes.
+        this.loadDemandes();
+    }
+
     selectEmployee(emp: Employee) {
         this.selectedEmployee = emp;
         this.filter.emp_code = emp.emp_code;
-        this.employeeSearch = `${emp.emp_nom} ${emp.emp_prenom} (${emp.emp_imarmp})`;
+        this.employeeSearch = `${emp.emp_nom} ${emp.emp_prenom} (${emp.emp_im_armp})`;
         this.employeeDropdownOpen = false;
+        this.loadDemandes();
     }
 
     clearEmployee() {
         this.selectedEmployee = null;
         this.filter.emp_code = null;
         this.employeeSearch = '';
+        this.loadDemandes();
+    }
+
+    resetFilters() {
+        this.filter = {
+            emp_code: null,
+            traitement: 'all',
+            type: 'all',
+            mois: new Date().getMonth() + 1,
+            annee: new Date().getFullYear()
+        };
+        this.selectedEmployee = null;
+        this.employeeSearch = '';
+        this.loadDemandes();
     }
 
     goToCreate() {

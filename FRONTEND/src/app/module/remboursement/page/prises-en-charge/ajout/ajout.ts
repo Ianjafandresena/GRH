@@ -124,7 +124,7 @@ export class AjoutPriseEnChargeComponent {
         const term = this.empSearchText.toLowerCase();
         this.filteredEmployees = this.employees.filter(e =>
             (e.emp_nom + ' ' + e.emp_prenom).toLowerCase().includes(term) ||
-            e.emp_imarmp.toLowerCase().includes(term)
+            e.emp_im_armp.toLowerCase().includes(term)
         );
         this.showDropdown = true;
     }

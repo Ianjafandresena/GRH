@@ -364,39 +364,34 @@ form {
 // Mode Toggle (Style Cyan unifié)
 .mode-toggle {
     display: flex;
-    gap: 0;
+    gap: $spacing-md;
     margin-bottom: $spacing-xl;
-    padding: 0;
-    background: transparent;
-    border-radius: $radius-sm;
-    overflow: hidden;
-    border: 1px solid #ddd;
+    padding: $spacing-md;
+    background: $bg-input;
+    border-radius: $radius-md;
 
     button {
         flex: 1;
         padding: 0.75rem 1.5rem;
-        border: none;
+        border: 2px solid $border-light;
         background: white;
         color: $secondary;
         font-size: 1rem;
         font-weight: 600;
+        border-radius: $radius-sm;
         cursor: pointer;
         @include transition-standard;
-        border-right: 1px solid #ddd;
-
-        &:last-child {
-            border-right: none;
-        }
 
         &:hover {
-            background: #f8fbff;
-            color: #038ba1; // darken(#04acc2, 10%)
+            border-color: $primary-cyan;
+            color: $primary-cyan;
         }
 
         &.active {
             background: $primary-cyan;
+            border-color: $primary-cyan;
             color: white;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(4, 172, 194, 0.3);
         }
     }
 }
@@ -432,17 +427,26 @@ form {
 // Empty State
 .empty-state {
     text-align: center;
-    padding: $spacing-xl;
+    padding: $spacing-lg !important;
     color: $secondary;
+    background: rgba($bg-input, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 
     i {
-        font-size: 3rem;
-        margin-bottom: $spacing-md;
-        opacity: 0.5;
+        font-size: 2.5rem;
+        margin-bottom: $spacing-sm;
+        opacity: 0.4;
+        display: block;
     }
 
     p {
         font-size: $font-size-base;
+        margin: 0;
+        font-weight: 500;
     }
 }
 
@@ -451,4 +455,26 @@ form {
     text-align: center;
     padding: $spacing-xl;
     color: $secondary;
+}
+
+// Selected Employee Info Card (Unifié)
+.selected-employee-info {
+    margin-top: $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: $radius-md;
+    border-left: 4px solid $primary-blue;
+
+    .info-row {
+        display: flex;
+        gap: $spacing-xs;
+        font-size: $font-size-sm;
+        color: #374151;
+        padding: 0.15rem 0;
+
+        strong {
+            color: #0369a1;
+            min-width: 80px;
+        }
+    }
 }

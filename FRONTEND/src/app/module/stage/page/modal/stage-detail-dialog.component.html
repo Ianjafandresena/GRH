@@ -1,0 +1,111 @@
+<h2 mat-dialog-title>
+    <mat-icon>visibility</mat-icon>
+    Détails du Stage
+</h2>
+
+<mat-dialog-content>
+    <section class="detail-section">
+        <h3><mat-icon>school</mat-icon> Informations du Stage</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="label">Stagiaire</span>
+                <span class="value">{{ stage.stgr_prenom }} {{ stage.stgr_nom }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Encadreur</span>
+                <span class="value">{{ stage.encadreur_prenom || '-' }} {{ stage.encadreur_nom || '' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Thème</span>
+                <span class="value">{{ stage.stg_theme || '-' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Établissement</span>
+                <span class="value">{{ stage.etab_nom || '-' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Date début</span>
+                <span class="value">{{ formatDate(stage.stg_date_debut) }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Date fin</span>
+                <span class="value">{{ formatDate(stage.stg_date_fin) }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Durée</span>
+                <span class="value">{{ stage.stg_duree || '-' }} jours</span>
+            </div>
+        </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <section class="detail-section">
+        <h3><mat-icon>event_busy</mat-icon> Assiduité</h3>
+
+        <div *ngIf="loadingEval" class="loading-inline">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>Chargement...</span>
+        </div>
+
+        <div *ngIf="!loadingEval && !evaluation" class="no-data-inline">
+            <mat-icon>info</mat-icon>
+            <span>Aucune évaluation enregistrée</span>
+        </div>
+
+        <div *ngIf="!loadingEval && evaluation" class="detail-grid">
+            <div class="detail-item">
+                <span class="label">Nombre d'absences</span>
+                <span class="value">{{ evaluation.asdt_nb_abscence ?? '-' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Nombre de retards</span>
+                <span class="value">{{ evaluation.asdt_nb_retard ?? '-' }}</span>
+            </div>
+            <div class="detail-item full-width">
+                <span class="label">Remarque</span>
+                <span class="value">{{ evaluation.asdt_remarque || '-' }}</span>
+            </div>
+        </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <section class="detail-section">
+        <h3><mat-icon>rate_review</mat-icon> Évaluation</h3>
+
+        <div *ngIf="!loadingEval && !evaluation" class="no-data-inline">
+            <mat-icon>info</mat-icon>
+            <span>Aucune évaluation enregistrée</span>
+        </div>
+
+        <div *ngIf="!loadingEval && evaluation" class="detail-grid">
+            <div class="detail-item">
+                <span class="label">Lieu d'évaluation</span>
+                <span class="value">{{ evaluation.evstg_lieu || '-' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Note</span>
+                <span class="value highlight">{{ evaluation.evstg_note ?? '-' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Aptitude</span>
+                <span class="value">{{ evaluation.evstg_aptitude || '-' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">Date d'évaluation</span>
+                <span class="value">{{ evaluation.evstg_date_eval || '-' }}</span>
+            </div>
+        </div>
+    </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button color="accent" (click)="telechargerDemandeAttestation()">
+        <mat-icon>description</mat-icon>
+        Demander Attestation
+    </button>
+    <button mat-raised-button color="primary" (click)="onClose()">
+        Fermer
+    </button>
+</mat-dialog-actions>

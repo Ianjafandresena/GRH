@@ -1,0 +1,282 @@
+<div class="creer-affectation-container" @fadeIn>
+    <!-- Page Header (ERPNext Style) -->
+    <header class="header-section">
+        <div class="header-content">
+            <h1>
+                <mat-icon>assignment_ind</mat-icon>
+                Nouvelle Affectation
+            </h1>
+            <p class="subtitle">Assignez un employé à un nouveau poste avec analyse d'adéquation des compétences.</p>
+        </div>
+
+        <div class="header-actions">
+            <!-- Dynamic Save Status or Quick Links could go here -->
+        </div>
+    </header>
+
+    <mat-card class="form-card">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon>edit_note</mat-icon>
+                Configuration de l'Affectation
+            </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            <form [formGroup]="affectationForm" (ngSubmit)="onSubmit()">
+
+                <!-- Part 1: Employee Selection -->
+                <section class="form-section">
+                    <div class="section-title">
+                        <mat-icon>person_search</mat-icon> Identification du Collaborateur
+                    </div>
+
+                    <div class="form-grid full-width">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Rechercher un employé</mat-label>
+                            <input type="text" matInput formControlName="emp_code" [matAutocomplete]="autoEmp"
+                                placeholder="Nom, prénom ou matricule...">
+                            <mat-autocomplete #autoEmp="matAutocomplete" [displayWith]="displayEmploye.bind(this)"
+                                (optionSelected)="onEmployeSelected($event)">
+                                <mat-option *ngFor="let emp of filteredEmployes$ | async" [value]="emp">
+                                    <div class="emp-option">
+                                        <span class="emp-name">{{ emp.emp_nom }} {{ emp.emp_prenom }}</span>
+                                        <span class="emp-mat text-muted" *ngIf="emp.emp_im_armp">IM ARMP: {{
+                                            emp.emp_im_armp }}</span>
+                                    </div>
+                                </mat-option>
+                            </mat-autocomplete>
+                            <mat-icon matSuffix color="primary">search</mat-icon>
+                            <mat-error *ngIf="affectationForm.get('emp_code')?.hasError('required')">L'employé est
+                                requis pour continuer.</mat-error>
+                        </mat-form-field>
+
+                        <!-- High-End Dynamic Context Box -->
+                        <div *ngIf="lastAffectation" class="last-affectation-box" @fadeIn>
+                            <div class="box-header">
+                                <mat-icon>history</mat-icon>
+                                <span>Dernière affectation connue</span>
+                            </div>
+                            <div class="box-content">
+                                <div class="info-item">
+                                    <span class="label">Poste Précédent</span>
+                                    <span class="value">{{ lastAffectation.pst_fonction }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Période de service</span>
+                                    <span class="value">{{ lastAffectation.affec_date_debut | date:'dd MMM yyyy' }} - {{
+                                        lastAffectation.affec_date_fin | date:'dd MMM yyyy' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Motif d'affectation précédente</span>
+                                    <span class="value">{{ lastAffectation.m_aff_motif }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Part 2: Assignment Destination -->
+                <section class="form-section mt-4">
+                    <div class="section-title">
+                        <mat-icon>location_on</mat-icon> Destination & Poste
+                    </div>
+
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Service de destination</mat-label>
+                            <mat-select formControlName="srvc_code">
+                                <mat-option [value]="">Tout les services</mat-option>
+                                <mat-option *ngFor="let service of services" [value]="service.srvc_code">
+                                    {{ service.srvc_nom }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Poste à occuper</mat-label>
+                            <input type="text" matInput formControlName="pst_code" [matAutocomplete]="autoPoste"
+                                placeholder="Rechercher un poste vacant...">
+                            <mat-autocomplete #autoPoste="matAutocomplete" [displayWith]="displayPoste.bind(this)">
+                                <mat-option *ngFor="let poste of filteredPostes$ | async" [value]="poste">
+                                    {{ poste.pst_fonction }}
+                                </mat-option>
+                            </mat-autocomplete>
+                            <mat-icon matSuffix color="primary">work_outline</mat-icon>
+                            <mat-error *ngIf="affectationForm.get('pst_code')?.hasError('required')">Le poste est
+                                obligatoire.</mat-error>
+                        </mat-form-field>
+                    </div>
+                </section>
+
+                <!-- Part 3: Contractual Terms -->
+                <section class="form-section mt-4">
+                    <div class="section-title">
+                        <mat-icon>description</mat-icon> Modalités Contractuelles
+                    </div>
+
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Motif de l'affectation</mat-label>
+                            <mat-select formControlName="m_aff_code">
+                                <mat-option *ngFor="let motif of motifs" [value]="motif.m_aff_code">
+                                    {{ motif.m_aff_motif }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Type de contrat</mat-label>
+                            <mat-select formControlName="tcontrat_code">
+                                <mat-option *ngFor="let type of typesContrat" [value]="type.tcontrat_code">
+                                    {{ type.tcontrat_nom }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de prise de fonction</mat-label>
+                            <input matInput [matDatepicker]="pickerDebut" formControlName="affec_date_debut"
+                                (click)="pickerDebut.open()" readonly>
+                            <mat-datepicker-toggle matSuffix [for]="pickerDebut"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerDebut></mat-datepicker>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" *ngIf="shouldShowDateFin()">
+                            <mat-label>Date de fin d'affectation</mat-label>
+                            <input matInput [matDatepicker]="pickerFin" formControlName="affec_date_fin"
+                                [readonly]="isDateFinReadonly()" (click)="!isDateFinReadonly() && pickerFin.open()">
+                            <mat-datepicker-toggle matSuffix [for]="pickerFin"
+                                [disabled]="isDateFinReadonly()"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerFin></mat-datepicker>
+                        </mat-form-field>
+                    </div>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Note additionnelle / Commentaire</mat-label>
+                        <textarea matInput formControlName="affec_commentaire" rows="3"
+                            placeholder="Précisions sur les modalités d'affectation..."></textarea>
+                    </mat-form-field>
+                </section>
+
+                <!-- Part 4: Gap Analysis (Smart Section) -->
+                <div *ngIf="analysisDone" class="analysis-section" @fadeIn>
+                    <h3>
+                        <mat-icon>insights</mat-icon>
+                        Smart Gap Analysis
+                    </h3>
+
+                    <div class="table-container" *ngIf="analysisResult.length > 0">
+                        <table mat-table [dataSource]="analysisResult" class="analysis-table">
+                            <!-- Compétence Column -->
+                            <ng-container matColumnDef="competence">
+                                <th mat-header-cell *matHeaderCellDef> Compétence ciblée </th>
+                                <td mat-cell *matCellDef="let element">
+                                    <div class="comp-info">
+                                        <span class="comp-name">{{element.competence}}</span>
+                                        <span class="comp-domain">{{element.domaine}}</span>
+                                    </div>
+                                </td>
+                            </ng-container>
+
+                            <!-- Niveau Requis Column -->
+                            <ng-container matColumnDef="niveauRequis">
+                                <th mat-header-cell *matHeaderCellDef> Niveau Requis (R) </th>
+                                <td mat-cell *matCellDef="let element">
+                                    <div class="level-display">
+                                        <span class="level-text">Objectif : {{element.niveauRequis}}/5</span>
+                                        <mat-progress-bar mode="determinate" [value]="element.niveauRequis * 20"
+                                            color="accent"></mat-progress-bar>
+                                    </div>
+                                </td>
+                            </ng-container>
+
+                            <!-- Niveau Acquis Column -->
+                            <ng-container matColumnDef="niveauAcquis">
+                                <th mat-header-cell *matHeaderCellDef> Profil Actuel (A) </th>
+                                <td mat-cell *matCellDef="let element">
+                                    <div class="level-display">
+                                        <span class="level-text">Maîtrise : {{element.niveauAcquis || 0}}/5</span>
+                                        <mat-progress-bar mode="determinate" [value]="(element.niveauAcquis || 0) * 20"
+                                            [color]="(element.niveauAcquis || 0) >= element.niveauRequis ? 'primary' : 'warn'"></mat-progress-bar>
+                                    </div>
+                                </td>
+                            </ng-container>
+
+                            <!-- Evaluation Column -->
+                            <ng-container matColumnDef="status">
+                                <th mat-header-cell *matHeaderCellDef> Évaluation d'Adéquation </th>
+                                <td mat-cell *matCellDef="let element">
+                                    <span class="status-badge" [ngClass]="{
+                                        'status-ok': element.status === 'OK',
+                                        'status-warn': element.status === 'A_RENFORCER',
+                                        'status-error': element.status === 'MANQUANT'
+                                    }">
+                                        <mat-icon>{{ element.status === 'OK' ? 'verified' : (element.status ===
+                                            'A_RENFORCER' ? 'trending_up' : 'report_problem') }}</mat-icon>
+                                        {{ element.status === 'OK' ? 'Compatible' : (element.status === 'A_RENFORCER' ?
+                                        'À développer' : 'Non maîtrisé') }}
+                                    </span>
+                                </td>
+                            </ng-container>
+
+                            <tr mat-header-row
+                                *matHeaderRowDef="['competence', 'niveauRequis', 'niveauAcquis', 'status']"></tr>
+                            <tr mat-row
+                                *matRowDef="let row; columns: ['competence', 'niveauRequis', 'niveauAcquis', 'status'];">
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Non-Requirements Message -->
+                    <div class="empty-analysis" *ngIf="analysisResult.length === 0">
+                        <mat-icon
+                            style="font-size: 48px; width: 48px; height: 48px; color: #94a3b8; margin-bottom: 1rem;">verified_user</mat-icon>
+                        <p>Aucun pré-requis de compétence n'a été défini pour ce poste. L'affectation est considérée
+                            comme techniquement compatible par défaut.</p>
+                        <div class="status-badge status-ok">
+                            <mat-icon>check_circle</mat-icon> Validation automatique du profil
+                        </div>
+                    </div>
+
+                    <div class="confirmation-box">
+                        <mat-checkbox [(ngModel)]="confirmationChecked" [ngModelOptions]="{standalone: true}"
+                            color="primary">
+                            Je certifie avoir examiné l'adéquation du profil avec les exigences du poste et valide cette
+                            décision d'affectation.
+                        </mat-checkbox>
+                    </div>
+                </div>
+
+                <!-- Footer Messages & Errors -->
+                <div *ngIf="errorMessage" class="error-message" @fadeIn>
+                    <mat-icon>warning_amber</mat-icon>
+                    <span>{{ errorMessage }}</span>
+                </div>
+
+                <div *ngIf="successMessage" class="success-message" @fadeIn>
+                    <mat-icon>check_circle</mat-icon>
+                    <span>{{ successMessage }}</span>
+                </div>
+
+                <!-- Submission Actions -->
+                <div class="action-buttons">
+                    <button mat-button type="button" routerLink="/employes/lister" class="cancel-btn"
+                        [disabled]="loading">
+                        Annuler
+                    </button>
+                    <button mat-raised-button color="primary" type="submit" class="submit-btn"
+                        [disabled]="affectationForm.invalid || loading || (analysisDone && !confirmationChecked)">
+                        <mat-spinner *ngIf="loading" diameter="20"
+                            style="display:inline-block; margin-right: 8px;"></mat-spinner>
+                        <mat-icon *ngIf="!loading">{{ analysisResult.length === 0 && !analysisDone ? 'analytics' :
+                            'assignment_turned_in' }}</mat-icon>
+                        <span>{{ analysisResult.length === 0 && !analysisDone ? 'Analyser l\'adéquation' : 'Confirmer
+                            l\'affectation' }}</span>
+                    </button>
+                </div>
+
+            </form>
+        </mat-card-content>
+    </mat-card>
+</div>

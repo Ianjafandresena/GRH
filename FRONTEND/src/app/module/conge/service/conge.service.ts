@@ -10,11 +10,11 @@ import { Region } from '../model/region.model';
 
 @Injectable({ providedIn: 'root' })
 export class CongeService {
-  private congeUrl = environment.apiUrl + '/conge/';
-  private interimUrl = environment.apiUrl + '/interim_conge/';
-  private typeCongeUrl = environment.apiUrl + '/type_conge/';
-  private regionUrl = environment.apiUrl + '/region/';
-  private soldeCongeUrl = environment.apiUrl + '/solde_conge/';
+  private congeUrl = environment.apiUrl + '/conge';
+  private interimUrl = environment.apiUrl + '/interim_conge';
+  private typeCongeUrl = environment.apiUrl + '/type_conge';
+  private regionUrl = environment.apiUrl + '/region';
+  private soldeCongeUrl = environment.apiUrl + '/solde_conge';
   private exportUrl = environment.apiUrl + '/conge/export';
   private importUrl = environment.apiUrl + '/conge/import';
   private exportExcelUrl = environment.apiUrl + '/conge/export-excel';
@@ -30,15 +30,17 @@ export class CongeService {
   }
 
   getConge(id: number): Observable<Conge> {
-    return this.http.get<Conge>(this.congeUrl + id);
+    return this.http.get<Conge>(`${this.congeUrl}/${id}`);
   }
 
-  getCongeDetail(id: number): Observable<any> {
-    return this.http.get<any>(this.congeUrl + 'detail/' + id);
+  getCongeDetail(id: number, type?: string): Observable<any> {
+    let params: any = {};
+    if (type) params.type = type;
+    return this.http.get<any>(`${this.congeUrl}/detail/${id}`, { params });
   }
 
   downloadAttestationPdf(id: number): Observable<Blob> {
-    return this.http.get(this.congeUrl + 'attestation/' + id, { responseType: 'blob' });
+    return this.http.get(`${this.congeUrl}/attestation/${id}`, { responseType: 'blob' });
   }
 
   createInterimConge(data: InterimConge): Observable<any> {
@@ -65,7 +67,7 @@ export class CongeService {
   }
 
   getLastSoldeDispo(emp_code: number): Observable<any> {
-    return this.http.get<any>(this.soldeCongeUrl + 'last_dispo/' + emp_code);
+    return this.http.get<any>(`${this.soldeCongeUrl}/last_dispo/${emp_code}`);
   }
 
   exportCongesCsv(): Observable<Blob> {
@@ -84,7 +86,7 @@ export class CongeService {
    * Récupère les congés dans une plage de dates (pour vue calendrier)
    */
   getByDateRange(params: { start_date: string; end_date: string; direction?: string; service?: string }): Observable<any[]> {
-    return this.http.get<any[]>(this.congeUrl + 'by-date-range', { params });
+    return this.http.get<any[]>(`${this.congeUrl}/by-date-range`, { params });
   }
 
   // État de Congé
@@ -97,11 +99,11 @@ export class CongeService {
   }
 
   getEtatCongeByEmployee(empCode: number): Observable<any> {
-    return this.http.get<any>(environment.apiUrl + '/etat_conge/' + empCode);
+    return this.http.get<any>(`${environment.apiUrl}/etat_conge/${empCode}`);
   }
 
   // ================== PERMISSIONS (Fusion) ==================
-  private permissionUrl = environment.apiUrl + '/permission/';
+  private permissionUrl = environment.apiUrl + '/permission';
 
   /**
    * Créer une permission
@@ -121,7 +123,14 @@ export class CongeService {
    * Récupérer une permission spécifique
    */
   getPermission(id: number): Observable<any> {
-    return this.http.get<any>(this.permissionUrl + id);
+    return this.http.get<any>(`${this.permissionUrl}/${id}`);
+  }
+
+  /**
+   * Valider une permission (Admin)
+   */
+  validatePermission(id: number): Observable<any> {
+    return this.http.post<any>(`${this.permissionUrl}/${id}/validate`, {});
   }
 
   /**

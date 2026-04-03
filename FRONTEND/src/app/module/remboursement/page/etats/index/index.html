@@ -59,7 +59,7 @@
                         <div *ngFor="let emp of filteredEmployeesList" class="dropdown-item"
                             (mousedown)="selectEmployee(emp)">
                             {{ emp.emp_nom }} {{ emp.emp_prenom }}
-                            <span class="matricule">({{ emp.emp_imarmp }})</span>
+                            <span class="matricule">({{ emp.emp_im_armp }})</span>
                         </div>
                     </div>
                 </div>
@@ -148,9 +148,11 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
             <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell empty" colspan="7">
-                    <i class="fas fa-inbox"></i>
-                    <p>Aucun état de remboursement enregistré</p>
+                <td class="mat-cell" colspan="7">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Aucun état de remboursement enregistré</p>
+                    </div>
                 </td>
             </tr>
         </table>

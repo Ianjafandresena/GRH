@@ -83,7 +83,7 @@ export class EtatsIndexComponent implements OnInit, AfterViewInit {
                     emp_code: e.emp_code,
                     emp_nom: e.nom_emp || '',
                     emp_prenom: e.prenom_emp || '',
-                    emp_imarmp: e.matricule || ''
+                    emp_im_armp: e.matricule || ''
                 } as Employee);
             }
         });
@@ -144,7 +144,7 @@ export class EtatsIndexComponent implements OnInit, AfterViewInit {
         this.filteredEmployeesList = employees.filter(emp =>
             emp.emp_nom?.toLowerCase().includes(search) ||
             emp.emp_prenom?.toLowerCase().includes(search) ||
-            emp.emp_imarmp?.toLowerCase().includes(search)
+            emp.emp_im_armp?.toLowerCase().includes(search)
         ).slice(0, 10);
     }
 

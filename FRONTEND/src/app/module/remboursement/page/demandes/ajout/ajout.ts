@@ -18,7 +18,7 @@ export interface DemandeLocal {
     emp_code: number;
     emp_nom: string;
     emp_prenom: string;
-    emp_imarmp: string;
+    emp_im_armp: string;
     pec_code: number;
     pec_num: string;
     beneficiaire_type: string;
@@ -200,7 +200,7 @@ export class AjoutDemandeComponent implements OnInit {
         this.filteredEmployees = this.employees.filter(e =>
             e.emp_nom?.toLowerCase().includes(s) ||
             e.emp_prenom?.toLowerCase().includes(s) ||
-            e.emp_imarmp?.toLowerCase().includes(s)
+            e.emp_im_armp?.toLowerCase().includes(s)
         );
     }
 
@@ -377,6 +377,26 @@ export class AjoutDemandeComponent implements OnInit {
         this.showArticleDropdown = false;
     }
 
+    promptAddArticle() {
+        const name = prompt('Nom de l\'article / prestation :');
+        if (name && name.trim()) {
+            this.loading = true;
+            this.objetFactureService.createObjet(name.trim()).subscribe({
+                next: (newObj) => {
+                    this.layoutService.showSuccessMessage('Article ajouté avec succès');
+                    this.loadObjets(); // Refresh list
+                    this.selectArticle(newObj); // Auto-select it
+                    this.loading = false;
+                },
+                error: (err) => {
+                    console.error('Erreur ajout article', err);
+                    this.layoutService.showErrorMessage('Erreur lors de l\'ajout de l\'article');
+                    this.loading = false;
+                }
+            });
+        }
+    }
+
     clearArticle() {
         this.selectedArticle = null;
         this.demande.obj_code = null;
@@ -458,8 +478,8 @@ export class AjoutDemandeComponent implements OnInit {
             emp_prenom: this.demandeMode === 'agent'
                 ? (this.selectedEmployee!.emp_prenom || '')
                 : (this.selectedPec!.prenom_emp || ''),
-            emp_imarmp: this.demandeMode === 'agent'
-                ? (this.selectedEmployee!.emp_imarmp || '')
+            emp_im_armp: this.demandeMode === 'agent'
+                ? (this.selectedEmployee!.emp_im_armp || '')
                 : '',
             pec_code: this.selectedPec!.pec_code!,
             pec_num: this.selectedPec!.pec_num || '',

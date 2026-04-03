@@ -6,5 +6,5 @@ import { CongeService } from '../service/conge.service';
 
 export const congeListResolver: ResolveFn<any[]> = () => {
   const service = inject(CongeService);
-  return service.getConges().pipe(catchError(() => of([])));
+  return service.getAbsences().pipe(catchError(() => of([])));
 };

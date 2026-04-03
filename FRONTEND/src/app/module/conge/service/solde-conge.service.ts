@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export interface SoldeDetail {
     sld_code: number;
@@ -16,22 +17,21 @@ export interface SoldeDetail {
     providedIn: 'root'
 })
 export class SoldeCongeService {
-    private apiUrl = '/api/solde_conge';
-
-    constructor(public http: HttpClient) { }
+    private readonly http = inject(HttpClient);
+    private readonly apiUrl = environment.apiUrl + '/solde_conge';
 
     /**
      * Récupérer tous les soldes d'un employé (multi-années FIFO)
      */
     getSoldesByEmployee(empCode: number): Observable<SoldeDetail[]> {
-        return this.http.get<SoldeDetail[]>(`${this.apiUrl}?emp_code=${empCode}`);
+        return this.http.get<SoldeDetail[]>(`${this.apiUrl}?emp_code=${empCode}`, { withCredentials: true });
     }
 
     /**
      * Récupérer le reliquat le plus ancien (FIFO)
      */
     getLastDispo(empCode: number): Observable<any> {
-        return this.http.get(`${this.apiUrl}/last_dispo/${empCode}`);
+        return this.http.get(`${this.apiUrl}/last_dispo/${empCode}`, { withCredentials: true });
     }
 
     /**
@@ -39,5 +39,12 @@ export class SoldeCongeService {
      */
     getTotalDisponible(soldes: SoldeDetail[]): number {
         return soldes.reduce((sum, s) => sum + (s.sld_restant || 0), 0);
+    }
+
+    /**
+     * Attribuer manuellement un solde (Congé ou Permission)
+     */
+    attribuerManuellement(data: { emp_code: number, type: string, jours: number, annee: number }): Observable<any> {
+        return this.http.post(`${this.apiUrl}/attribuer`, data, { withCredentials: true });
     }
 }

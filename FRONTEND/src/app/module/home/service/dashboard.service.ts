@@ -164,7 +164,8 @@ export class DashboardService {
         });
 
         safePermissions.forEach(p => {
-            if (p.prm_debut) {
+            const isValidated = p.prm_status === true || p.prm_status === 't' || p.prm_status === 1 || p.prm_status === '1';
+            if (isValidated && p.prm_debut) {
                 const date = new Date(p.prm_debut);
                 const idx = buckets.findIndex(b => b.month === date.getMonth() && b.year === date.getFullYear());
                 if (idx !== -1) {
@@ -226,5 +227,9 @@ export class DashboardService {
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
         return this.http.get<any[]>(`${this.apiUrl}/dashboard/top-reimbursements`, { params, withCredentials: true });
+    }
+
+    getDashboardCarriereStats(filters?: any): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/dashboard-carriere`, { params: filters, withCredentials: true });
     }
 }

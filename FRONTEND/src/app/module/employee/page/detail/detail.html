@@ -1,143 +1,276 @@
-<div class="dialog-container">
-    <div class="dialog-header">
-        <div class="header-content">
-            <h2 *ngIf="!loading">{{ employee?.emp_nom }} {{ employee?.emp_prenom }}</h2>
-            <h2 *ngIf="loading">Chargement...</h2>
-            <span class="status-badge" [ngClass]="getStatusClass()" *ngIf="employee">
-                <mat-icon>{{ employee.is_available ? 'check_circle' : 'event_busy' }}</mat-icon>
-                {{ getStatusText() }}
-            </span>
+<div class="page-container" *ngIf="!loading && employee" @fadeInUp>
+    <!-- Header -->
+    <div class="header-actions">
+        <div class="breadcrumb">
+            <button mat-icon-button (click)="goBack()" class="back-btn">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <span class="root" (click)="goBack()">Employés</span>
+            <mat-icon>chevron_right</mat-icon>
+            <span class="current">{{ employee.emp_nom }} {{ employee.emp_prenom }}</span>
         </div>
-        <button class="close-btn" (click)="close()" mat-dialog-close>
-            <mat-icon>close</mat-icon>
+    </div>
+
+    <div class="main-layout">
+        <!-- Sidebar -->
+        <aside class="profile-sidebar">
+            <div class="avatar-wrapper">
+                <div class="avatar">
+                    {{ (employee.emp_nom || '?').charAt(0) }}{{(employee.emp_prenom || '').charAt(0)}}
+                </div>
+                <div class="status-indicator" [class.inactive]="!employee.is_available" [matTooltip]="getStatusText()">
+                </div>
+            </div>
+
+            <h1 class="profile-name">{{ employee.emp_nom }} {{ employee.emp_prenom }}</h1>
+            <p class="profile-title">{{ employee.pst_fonction || 'Sans poste défini' }}</p>
+
+            <div class="stats-list">
+                <div class="stat-item">
+                    <span class="label">Matricule</span>
+                    <span class="value">{{ employee.emp_matricule || 'N/A' }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">IM ARMP</span>
+                    <span class="value armp-badge">{{ employee.emp_im_armp || 'N/A' }}</span>
+                </div>
+                <div class="stat-item" *ngIf="employee.emp_im_etat">
+                    <span class="label">IM État</span>
+                    <span class="value">{{ employee.emp_im_etat }}</span>
+                </div>
+                <!-- Availability Badge inside Sidebar -->
+                <div class="availability-badge" [ngClass]="getStatusClass()" [matTooltip]="getStatusText()">
+                    <mat-icon>{{ employee.is_available ? 'check_circle' : 'error' }}</mat-icon>
+                    {{ getStatusText() }}
+                </div>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="content-area">
+
+
+
+            <!-- Group: Info & Assignment Side-by-Side -->
+            <div class="info-assignment-grid">
+                <!-- Card: Personal Information -->
+                <div class="details-card">
+                    <div class="card-header">
+                        <mat-icon>person</mat-icon>
+                        <h2>Informations Personnelles</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-vertical-stack">
+                            <div class="info-group">
+                                <span class="label">Sexe</span>
+                                <span class="value">
+                                    <mat-icon>{{ employee.emp_sexe ? 'male' : 'female' }}</mat-icon>
+                                    {{ employee.emp_sexe ? 'Homme' : 'Femme' }}
+                                </span>
+                            </div>
+                            <div class="info-group">
+                                <span class="label">Date de Naissance</span>
+                                <span class="value">{{ formatDate(employee.emp_datenaissance) }}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="label">Email Professionnel</span>
+                                <span class="value">{{ employee.emp_mail || 'Non renseigné' }}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="label">Contact Téléphonique</span>
+                                <span class="value">{{ employee.emp_contact || 'Non renseigné' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <div class="card-header">
+                        <mat-icon>business</mat-icon>
+                        <h2>Affectation & Poste Actuel</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="assignment-details">
+                            <div class="title-row">
+                                <h3 class="pst-title">{{ employee.pst_fonction || 'Non affecté' }}</h3>
+                                <div class="contrat-pill" *ngIf="employee.tcontrat_nom">
+                                    {{ employee.tcontrat_nom }}
+                                </div>
+                            </div>
+
+                            <div class="org-path" *ngIf="employee.dir_nom">
+                                <mat-icon>apartment</mat-icon>
+                                <span>{{ employee.dir_nom }} / {{ employee.srvc_nom || 'Siège' }}</span>
+                            </div>
+
+                            <div class="assignment-meta" *ngIf="employee.affec_date_debut">
+                                <div class="meta-item">
+                                    <div class="meta-icon">
+                                        <mat-icon>calendar_today</mat-icon>
+                                    </div>
+                                    <div class="meta-content">
+                                        <span class="label">Date de Prise de Fonction</span>
+                                        <span class="value">{{ formatDate(employee.affec_date_debut) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Family Information -->
+                <div class="details-card family-card">
+                    <div class="card-header">
+                        <mat-icon>family_restroom</mat-icon>
+                        <h2>Informations Familiales</h2>
+                        <span class="flex-spacer"></span>
+                        <button mat-button color="primary" class="btn-manage" (click)="goToFamilyMgmt()">
+                            Gérer
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-horizontal-grid">
+                            <div class="info-group">
+                                <span class="label">Conjoint(e)</span>
+                                <span class="value" *ngIf="getMarriedSpouse() as spouse; else noSpouse">
+                                    <mat-icon>favorite</mat-icon>
+                                    {{ spouse.conj_nom }} {{ spouse.conj_prenom }}
+                                </span>
+                                <ng-template #noSpouse>
+                                    <span class="value none">Aucun(e)</span>
+                                </ng-template>
+                            </div>
+                            <div class="info-group">
+                                <span class="label">Enfants</span>
+                                <span class="value">
+                                    <mat-icon>child_care</mat-icon>
+                                    {{ children.length }} enfant(s)
+                                </span>
+                                <div class="child-list-numbered" *ngIf="children.length > 0">
+                                    <div class="child-entry" *ngFor="let c of children; let i = index">
+                                        <span class="index">Enfant {{ i + 1 }} :</span>
+                                        <span class="name">{{ c.enf_nom }}</span>
+                                        <span class="dob" *ngIf="c.date_naissance">({{ formatDate(c.date_naissance)
+                                            }})</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Soldes Management -->
+            <div class="details-card management-card">
+                <div class="card-header">
+                    <mat-icon>account_balance_wallet</mat-icon>
+                    <h2>Gestion des Soldes</h2>
+                    <span class="flex-spacer"></span>
+                    <button mat-icon-button (click)="toggleAttributionForm()" class="btn-add-circle"
+                        [color]="showAttributionForm ? 'warn' : 'primary'" matTooltip="Attribuer manuellement">
+                        <mat-icon>{{ showAttributionForm ? 'cancel' : 'add_circle' }}</mat-icon>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- attribution-container -->
+                    <div class="attribution-container" *ngIf="showAttributionForm" @fadeInUp>
+                        <form [formGroup]="attributionForm" (ngSubmit)="attribuerSolde()" class="attribution-form">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Type</mat-label>
+                                <mat-select formControlName="type">
+                                    <mat-option value="conge">Congé</mat-option>
+                                    <mat-option value="permission">Permission</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Jours</mat-label>
+                                <input matInput type="number" formControlName="jours">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Année</mat-label>
+                                <input matInput type="number" formControlName="annee">
+                            </mat-form-field>
+                            <button mat-flat-button color="primary" type="submit" [disabled]="attributionForm.invalid">
+                                <mat-icon>add</mat-icon> Attribuer
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="soldes-grid">
+                        <div class="solde-section">
+                            <h4 class="section-title"><mat-icon>event</mat-icon> Congés</h4>
+                            <div class="table-responsive">
+                                <table class="minimal-table" *ngIf="soldesConge.length > 0; else noSoldesConge">
+                                    <thead>
+                                        <tr>
+                                            <th>Année</th>
+                                            <th>Réf</th>
+                                            <th>Initial</th>
+                                            <th>Restant</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let s of soldesConge">
+                                            <td>{{ s.sld_anne }}</td>
+                                            <td><span class="badge-token">{{ s.dec_num }}</span></td>
+                                            <td>{{ s.sld_initial }}</td>
+                                            <td class="bold text-primary">{{ s.sld_restant }}j</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <ng-template #noSoldesConge>
+                                    <p class="no-data">Aucun solde.</p>
+                                </ng-template>
+                            </div>
+                        </div>
+
+                        <div class="solde-section">
+                            <h4 class="section-title"><mat-icon>assignment_turned_in</mat-icon> Permissions</h4>
+                            <div class="table-responsive">
+                                <table class="minimal-table" *ngIf="soldesPermission.length > 0; else noSoldesPrm">
+                                    <thead>
+                                        <tr>
+                                            <th>Année</th>
+                                            <th>Disponible</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let p of soldesPermission">
+                                            <td>{{ p.sld_prm_anne }}</td>
+                                            <td class="bold text-teal">{{ p.sld_prm_dispo }}j</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <ng-template #noSoldesPrm>
+                                    <p class="no-data">Aucun solde.</p>
+                                </ng-template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Empty State / Not Found -->
+<div class="page-container" *ngIf="!loading && !employee" @fadeInUp>
+    <div class="card empty-card"
+        style="text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <mat-icon
+            style="font-size: 4rem; width: 4rem; height: 4rem; color: #ccc; margin-bottom: 1rem;">person_off</mat-icon>
+        <h2 style="margin-bottom: 0.5rem;">Employé introuvable</h2>
+        <p style="color: #666; margin-bottom: 2rem;">Les informations de cet employé n'ont pas pu être récupérées ou
+            l'employé n'existe plus.</p>
+        <button mat-flat-button color="primary" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon> Retour à la liste
         </button>
     </div>
+</div>
 
-    <div class="dialog-body" *ngIf="!loading && employee">
-        <!-- Personal Information -->
-        <section class="info-section">
-            <h3 class="section-title">
-                <mat-icon>person</mat-icon>
-                Informations Personnelles
-            </h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>Matricule</label>
-                    <span class="value">{{ employee.emp_imarmp || '-' }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Sexe</label>
-                    <span class="value">{{ employee.emp_sexe ? 'Masculin' : 'Féminin' }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Date d'embauche</label>
-                    <span class="value">{{ formatDate(employee.emp_date_embauche) }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Email</label>
-                    <span class="value">{{ employee.emp_mail || '-' }}</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Position & Affectation -->
-        <section class="info-section">
-            <h3 class="section-title">
-                <mat-icon>work</mat-icon>
-                Poste et Affectation
-            </h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>Poste/Fonction</label>
-                    <span class="value">{{ employee.pst_fonction || '-' }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Direction</label>
-                    <span class="value">
-                        {{ employee.dir_nom || '-' }}
-                        <span class="badge" *ngIf="employee.dir_abreviation">({{ employee.dir_abreviation }})</span>
-                    </span>
-                </div>
-                <div class="info-item">
-                    <label>Date d'affectation</label>
-                    <span class="value">{{ formatDate(employee.affec_date_debut) }}</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Recent Leaves -->
-        <section class="info-section" *ngIf="employee.recent_leaves?.length > 0">
-            <h3 class="section-title">
-                <mat-icon>event_available</mat-icon>
-                Historique des Congés Récents
-            </h3>
-            <div class="history-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Début</th>
-                            <th>Fin</th>
-                            <th>Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let leave of employee.recent_leaves">
-                            <td>{{ leave.typ_appelation || 'Congé' }}</td>
-                            <td>{{ formatDate(leave.cng_debut) }}</td>
-                            <td>{{ formatDate(leave.cng_fin) }}</td>
-                            <td>
-                                <span class="badge badge-success">Validé</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Recent Permissions -->
-        <section class="info-section" *ngIf="employee.recent_permissions?.length > 0">
-            <h3 class="section-title">
-                <mat-icon>schedule</mat-icon>
-                Historique des Permissions Récentes
-            </h3>
-            <div class="history-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Début</th>
-                            <th>Fin</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let perm of employee.recent_permissions">
-                            <td>{{ formatDate(perm.prm_debut) }}</td>
-                            <td>{{ formatDate(perm.prm_fin) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Empty state for history -->
-        <section class="info-section" *ngIf="!employee.recent_leaves?.length && !employee.recent_permissions?.length">
-            <div class="empty-history">
-                <mat-icon>history</mat-icon>
-                <p>Aucun historique d'absence disponible</p>
-            </div>
-        </section>
-    </div>
-
-    <div class="dialog-body" *ngIf="loading">
-        <div class="loading-state">
-            <p>Chargement des détails...</p>
-        </div>
-    </div>
-
-    <div class="dialog-body" *ngIf="!loading && !employee">
-        <div class="error-state">
-            <mat-icon>error_outline</mat-icon>
-            <p>Impossible de charger les informations de l'employé</p>
-        </div>
-    </div>
+<!-- Loading Overlay -->
+<div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Chargement des données de l'employé...</p>
 </div>

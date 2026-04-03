@@ -39,6 +39,7 @@ export class DetailDemandeComponent {
                 this.loading = false;
             },
             error: () => {
+                this.layoutService.showErrorMessage('Erreur lors du chargement des détails');
                 this.errorMsg = 'Erreur chargement';
                 this.loading = false;
             }
@@ -51,10 +52,14 @@ export class DetailDemandeComponent {
         this.rembService.validerRRH(this.demande.rem_code, 'APPROUVE').subscribe({
             next: (res: any) => {
                 this.demande = res.demande;
-                alert(res.message);
+                this.layoutService.showSuccessMessage(res.message || 'Validation RRH effectuée');
                 this.loadDetail(this.demande.rem_code);
             },
-            error: (err: any) => this.errorMsg = err.error?.message || 'Erreur validation RRH'
+            error: (err: any) => {
+                const msg = err.error?.message || 'Erreur validation RRH';
+                this.layoutService.showErrorMessage(msg);
+                this.errorMsg = msg;
+            }
         });
     }
 
@@ -63,10 +68,14 @@ export class DetailDemandeComponent {
         this.rembService.validerDAAF(this.demande.rem_code, 'APPROUVE').subscribe({
             next: (res: any) => {
                 this.demande = res.demande;
-                alert(res.message);
+                this.layoutService.showSuccessMessage(res.message || 'Validation DAAF effectuée');
                 this.loadDetail(this.demande.rem_code);
             },
-            error: (err: any) => this.errorMsg = err.error?.message || 'Erreur validation DAAF'
+            error: (err: any) => {
+                const msg = err.error?.message || 'Erreur validation DAAF';
+                this.layoutService.showErrorMessage(msg);
+                this.errorMsg = msg;
+            }
         });
     }
 
@@ -75,10 +84,14 @@ export class DetailDemandeComponent {
         this.rembService.engager(this.demande.rem_code).subscribe({
             next: (res: any) => {
                 this.demande = res.demande;
-                alert(`Engagement créé: ${res.num_engagement}`);
+                this.layoutService.showSuccessMessage(`Engagement créé avec succès: ${res.num_engagement}`);
                 this.loadDetail(this.demande.rem_code);
             },
-            error: (err: any) => this.errorMsg = err.error?.message || 'Erreur engagement'
+            error: (err: any) => {
+                const msg = err.error?.message || 'Erreur lors de l\'engagement';
+                this.layoutService.showErrorMessage(msg);
+                this.errorMsg = msg;
+            }
         });
     }
 
@@ -87,10 +100,14 @@ export class DetailDemandeComponent {
         this.rembService.payer(this.demande.rem_code).subscribe({
             next: (res: any) => {
                 this.demande = res.demande;
-                alert(res.message);
+                this.layoutService.showSuccessMessage(res.message || 'Paiement effectué');
                 this.loadDetail(this.demande.rem_code);
             },
-            error: (err: any) => this.errorMsg = err.error?.message || 'Erreur paiement'
+            error: (err: any) => {
+                const msg = err.error?.message || 'Erreur paiement';
+                this.layoutService.showErrorMessage(msg);
+                this.errorMsg = msg;
+            }
         });
     }
 
@@ -102,10 +119,14 @@ export class DetailDemandeComponent {
         this.rembService.rejeter(this.demande.rem_code, motif).subscribe({
             next: (res: any) => {
                 this.demande = res.demande;
-                alert(res.message);
+                this.layoutService.showSuccessMessage(res.message || 'Demande rejetée');
                 this.loadDetail(this.demande.rem_code);
             },
-            error: (err: any) => this.errorMsg = err.error?.message || 'Erreur rejet'
+            error: (err: any) => {
+                const msg = err.error?.message || 'Erreur lors du rejet';
+                this.layoutService.showErrorMessage(msg);
+                this.errorMsg = msg;
+            }
         });
     }
 
@@ -138,7 +159,7 @@ export class DetailDemandeComponent {
 
         dialogRef.afterClosed().subscribe(result => {
             if (result && result.success) {
-                alert(`Demande traitée! État: ${result.eta_code}, Total: ${result.eta_total} Ar`);
+                this.layoutService.showSuccessMessage(`Demande traitée avec succès ! (Total: ${result.eta_total} Ar)`);
                 this.loadDetail(this.demande.rem_code);
             }
         });
