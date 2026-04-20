@@ -53,6 +53,7 @@ export class HomeComponent implements OnInit {
   donutData = signal<any>({ stats: { approuve: 0, en_attente: 0, total: 0 }, montants: { en_attente: 0 } });
   topAbsent = signal<any[]>([]);
   topReimbursements = signal<any[]>([]);
+  absenceKPIs = signal<any>({ avg_days: 0, utilization_rate: 0, absenteeism_rate: 0, total_records: 0 });
 
   // UI State for Top Lists
   showAbsentList = signal(true);
@@ -82,6 +83,7 @@ export class HomeComponent implements OnInit {
       this.pendingRequests.set(resolvedData.pendingRequests);
       this.recentActivity.set(resolvedData.recentActivity);
       this.donutData.set(resolvedData.donutData);
+      this.absenceKPIs.set(resolvedData.absenceKPIs);
 
       // On initialise les dates par défaut pour l'UI même si on a les données
       const now = new Date();
@@ -146,6 +148,7 @@ export class HomeComponent implements OnInit {
     this.dashboardService.getReimbursementDistribution(start, end).subscribe(data => this.donutData.set(data));
     this.dashboardService.getTopAbsent(start, end).subscribe(data => this.topAbsent.set(data));
     this.dashboardService.getTopReimbursements(start, end).subscribe(data => this.topReimbursements.set(data));
+    this.dashboardService.getAbsenceKPIs({ start, end }).subscribe(data => this.absenceKPIs.set(data));
   }
 
   private processStats(stats: any) {

@@ -26,6 +26,27 @@
             margin: 0;
         }
     }
+
+    .header-actions {
+        display: flex;
+        gap: $spacing-sm;
+        align-items: center;
+    }
+}
+
+// Button variants
+.btn-success {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    &:hover { background-color: #059669; }
+}
+
+.btn-outline-primary {
+    background-color: transparent;
+    border: 1.5px solid $primary-blue;
+    color: $primary-blue;
+    &:hover { background-color: rgba($primary-blue, 0.05); }
 }
 
 // Filters row
@@ -176,12 +197,13 @@
 .table-container {
     background: white;
     border-radius: $radius-lg;
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: $shadow-sm;
 }
 
 table[mat-table] {
     width: 100%;
+    min-width: 1000px;
     background: transparent;
 
     .mat-mdc-header-row {

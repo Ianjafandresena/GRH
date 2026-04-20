@@ -1,4 +1,32 @@
 <div class="page-container">
+
+  <!-- KPI SUMMARY BAR -->
+  <div class="kpi-summary-bar">
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><mat-icon>analytics</mat-icon></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Moyenne de jours</div>
+        <div class="kpi-value text-blue">{{ absenceKPIs().avg_days }} jrs / employé</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon red"><mat-icon>error_outline</mat-icon></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Taux absentéisme</div>
+        <div class="kpi-value text-red">{{ absenceKPIs().absenteeism_rate }}%</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon dark"><mat-icon>history_edu</mat-icon></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Total absences</div>
+        <div class="kpi-value text-dark">{{ absenceKPIs().total_records }}</div>
+      </div>
+    </div>
+  </div>
+
   <div class="card filter-card">
     <div class="card-header-internal">
       <div class="title-group">

@@ -48,9 +48,11 @@ class DemandeRembController extends ResourceController
         $moisCode = $moisMap[date('m')];
         $annee = date('y');
         
-        // 3. Compter TOUTES les demandes pour obtenir le séquentiel global
-        $count = $db->table('demande_remb')->countAllResults();
-        $sequential = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        // 3. Obtenir le prochain numéro séquentiel robuste
+        $query = $db->query("SELECT MAX(CAST(NULLIF(SPLIT_PART(rem_num, '/', 1), '') AS INTEGER)) as max_num FROM demande_remb");
+        $res = $query->getRowArray();
+        $nextId = ($res['max_num'] ?? 0) + 1;
+        $sequential = str_pad($nextId, 3, '0', STR_PAD_LEFT);
         
         // 4. Construire le numéro final
         return "{$sequential}/ARMP/DG/DAAF/{$serviceCode}/{$moisCode}-{$annee}";
@@ -63,23 +65,26 @@ class DemandeRembController extends ResourceController
     private function generateEtatNum($year)
     {
         $db = \Config\Database::connect();
-        $yy = substr((string)$year, -2);
         
-        // Chercher le dernier numéro d'état pour cette année
-        $last = $db->table('etat_remb')
-            ->like('etat_num', "/ARMP/DG/DAAF/SRH/FM-$yy", 'after')
-            ->orderBy('eta_code', 'DESC')
-            ->get()
-            ->getRow();
+        // Obtenir le prochain numéro séquentiel via une requête SQL robuste
+        // On extrait la première partie du string (NNN), on la convertit en entier et on prend le max
+        $query = $db->query("SELECT MAX(CAST(NULLIF(SPLIT_PART(etat_num, '/', 1), '') AS INTEGER)) as max_num FROM etat_remb");
+        $res = $query->getRowArray();
+        
+        $nextId = ($res['max_num'] ?? 0) + 1;
+        $sequential = str_pad($nextId, 3, '0', STR_PAD_LEFT);
+        
+        // Obtenir mois et année
+        $anneeActuel = date('y');
+        $moisMap = [
+            '01' => 'JA', '02' => 'FE', '03' => 'MA', '04' => 'AV',
+            '05' => 'MI', '06' => 'JU', '07' => 'JL', '08' => 'AO',
+            '09' => 'SE', '10' => 'OC', '11' => 'NO', '12' => 'DE'
+        ];
+        $moisCode = $moisMap[date('m')];
 
-        $next = 1;
-        if ($last && $last->etat_num) {
-            $parts = explode('/', $last->etat_num);
-            if (isset($parts[0]) && is_numeric($parts[0])) {
-                $next = intval($parts[0]) + 1;
-            }
-        }
-        return sprintf('%03d/ARMP/DG/DAAF/SRH/FM-%s', $next, $yy);
+        // Format final
+        return "{$sequential}/ARMP/DG/DAAF/SRH/{$moisCode}-{$anneeActuel}";
     }
 
     /**
@@ -1178,4 +1183,143 @@ class DemandeRembController extends ResourceController
             ->setHeader('Content-Disposition', 'inline; filename="etat_remboursement_agent_' . $empCode . '_' . $annee . '_' . $mois . '.pdf"')
             ->setBody($content);
     }
+    /**
+     * Exporter les demandes au format Excel (HTML Styled)
+     * Reproduit exactement le formatage de l'image (couleurs A/C/E)
+     */
+    public function exportExcel()
+    {
+        $model = new DemandeRembModel();
+        $demandes = $model->select("DISTINCT ON (demande_remb.rem_code) demande_remb.*, employe.emp_im_armp, employe.emp_nom, employe.emp_prenom, direction.dir_nom, pris_en_charge.pec_num, facture.fac_num, objet_remboursement.obj_article,
+                      CASE 
+                        WHEN pris_en_charge.conj_code IS NOT NULL THEN 'C'
+                        WHEN pris_en_charge.enf_code IS NOT NULL THEN 'E'
+                        ELSE 'A'
+                      END as lien_code")
+            ->join('employe', 'employe.emp_code = demande_remb.emp_code', 'left')
+            ->join('affectation', "affectation.emp_code = employe.emp_code AND affectation.affec_etat = 'active'", 'left')
+            ->join('poste', 'poste.pst_code = affectation.pst_code', 'left')
+            ->join('direction', 'direction.dir_code = poste.dir_code', 'left')
+            ->join('pris_en_charge', 'pris_en_charge.pec_code = demande_remb.pec_code', 'left')
+            ->join('facture', 'facture.fac_code = demande_remb.fac_code', 'left')
+            ->join('objet_remboursement', 'objet_remboursement.obj_code = demande_remb.obj_code', 'left')
+            ->orderBy('demande_remb.rem_code', 'DESC')
+            ->findAll();
+
+        $html = "
+        <meta charset='utf-8'>
+        <table border='1'>
+            <tr style='background-color: #f2f2f2; font-weight: bold;'>
+                <td>CODE</td>
+                <td>IM</td>
+                <td>LIEN</td>
+                <td>N° Bulletin de Prise en charge</td>
+                <td>N° Ordonnance</td>
+                <td>N° Facture</td>
+                <td>Date de l'acte OU Consultation</td>
+                <td>Objet du remboursement</td>
+                <td>Montant/Acte</td>
+                <td>Montant/Acte en lettre</td>
+            </tr>";
+
+        foreach ($demandes as $d) {
+            $bgColor = '#ffffff'; // Blanc pour Agent (A)
+            if ($d['lien_code'] === 'C') $bgColor = '#A0522D'; // Marron pour Conjoint
+            if ($d['lien_code'] === 'E') $bgColor = '#4682B4'; // Bleu pour Enfant
+            
+            $textColor = ($bgColor === '#ffffff') ? '#000000' : '#ffffff';
+            $date = $d['rem_date'] ? date('d/m/Y', strtotime($d['rem_date'])) : '-';
+            
+            // Sécurité PHP 8+ : caster en float pour éviter l'erreur sur null
+            $valMontant = (float)($d['rem_montant'] ?? 0);
+            $montant = number_format($valMontant, 2, ',', ' ') . ' Ar';
+
+            $html .= "
+            <tr style='background-color: $bgColor; color: $textColor;'>
+                <td>" . htmlspecialchars($d['dir_nom'] ?? 'DIR') . "</td>
+                <td>" . htmlspecialchars($d['emp_im_armp'] ?? '') . "</td>
+                <td style='text-align:center;'>" . $d['lien_code'] . "</td>
+                <td>" . htmlspecialchars($d['pec_num'] ?? '') . "</td>
+                <td>" . htmlspecialchars($d['rem_num'] ?? '') . "</td>
+                <td>" . htmlspecialchars($d['fac_num'] ?? '') . "</td>
+                <td>$date</td>
+                <td>" . htmlspecialchars($d['obj_article'] ?? '') . "</td>
+                <td style='text-align:right;'>$montant</td>
+                <td>" . htmlspecialchars($d['rem_montant_lettre'] ?? '') . "</td>
+            </tr>";
+        }
+        $html .= "</table>";
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/vnd.ms-excel')
+            ->setHeader('Content-Disposition', 'attachment; filename="export_remboursements_' . date('Y-m-d') . '.xls"')
+            ->setBody("\xEF\xBB\xBF" . $html);
+    }
+
+    /**
+     * Importer des demandes via CSV
+     * Format attendu : IM, LIEN(A/C/E), PEC_NUM, DATE(YYYY-MM-DD), OBJET_LIBELLE, MONTANT
+     */
+    public function importExcel()
+    {
+        $file = $this->request->getFile('file');
+        
+        if (!$file || !$file->isValid()) {
+            return $this->fail('Fichier invalide');
+        }
+
+        $db = \Config\Database::connect();
+        $handle = fopen($file->getTempName(), "r");
+        
+        // Skip header
+        fgetcsv($handle, 1000, ",");
+        
+        $count = 0;
+        $db->transStart();
+
+        while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            if (count($data) < 6) continue;
+
+            $im = $data[0];
+            $lien = $data[1];
+            $pecNum = $data[2];
+            $dateAct = $data[3];
+            $objet = $data[4];
+            $montant = $data[5];
+
+            // 1. Trouver l'employé
+            $emp = $db->table('employe')->where('emp_im_armp', $im)->get()->getRowArray();
+            if (!$emp) continue;
+
+            // 2. Trouver la PEC
+            $pec = $db->table('pris_en_charge')->where('pec_num', $pecNum)->get()->getRowArray();
+            if (!$pec) continue;
+
+            // 3. Trouver ou créer l'objet de remboursement
+            $obj = $db->table('objet_remboursement')->where('obj_article', $objet)->get()->getRowArray();
+            $objCode = $obj ? $obj['obj_code'] : $db->table('objet_remboursement')->insert(['obj_article' => $objet]);
+
+            // 4. Insérer la demande
+            $db->table('demande_remb')->insert([
+                'rem_num' => $this->generateNumDemande($emp['emp_code']),
+                'rem_date' => $dateAct,
+                'rem_montant' => (float)$montant,
+                'rem_montant_lettre' => $this->numberToWords((int)$montant),
+                'rem_status' => false,
+                'emp_code' => $emp['emp_code'],
+                'pec_code' => $pec['pec_code'],
+                'obj_code' => $objCode
+            ]);
+            $count++;
+        }
+
+        $db->transComplete();
+        fclose($handle);
+
+        return $this->respond([
+            'success' => true,
+            'message' => "$count demandes importées avec succès"
+        ]);
+    }
 }
+

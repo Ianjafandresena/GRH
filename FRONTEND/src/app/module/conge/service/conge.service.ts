@@ -134,6 +134,13 @@ export class CongeService {
   }
 
   /**
+   * Refuser une permission (Admin) — motif obligatoire
+   */
+  rejectPermission(id: number, motif: string): Observable<any> {
+    return this.http.post<any>(`${this.permissionUrl}/${id}/reject`, { motif });
+  }
+
+  /**
    * MÉTHODE UNIFIÉE: Récupérer toutes les absences (congés + permissions)
    * Retourne un tableau unifié avec propriété 'type' ajoutée
    */

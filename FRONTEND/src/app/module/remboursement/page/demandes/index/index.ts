@@ -212,4 +212,33 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
             this.errorMsg = 'Erreur lors du telechargement';
         });
     }
+
+    exportExcel() {
+        this.rembService.exportExcel().subscribe(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `export_remboursements_${new Date().toISOString().split('T')[0]}.xls`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+    }
+
+    importExcel(event: any) {
+        const file = event.target.files[0];
+        if (file) {
+            this.loading = true;
+            this.rembService.importExcel(file).subscribe({
+                next: (res) => {
+                    this.layoutService.showSuccessMessage(res.message);
+                    this.loadDemandes();
+                    this.loading = false;
+                },
+                error: (err) => {
+                    this.errorMsg = "Erreur lors de l'importation : " + (err.error?.message || 'Fichier malformé');
+                    this.loading = false;
+                }
+            });
+        }
+    }
 }

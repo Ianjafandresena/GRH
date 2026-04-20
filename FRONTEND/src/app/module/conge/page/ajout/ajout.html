@@ -257,6 +257,35 @@
         </div>
       </div>
 
+      <!-- Interims Permission -->
+      <div class="form-section" formArrayName="interims">
+        <h3 class="section-title">Intérimaires / Suppléants</h3>
+
+        <div *ngFor="let group of permissionInterims.controls; let i=index" [formGroupName]="i" class="interim-row">
+          <div class="select2-container flex-grow">
+            <div class="input-wrapper">
+              <i class="fas fa-user-friends search-icon"></i>
+              <input type="text" formControlName="interim_search" class="form-control"
+                placeholder="Rechercher un suppléant..." autocomplete="off" (focus)="onPermissionInterimFocus(i)"
+                (blur)="onPermissionInterimBlur(i)">
+            </div>
+            <ul class="suggestions" *ngIf="permissionShowInterimDropdowns[i] && (permissionFilteredInterims[i]?.length || 0) > 0">
+              <li *ngFor="let emp of permissionFilteredInterims[i]" (mousedown)="selectPermissionInterim(i, emp)">
+                {{ emp.emp_nom }} {{ emp.emp_prenom }}
+              </li>
+            </ul>
+          </div>
+
+          <button type="button" class="btn btn-icon delete" *ngIf="permissionInterims.length > 1" (click)="removePermissionInterimField(i)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-dashed" (click)="addPermissionInterimField()">
+          <i class="fas fa-plus"></i> Ajouter un suppléant
+        </button>
+      </div>
+
       <!-- Actions -->
       <div class="form-footer">
         <div class="actions">

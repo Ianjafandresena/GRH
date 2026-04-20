@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EtatRembService, EtatRemb } from '../../../service/etat-remb.service';
+import { EtatRembService } from '../../../service/etat-remb.service';
 import { RemboursementService } from '../../../service/remboursement.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
 
@@ -136,6 +136,21 @@ export class DetailEtatComponent {
         const etaCode = this.etat()?.eta_code;
         if (!etaCode) return;
         window.open(`${this.etatService.baseUrl}/${etaCode}/pdf`, '_blank');
+    }
+
+    downloadExcel() {
+        const id = this.etat()?.eta_code;
+        if (!id) return;
+        
+        this.etatService.exportExcel(id).subscribe(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filename = (this.etat()?.etat_num || `etat_${id}`).replace(/\//g, '_');
+            a.download = `${filename}.xls`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
     }
 
     viewDemande(remCode: number) {

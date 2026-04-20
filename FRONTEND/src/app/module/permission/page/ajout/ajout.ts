@@ -32,9 +32,14 @@ export class AjoutPermissionComponent implements OnInit {
   loading = false;
   errorMsg = '';
 
+  // Intérimaire
+  filteredInterims: Employee[] = [];
+  selectedInterim: Employee | null = null;
+
   constructor() {
     this.form = this.fb.group({
       emp_search: ['', Validators.required],
+      interim_search: [''],
       prm_date: [null, Validators.required],
       periode: ['matin', Validators.required],
       motif: ['']
@@ -57,10 +62,21 @@ export class AjoutPermissionComponent implements OnInit {
         this.filteredEmployees = this.employees.filter(e =>
           `${e.emp_nom} ${e.emp_prenom}`.toLowerCase().includes(v)
         ).slice(0, 10);
-      } else {
-        this.filteredEmployees = [];
       }
-      if (!val) this.selectedEmployee = null;
+    });
+
+    // Filtrer les intérimaires lors de la saisie
+    this.form.get('interim_search')?.valueChanges.subscribe((val: string) => {
+      const v = (val || '').toLowerCase();
+      if (v.length >= 2) {
+        this.filteredInterims = this.employees.filter(e =>
+          `${e.emp_nom} ${e.emp_prenom}`.toLowerCase().includes(v) &&
+          e.emp_code !== this.selectedEmployee?.emp_code
+        ).slice(0, 10);
+      } else {
+        this.filteredInterims = [];
+      }
+      if (!val) this.selectedInterim = null;
     });
 
     // Recalculer la durée quand la période change
@@ -125,7 +141,8 @@ export class AjoutPermissionComponent implements OnInit {
     const periode = this.form.value.periode;
 
     // Calculer les heures de début et fin selon la période
-    let debut: string, fin: string;
+    let debut: string = `${date}T08:00:00`;
+    let fin: string = `${date}T12:00:00`;
     switch (periode) {
       case 'matin':
         debut = `${date}T08:00:00`;
@@ -146,6 +163,7 @@ export class AjoutPermissionComponent implements OnInit {
 
     const payload = {
       emp_code: this.selectedEmployee.emp_code,
+      interim_emp_code: this.selectedInterim?.emp_code,
       prm_debut: debut,
       prm_fin: fin,
       prm_duree: this.calculatedHours
@@ -165,9 +183,16 @@ export class AjoutPermissionComponent implements OnInit {
     });
   }
 
+  selectInterim(emp: Employee) {
+    this.selectedInterim = emp;
+    this.form.patchValue({ interim_search: `${emp.emp_nom} ${emp.emp_prenom}` });
+    this.filteredInterims = [];
+  }
+
   reset() {
     this.form.reset({ periode: 'matin' });
     this.selectedEmployee = null;
+    this.selectedInterim = null;
     this.soldeRestant = null;
     this.calculatedHours = null;
     this.errorMsg = '';
