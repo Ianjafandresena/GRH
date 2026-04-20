@@ -174,8 +174,26 @@ HTML;
      */
     public function sendValidationComplete(string $toEmail, string $toName, array $congeDetails): bool
     {
-        log_message('info', "[MOCK EMAIL] Validation Complete sent to $toEmail for Conge {$congeDetails['cng_code']}");
-        return true;
+        try {
+            if (!isset($this->mailer)) return false;
+
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($toEmail, $toName);
+            $this->mailer->Subject = "Notification de validation de congé : {$congeDetails['typ_appelation']}";
+
+            $body = $this->getCompletionEmailTemplate($congeDetails);
+            
+            $this->mailer->Body = $body;
+            $sent = $this->mailer->send();
+            
+            if ($sent) {
+                log_message('info', "[Email] Notification de succès envoyée à: " . $toEmail);
+            }
+            return $sent;
+        } catch (\Throwable $e) {
+            log_message('error', "[Email] Erreur notification succès à $toEmail: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -188,8 +206,98 @@ HTML;
         string $rejetePar,
         string $motif
     ): bool {
-        log_message('info', "[MOCK EMAIL] Rejection Notice sent to $toEmail for Conge {$congeDetails['cng_code']}");
-        return true;
+        try {
+            if (!isset($this->mailer)) return false;
+
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($toEmail, $toName);
+            $this->mailer->Subject = "Notification de décision : Demande de congé non validée";
+
+            $body = $this->getRejectionEmailTemplate($congeDetails, $rejetePar, $motif);
+            
+            $this->mailer->Body = $body;
+            $sent = $this->mailer->send();
+            
+            if ($sent) {
+                log_message('info', "[Email] Notification de rejet envoyée à: " . $toEmail);
+            }
+            return $sent;
+        } catch (\Throwable $e) {
+            log_message('error', "[Email] Erreur notification rejet à $toEmail: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Template pour validation complète
+     */
+    private function getCompletionEmailTemplate(array $conge): string
+    {
+        $type = htmlspecialchars($conge['typ_appelation']);
+        $debut = htmlspecialchars($conge['cng_debut']);
+        $fin = htmlspecialchars($conge['cng_fin']);
+        $jours = htmlspecialchars($conge['cng_nb_jour']);
+        
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;font-family:sans-serif;background-color:#f9fafb;">
+    <div style="max-width:600px;margin:30px auto;background:#ffffff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05);overflow:hidden;border:1px solid #e5e7eb;">
+        <div style="background:#4F46E5;color:#ffffff;padding:25px;text-align:center;">
+            <h2 style="margin:0;font-size:18px;">Notification de validation</h2>
+        </div>
+        <div style="padding:30px;color:#374151;line-height:1.6;">
+            <p>Madame, Monsieur,</p>
+            <p>Nous vous informons que votre demande de <strong>$type</strong> a reçu un avis favorable de la part de l'administration.</p>
+            <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+                <p style="margin:5px 0;"><strong>Récapitulatif de la période :</strong></p>
+                <p style="margin:5px 0;">Dates : du $debut au $fin</p>
+                <p style="margin:5px 0;">Durée : $jours jour(s)</p>
+            </div>
+            <p>Le titre de congé correspondant est désormais disponible en téléchargement dans votre espace personnel.</p>
+            <p style="margin-top:30px;font-size:13px;color:#6b7280;border-top:1px solid #eee;padding-top:15px;">
+                Direction Générale - Service des Ressources Humaines<br>
+                Autorité de Régulation des Marchés Publics (ARMP)
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+     * Template pour rejet
+     */
+    private function getRejectionEmailTemplate(array $conge, string $rejetePar, string $motif): string
+    {
+        $type = htmlspecialchars($conge['typ_appelation']);
+        $motif = htmlspecialchars($motif);
+        
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;font-family:sans-serif;background-color:#f9fafb;">
+    <div style="max-width:600px;margin:30px auto;background:#ffffff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05);overflow:hidden;border:1px solid #e5e7eb;">
+        <div style="background:#374151;color:#ffffff;padding:25px;text-align:center;">
+            <h2 style="margin:0;font-size:18px;">Notification de décision administrative</h2>
+        </div>
+        <div style="padding:30px;color:#374151;line-height:1.6;">
+            <p>Madame, Monsieur,</p>
+            <p>Nous vous informons que votre demande de <strong>$type</strong> n'a pas pu être validée pour le motif suivant :</p>
+            <div style="background:#fef2f2;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #ef4444;">
+                <p style="margin:0;color:#991b1b;"><strong>Observation :</strong> $motif</p>
+            </div>
+            <p>Pour toute demande de précision, vous pouvez vous rapprocher du Service des Ressources Humaines.</p>
+            <p style="margin-top:30px;font-size:13px;color:#6b7280;border-top:1px solid #eee;padding-top:15px;">
+                Direction Générale - Service des Ressources Humaines<br>
+                Autorité de Régulation des Marchés Publics (ARMP)
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
     }
 
     /**

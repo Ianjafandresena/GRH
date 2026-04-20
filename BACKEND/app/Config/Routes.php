@@ -61,6 +61,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('reimbursement-distribution', 'DashboardController::getReimbursementDistribution');
         $routes->get('top-absent', 'DashboardController::getTopAbsentEmployees');
         $routes->get('top-reimbursements', 'DashboardController::getTopReimbursements');
+        $routes->get('absence-kpis', 'DashboardController::getAbsenceKPIs');
     });
 
     // Validation congé (workflow multi-étapes: CHEF -> RRH -> DAAF -> DG)
@@ -82,6 +83,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->get('(:num)', 'PermissionController::getPermission/$1');
         $routes->get('(:num)/pdf', 'PermissionController::exportPermissionPdf/$1');
         $routes->post('(:num)/validate', 'PermissionController::validatePermission/$1');
+        $routes->post('(:num)/reject', 'PermissionController::rejectPermission/$1');
     });
 
     $routes->group('interim_conge', ['namespace' => 'App\Controllers\conge', 'filter' => 'jwtauth'], function($routes) {
@@ -191,6 +193,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('(:num)/traiter', 'DemandeRembController::traiter/$1');
         $routes->get('(:num)/pdf', 'DemandeRembController::exportPdf/$1');
         $routes->get('etat/agent/pdf', 'DemandeRembController::exportEtatAgentPdf');
+        $routes->get('export/excel', 'DemandeRembController::exportExcel');
+        $routes->post('import/excel', 'DemandeRembController::importExcel');
     });
 
     // États de Remboursement
@@ -202,6 +206,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('(:num)/mandater', 'EtatRembController::mandater/$1');
         $routes->post('(:num)/agent-comptable', 'EtatRembController::agentComptable/$1');
         $routes->get('(:num)/pdf', 'EtatPdfController::generateEtatPdf/$1');  // PDF
+        $routes->get('(:num)/excel', 'EtatRembController::exportExcel/$1');  // Excel
     });
 
     // Prises en charge

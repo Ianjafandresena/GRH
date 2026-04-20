@@ -42,6 +42,30 @@
             </div>
           </div>
         </div>
+
+        <!-- 1b. Recherche Intérimaire -->
+        <div class="form-group mt-3">
+          <label>Intérimaire (Facultatif)</label>
+          <div class="input-wrapper">
+            <mat-icon class="search-icon">person_search</mat-icon>
+            <input type="text" class="form-control" formControlName="interim_search"
+              placeholder="Rechercher un intérimaire..." autocomplete="off" />
+
+            <ul class="suggestions"
+              *ngIf="filteredInterims.length && form.get('interim_search')?.value && !selectedInterim">
+              <li *ngFor="let emp of filteredInterims" (click)="selectInterim(emp)">
+                <strong>{{ emp.emp_nom }}</strong> {{ emp.emp_prenom }}
+                <small class="text-muted">{{ emp.emp_im_armp }}</small>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Intérimaire sélectionné -->
+          <div *ngIf="selectedInterim" class="selected-employee-info mt-2">
+            <div class="info-row"><strong>Matricule:</strong> {{ selectedInterim.emp_im_armp }}</div>
+            <div class="info-row"><strong>Poste:</strong> {{ selectedInterim.pst_fonction || '-' }}</div>
+          </div>
+        </div>
       </div>
 
       <!-- 2. Date et Période -->

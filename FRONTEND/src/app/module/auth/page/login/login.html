@@ -39,25 +39,28 @@
 
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
         <div class="form-group">
-          <label class="input-label">User Name</label>
-          <input type="text" name="username" [(ngModel)]="credentials.username" [disabled]="isLoading"
-            class="custom-input" required>
+          <label class="input-label">Identifiant</label>
+          <div class="input-with-icon">
+            <i class="fas fa-user-circle"></i>
+            <input type="text" name="username" [(ngModel)]="credentials.username" [disabled]="isLoading"
+              class="custom-input" placeholder="Entrez votre nom d'utilisateur" required>
+          </div>
         </div>
 
         <div class="form-group">
-          <label class="input-label">Password</label>
-          <input type="password" name="password" [(ngModel)]="credentials.password" [disabled]="isLoading"
-            class="custom-input" required>
-        </div>
-
-        <div class="form-actions">
-          <label class="remember-me">
-            <input type="checkbox" name="remember"> Remember me
-          </label>
+          <label class="input-label">Mot de passe</label>
+          <div class="input-with-icon">
+            <i class="fas fa-lock"></i>
+            <input [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="credentials.password" [disabled]="isLoading"
+              class="custom-input" placeholder="Entrez votre mot de passe" required>
+            <button type="button" class="btn-toggle-password" (click)="togglePasswordVisibility()">
+              <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
         </div>
 
         <button type="submit" [disabled]="isLoading || loginForm.invalid" class="btn-submit">
-          <span *ngIf="!isLoading">Valider</span>
+          <span *ngIf="!isLoading">Se connecter</span>
           <div *ngIf="isLoading" class="spinner"></div>
         </button>
       </form>

@@ -62,6 +62,10 @@ export class AjoutCongeComponent implements OnInit {
   permissionShowEmpDropdown = false;
   permissionLoading = false;
 
+  // Intérimaires Permission
+  permissionFilteredInterims: Employee[][] = [];
+  permissionShowInterimDropdowns: boolean[] = [];
+
   constructor(
     private fb: FormBuilder,
     private employeeService: EmployeeService,
@@ -87,12 +91,20 @@ export class AjoutCongeComponent implements OnInit {
       prm_date_debut: [new Date().toISOString().split('T')[0], Validators.required],
       prm_moment_debut: ['matin', Validators.required],
       prm_date_fin: [new Date().toISOString().split('T')[0], Validators.required],
-      prm_moment_fin: ['matin', Validators.required]
+      prm_moment_fin: ['matin', Validators.required],
+      interims: this.fb.array([this.fb.group({
+        interim_search: [''],
+        selectedInterim: [null]
+      })])
     });
   }
 
   get interims(): FormArray {
     return this.congeForm.get('interims') as FormArray;
+  }
+
+  get permissionInterims(): FormArray {
+    return this.permissionForm.get('interims') as FormArray;
   }
 
   ngOnInit() {
@@ -103,6 +115,11 @@ export class AjoutCongeComponent implements OnInit {
       this.filteredInterims = [this.employees];
       this.showInterimDropdowns = [false];
       this.interims.controls.forEach((ctrl, i) => this.interimSearchListener(ctrl, i));
+
+      // Init interims permission
+      this.permissionFilteredInterims = [this.employees];
+      this.permissionShowInterimDropdowns = [false];
+      this.permissionInterims.controls.forEach((ctrl, i) => this.permissionInterimSearchListener(ctrl, i));
     });
 
     this.congeService.getTypesConge().subscribe((types: TypeConge[]) => {
@@ -532,12 +549,26 @@ export class AjoutCongeComponent implements OnInit {
     };
 
     this.permissionLoading = true;
+    const interimsData = this.permissionInterims.controls
+      .map(ctrl => ctrl.get('selectedInterim')?.value)
+      .filter(interim => !!interim);
 
     this.congeService.createPermission(payload).subscribe({
-      next: () => {
-        this.permissionLoading = false;
+      next: (res: any) => {
+        const prm_code = res.prm_code;
+        interimsData.forEach((interim: any) => {
+          if (interim && interim.emp_code) {
+            const interimPayload = {
+              emp_code: interim.emp_code,
+              prm_code: prm_code,
+              int_prm_debut: payload.prm_debut,
+              int_prm_fin: payload.prm_fin
+            };
+            this.congeService.createPermission(interimPayload as any).subscribe();
+          }
+        });
 
-        // 🔄 MODIFIÉ: Navigation au lieu d'alert
+        this.permissionLoading = false;
         this.layoutService.showSuccessMessage('Permission enregistrée avec succès !');
         this.router.navigate(['/conge/index']);
       },
@@ -547,6 +578,60 @@ export class AjoutCongeComponent implements OnInit {
         this.layoutService.showErrorMessage(msg);
       }
     });
+  }
+
+  // ========== UTILS INTERIM PERMISSION ==========
+
+  onPermissionInterimFocus(idx: number) {
+    this.permissionShowInterimDropdowns[idx] = true;
+    const ctrl = this.permissionInterims.at(idx);
+    if (!ctrl.get('interim_search')?.value) {
+      this.permissionFilteredInterims[idx] = this.employees.filter(e =>
+        !this.permissionSelectedEmployee || e.emp_code !== this.permissionSelectedEmployee.emp_code
+      );
+    }
+  }
+
+  onPermissionInterimBlur(idx: number) {
+    setTimeout(() => { this.permissionShowInterimDropdowns[idx] = false; }, 200);
+  }
+
+  permissionInterimSearchListener(ctrl: AbstractControl, idx: number) {
+    ctrl.get('interim_search')?.valueChanges.subscribe((val: string) => {
+      const filterVal = val ? val.toLowerCase() : '';
+      this.permissionFilteredInterims[idx] = this.employees
+        .filter(e =>
+          (!this.permissionSelectedEmployee || e.emp_code !== this.permissionSelectedEmployee.emp_code) &&
+          (`${e.emp_nom} ${e.emp_prenom}`.toLowerCase().includes(filterVal) ||
+            e.emp_im_armp.toLowerCase().includes(filterVal))
+        );
+      this.permissionShowInterimDropdowns[idx] = true;
+    });
+  }
+
+  selectPermissionInterim(idx: number, emp: Employee) {
+    this.permissionInterims.at(idx).patchValue({
+      interim_search: `${emp.emp_nom} ${emp.emp_prenom}`,
+      selectedInterim: emp
+    }, { emitEvent: false });
+    this.permissionShowInterimDropdowns[idx] = false;
+  }
+
+  addPermissionInterimField() {
+    const group = this.fb.group({
+      interim_search: [''],
+      selectedInterim: [null]
+    });
+    this.permissionInterims.push(group);
+    this.permissionFilteredInterims.push(this.employees);
+    this.permissionShowInterimDropdowns.push(false);
+    this.permissionInterimSearchListener(group, this.permissionInterims.length - 1);
+  }
+
+  removePermissionInterimField(idx: number) {
+    this.permissionInterims.removeAt(idx);
+    this.permissionFilteredInterims.splice(idx, 1);
+    this.permissionShowInterimDropdowns.splice(idx, 1);
   }
 
   resetPermission() {

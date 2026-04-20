@@ -2,9 +2,14 @@
     <div class="header">
         <button class="btn-back" (click)="goBack()">← Retour</button>
         <h1>{{ etat()?.etat_num || 'État de Remboursement' }}</h1>
-        <button class="btn btn-outline-primary" (click)="downloadPdf()">
-            <i class="fas fa-file-pdf"></i> Télécharger PDF
-        </button>
+        <div class="header-actions">
+            <button class="btn btn-outline-success" (click)="downloadExcel()">
+                <i class="fas fa-file-excel"></i> Exporter Excel
+            </button>
+            <button class="btn btn-outline-primary" (click)="downloadPdf()">
+                <i class="fas fa-file-pdf"></i> Télécharger PDF
+            </button>
+        </div>
     </div>
 
     @if (loading()) {

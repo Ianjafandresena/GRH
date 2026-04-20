@@ -39,6 +39,10 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
   showValidateModal = false;
   rejectObservation = '';
 
+  // Permission reject
+  showRejectPermModal = false;
+  rejectPermMotif = '';
+
   // Auto-refresh interval
   private refreshInterval: any = null;
 
@@ -214,6 +218,33 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
 
   closeValidateModal() {
     this.showValidateModal = false;
+  }
+
+  openRejectPermModal() {
+    this.rejectPermMotif = '';
+    this.showRejectPermModal = true;
+  }
+
+  closeRejectPermModal() {
+    this.showRejectPermModal = false;
+    this.rejectPermMotif = '';
+  }
+
+  confirmRejectPermission() {
+    if (!this.congeId || !this.rejectPermMotif?.trim()) return;
+    this.validating = true;
+    this.service.rejectPermission(this.congeId, this.rejectPermMotif).subscribe({
+      next: () => {
+        this.layoutService.showSuccessMessage('Permission refusée avec succès');
+        this.closeRejectPermModal();
+        this.reloadCongeData();
+        this.validating = false;
+      },
+      error: (err) => {
+        this.layoutService.showErrorMessage(err?.error?.messages?.error || 'Erreur lors du refus');
+        this.validating = false;
+      }
+    });
   }
 
   confirmValidation() {

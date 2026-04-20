@@ -232,4 +232,8 @@ export class DashboardService {
     getDashboardCarriereStats(filters?: any): Observable<any> {
         return this.http.get<any>(`${this.apiUrl}/dashboard-carriere`, { params: filters, withCredentials: true });
     }
+
+    getAbsenceKPIs(filters?: any): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/dashboard/absence-kpis`, { params: filters, withCredentials: true });
+    }
 }

@@ -3,10 +3,21 @@
         <div class="title-group">
             <h1>Demandes de Remboursement</h1>
         </div>
-        <button class="btn btn-primary" (click)="goToCreate()">
-            <i class="fas fa-plus"></i>
-            Nouvelle Demande
-        </button>
+        <div class="header-actions">
+            <button class="btn btn-success" (click)="exportExcel()">
+                <i class="fas fa-file-excel"></i>
+                Exporter Excel
+            </button>
+            <button class="btn btn-outline-primary" (click)="fileInput.click()">
+                <i class="fas fa-file-import"></i>
+                Importer CSV
+            </button>
+            <input type="file" #fileInput (change)="importExcel($event)" accept=".csv" style="display:none">
+            <button class="btn btn-primary" (click)="goToCreate()">
+                <i class="fas fa-plus"></i>
+                Nouvelle Demande
+            </button>
+        </div>
     </div>
 
     <!-- FILTRES HORIZONTAUX -->

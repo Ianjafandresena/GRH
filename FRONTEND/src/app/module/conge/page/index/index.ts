@@ -9,6 +9,9 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { DashboardService } from '../../../home/service/dashboard.service';
+import { MatIconModule } from '@angular/material/icon';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-conge-index',
@@ -19,7 +22,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     RouterLink,
     MatTableModule,
     MatPaginatorModule,
-    MatSortModule
+    MatSortModule,
+    MatIconModule
   ],
   templateUrl: './index.html',
   styleUrls: ['./index.scss']
@@ -29,9 +33,11 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly congeService = inject(CongeService);
   private readonly layoutService = inject(LayoutService);
+  private readonly dashboardService = inject(DashboardService);
 
   conges: any[] = [];
   absences: any[] = [];
+  absenceKPIs = signal<any>({ avg_days: 0, utilization_rate: 0, absenteeism_rate: 0, total_records: 0 });
   dataSource = new MatTableDataSource<any>([]);
   displayedColumns: string[] = ['employee', 'type', 'start', 'end', 'duration', 'reason', 'status', 'actions'];
 
@@ -200,6 +206,7 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
         this.absences = absences || [];
         this.conges = this.absences.filter(a => a.absence_type === 'conge');
         this.applyClientSideFilter();
+        this.loadKPIs();
       },
       error: (err) => {
         this.errorMsg = err?.message || 'Erreur lors du chargement';
@@ -250,5 +257,13 @@ export class CongeIndexComponent implements OnInit, AfterViewInit, OnDestroy {
 
   create() {
     this.router.navigate(['/conge/create']);
+  }
+
+  loadKPIs() {
+    const params: any = {};
+    if (this.start) params.start = this.start;
+    if (this.end) params.end = this.end;
+    if (this.lieu) params.lieu = this.lieu;
+    this.dashboardService.getAbsenceKPIs(params).subscribe((data: any) => this.absenceKPIs.set(data));
   }
 }

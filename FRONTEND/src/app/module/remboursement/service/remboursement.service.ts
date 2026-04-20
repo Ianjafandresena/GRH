@@ -80,6 +80,23 @@ export class RemboursementService {
         });
     }
 
+    // Exporter vers Excel (XLS stylisé)
+    exportExcel(): Observable<Blob> {
+        return this.http.get(`${this.baseUrl}/export/excel`, { 
+            responseType: 'blob', 
+            withCredentials: true 
+        });
+    }
+
+    // Importer via CSV
+    importExcel(file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post(`${this.baseUrl}/import/excel`, formData, { 
+            withCredentials: true 
+        });
+    }
+
     // États de remboursement
     getEtats(): Observable<EtatRemb[]> {
         return this.http.get<EtatRemb[]>(this.etatUrl, { withCredentials: true });

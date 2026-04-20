@@ -271,4 +271,115 @@ class DashboardController extends ResourceController
             return $this->respond([]);
         }
     }
+
+    /**
+     * Get Absence and Leave KPIs for the summary bar
+     */
+    public function getAbsenceKPIs()
+    {
+        try {
+            $db = \Config\Database::connect();
+            $start = $this->request->getGet('start');
+            $end = $this->request->getGet('end');
+            $lieu = $this->request->getGet('lieu');
+            
+            // 1. Total Employees (filtered by lieu if provided)
+            $empBuilder = $db->table('employe')->where('emp_disponibilite', true);
+            if ($lieu) {
+                $empBuilder->join('affectation', 'affectation.emp_code = employe.emp_code')
+                           ->join('region', 'region.reg_code = affectation.reg_code')
+                           ->like('region.reg_nom', $lieu);
+            }
+            $totalEmployees = $empBuilder->countAllResults();
+            if ($totalEmployees == 0) $totalEmployees = 1;
+
+            // 2. Total Days Taken (Conges)
+            $congeBuilder = $db->table('conge')
+                ->selectSum('cng_nb_jour')
+                ->where('cng_status', true);
+            
+            if ($start) $congeBuilder->where('cng_debut >=', $start);
+            if ($end) $congeBuilder->where('cng_fin <=', $end);
+            if ($lieu) {
+                $congeBuilder->join('region', 'region.reg_code = conge.reg_code')
+                             ->like('region.reg_nom', $lieu);
+            }
+            $totalDaysTaken = $congeBuilder->get()->getRow()->cng_nb_jour ?? 0;
+
+            // 3. Total Days Allocated (sld_initial)
+            $allocBuilder = $db->table('solde_conge')->selectSum('sld_initial');
+            if ($start) {
+                $year = date('Y', strtotime($start));
+                $allocBuilder->where('sld_anne', $year);
+            } else {
+                $allocBuilder->where('sld_anne', date('Y'));
+            }
+            $totalDaysAllocated = $allocBuilder->get()->getRow()->sld_initial ?? 0;
+            if ($totalDaysAllocated == 0) $totalDaysAllocated = 1;
+
+            // 4. Permissions
+            $permBuilder = $db->table('permission')
+                ->selectSum('prm_duree')
+                ->where('prm_status', true);
+            if ($start) $permBuilder->where('prm_debut >=', $start);
+            if ($end) $permBuilder->where('prm_fin <=', $end);
+            if ($lieu) {
+                $permBuilder->join('employe', 'employe.emp_code = permission.emp_code')
+                            ->join('affectation', 'affectation.emp_code = employe.emp_code')
+                            ->join('region', 'region.reg_code = affectation.reg_code')
+                            ->like('region.reg_nom', $lieu);
+            }
+            $totalPermissionsHours = $permBuilder->get()->getRow()->prm_duree ?? 0;
+            $totalPermissionsDays = (float)$totalPermissionsHours / 8;
+
+            // KPI calculation
+            $totalAbsenceDays = (float)$totalDaysTaken + $totalPermissionsDays;
+            $avgDays = round($totalAbsenceDays / $totalEmployees, 1);
+            $utilizationRate = round(($totalDaysTaken / $totalDaysAllocated) * 100, 1);
+            
+            // Absenteeism Rate calculation
+            $theoreticalWorkDays = 260; 
+            if ($start && $end) {
+                $diff = strtotime($end) - strtotime($start);
+                $theoreticalWorkDays = max(1, floor($diff / (60 * 60 * 24)) * 0.7); // Rough working days
+            }
+            $absenteeismRate = round(($totalAbsenceDays / ($totalEmployees * $theoreticalWorkDays)) * 100, 2);
+            
+            // Total recorded count (filtered)
+            $cngCountBuilder = $db->table('conge');
+            if ($start) $cngCountBuilder->where('cng_debut >=', $start);
+            if ($end) $cngCountBuilder->where('cng_fin <=', $end);
+            if ($lieu) {
+                $cngCountBuilder->join('region', 'region.reg_code = conge.reg_code')
+                                ->like('region.reg_nom', $lieu);
+            }
+            $countConges = $cngCountBuilder->countAllResults();
+
+            $prmCountBuilder = $db->table('permission');
+            if ($start) $prmCountBuilder->where('prm_debut >=', $start);
+            if ($end) $prmCountBuilder->where('prm_fin <=', $end);
+            if ($lieu) {
+                $prmCountBuilder->join('employe', 'employe.emp_code = permission.emp_code')
+                                ->join('affectation', 'affectation.emp_code = employe.emp_code')
+                                ->join('region', 'region.reg_code = affectation.reg_code')
+                                ->like('region.reg_nom', $lieu);
+            }
+            $countPerms = $prmCountBuilder->countAllResults();
+
+            return $this->respond([
+                'avg_days' => $avgDays,
+                'utilization_rate' => $utilizationRate,
+                'absenteeism_rate' => min(100, $absenteeismRate),
+                'total_records' => $countConges + $countPerms
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', '[getAbsenceKPIs] Error: ' . $e->getMessage());
+            return $this->respond([
+                'avg_days' => 0,
+                'utilization_rate' => 0,
+                'absenteeism_rate' => 0,
+                'total_records' => 0
+            ]);
+        }
+    }
 }

@@ -75,6 +75,18 @@ class PermissionController extends ResourceController
                 $errs = $model->errors();
                 return $this->fail(!empty($errs) ? implode(', ', $errs) : 'Erreur SQL lors de l\'insertion', 500);
             }
+
+            // GÉRER L'INTÉRIMAIRE SI FOURNI
+            if (!empty($payload['interim_emp_code'])) {
+                $db = \Config\Database::connect();
+                $db->table('interim_permission')->insert([
+                    'emp_code' => (int)$payload['interim_emp_code'],
+                    'prm_code' => $id,
+                    'int_prm_debut' => date('Y-m-d H:i:s', $d1),
+                    'int_prm_fin' => date('Y-m-d H:i:s', $d2)
+                ]);
+            }
+
             return $this->respondCreated($model->find($id));
         } catch (\Exception $e) {
             return $this->fail($e->getMessage(), 500);
@@ -148,6 +160,31 @@ class PermissionController extends ResourceController
             $db->transRollback();
             return $this->fail($e->getMessage(), 500);
         }
+    }
+
+    public function rejectPermission($id = null)
+    {
+        $model = new PermissionModel();
+        $prm = $model->find($id);
+        if (!$prm) return $this->failNotFound('Permission non trouvée');
+
+        $isValidated = ($prm['prm_status'] === 't' || $prm['prm_status'] === true || $prm['prm_status'] === 1 || $prm['prm_status'] === '1');
+        if ($isValidated) {
+            return $this->fail('Cette permission est déjà validée et ne peut pas être refusée', 400);
+        }
+
+        $payload = $this->request->getJSON(true) ?? [];
+        $motif = trim($payload['motif'] ?? '');
+        if (empty($motif)) {
+            return $this->fail('Le motif du refus est obligatoire', 400);
+        }
+
+        $model->update($id, [
+            'prm_status'       => false,
+            'prm_motif_rejet'  => $motif
+        ]);
+
+        return $this->respond(['message' => 'Permission refusée avec succès']);
     }
 
     public function exportPermissionPdf($id = null)
