@@ -2,6 +2,8 @@ import { Component, inject, OnInit, ViewChild, AfterViewInit } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { PdfPreviewDialogComponent } from '../../../../document/component/pdf-preview/pdf-preview-dialog.component';
 import { PrisEnChargeService } from '../../../service/prise-en-charge.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
 import { PrisEnCharge } from '../../../model/prise-en-charge.model';
@@ -17,7 +19,8 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
         MatIconModule,
         MatTableModule,
         MatPaginatorModule,
-        MatSortModule
+        MatSortModule,
+        MatDialogModule
     ],
     templateUrl: './index.html',
     styleUrls: ['./index.scss']
@@ -27,6 +30,7 @@ export class PrisesEnChargeIndexComponent implements OnInit, AfterViewInit {
     private readonly router = inject(Router);
     private readonly pecService = inject(PrisEnChargeService);
     private readonly layoutService = inject(LayoutService);
+    private readonly dialog = inject(MatDialog);
 
     prises: PrisEnCharge[] = [];
     dataSource = new MatTableDataSource<PrisEnCharge>([]);
@@ -94,10 +98,16 @@ export class PrisesEnChargeIndexComponent implements OnInit, AfterViewInit {
     downloadBulletin(id: number) {
         this.pecService.downloadBulletin(id).subscribe(blob => {
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `prise_en_charge_${id}.pdf`;
-            a.click();
+            
+            this.dialog.open(PdfPreviewDialogComponent, {
+                width: '800px',
+                maxWidth: '95vw',
+                data: {
+                    pdfUrl: url,
+                    filename: `prise_en_charge_${id}.pdf`,
+                    title: 'Prise en Charge (PEC)'
+                }
+            });
         });
     }
 }

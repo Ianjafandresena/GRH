@@ -8,7 +8,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 
 export interface PdfPreviewData {
-    pdfBase64: string;
+    pdfBase64?: string;
+    pdfUrl?: string;
     filename: string;
     title?: string;
 }
@@ -28,7 +29,7 @@ export interface PdfPreviewData {
     styleUrls: ['./pdf-preview-dialog.component.scss']
 })
 export class PdfPreviewDialogComponent implements OnInit {
-    pdfUrl: SafeResourceUrl | null = null;
+    pdfSafeUrl: SafeResourceUrl | null = null;
     loading = true;
 
     constructor(
@@ -38,12 +39,23 @@ export class PdfPreviewDialogComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.generatePdfUrl();
+        this.loadPdf();
     }
 
-    private generatePdfUrl(): void {
+    private loadPdf(): void {
+        if (this.data.pdfBase64) {
+            this.generatePdfUrlFromBase64(this.data.pdfBase64);
+        } else if (this.data.pdfUrl) {
+            this.pdfSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.data.pdfUrl);
+            this.loading = false;
+        } else {
+            this.loading = false;
+        }
+    }
+
+    private generatePdfUrlFromBase64(base64: string): void {
         try {
-            const byteCharacters = atob(this.data.pdfBase64);
+            const byteCharacters = atob(base64);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
                 byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -51,7 +63,7 @@ export class PdfPreviewDialogComponent implements OnInit {
             const byteArray = new Uint8Array(byteNumbers);
             const blob = new Blob([byteArray], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
-            this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+            this.pdfSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
             this.loading = false;
         } catch (error) {
             console.error('Erreur lors de la préparation de l\'aperçu PDF:', error);
@@ -60,7 +72,15 @@ export class PdfPreviewDialogComponent implements OnInit {
     }
 
     download(): void {
-        const byteCharacters = atob(this.data.pdfBase64);
+        if (this.data.pdfBase64) {
+            this.downloadFromBase64(this.data.pdfBase64);
+        } else if (this.data.pdfUrl) {
+            this.downloadFromUrl(this.data.pdfUrl);
+        }
+    }
+
+    private downloadFromBase64(base64: string): void {
+        const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -69,6 +89,27 @@ export class PdfPreviewDialogComponent implements OnInit {
         const blob = new Blob([byteArray], { type: 'application/pdf' });
 
         const url = window.URL.createObjectURL(blob);
+        this.triggerDownload(url);
+    }
+
+    private downloadFromUrl(url: string): void {
+        // Pour les URLs, on peut souvent juste ouvrir ou créer un lien
+        // Mais pour forcer le nom de fichier, un fetch est parfois nécessaire
+        // Pour faire simple et robuste :
+        fetch(url)
+            .then(res => res.blob())
+            .then(blob => {
+                const blobUrl = window.URL.createObjectURL(blob);
+                this.triggerDownload(blobUrl);
+            })
+            .catch(err => {
+                console.error('Erreur de téléchargement:', err);
+                // Fallback: ouvrir simplement l'URL
+                window.open(url, '_blank');
+            });
+    }
+
+    private triggerDownload(url: string): void {
         const link = document.createElement('a');
         link.href = url;
         link.download = this.data.filename;

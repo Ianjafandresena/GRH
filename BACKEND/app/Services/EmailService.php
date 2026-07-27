@@ -388,6 +388,62 @@ HTML;
     }
 
     /**
+     * Notifier l'employé que son paiement a été validé (fin de workflow)
+     */
+    public function sendPaiementEffectueNotice(string $toEmail, string $toName, array $etat): bool
+    {
+        try {
+            if (!isset($this->mailer)) return false;
+
+            $this->mailer->clearAddresses();
+            $this->mailer->addAddress($toEmail, $toName);
+            $this->mailer->Subject = "Confirmation de Remboursement : Paiement Effectué";
+
+            $body = $this->getPaiementEmailTemplate($etat);
+            
+            $this->mailer->Body = $body;
+            return $this->mailer->send();
+        } catch (\Throwable $e) {
+            log_message('error', "[Email-Paiement] Erreur: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function getPaiementEmailTemplate(array $etat): string
+    {
+        $etatNum = htmlspecialchars($etat['etat_num']);
+        $total = number_format($etat['eta_total'], 2, ',', ' ') . ' Ar';
+        
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <div style="background:#27ae60; color:#ffffff; padding:15px; border-radius:10px 10px 0 0; text-align:center;">
+            <h2 style="margin:0;">Paiement Validé</h2>
+        </div>
+        <div style="padding:20px;">
+            <p>Bonjour,</p>
+            <p>Nous avons le plaisir de vous confirmer que le paiement de votre état de remboursement numéro <strong>$etatNum</strong> a été validé par l'Agent Comptable.</p>
+            
+            <div style="background:#f9f9f9; padding:15px; border-radius:5px; margin:20px 0; text-align:center;">
+                <p style="margin:0; font-size:14px; color:#666;">Montant total versé :</p>
+                <h3 style="margin:5px 0; color:#27ae60; font-size:24px;">$total</h3>
+            </div>
+            
+            <p>Le virement sera effectif sur votre compte dans les délais bancaires habituels.</p>
+            
+            <p style="margin-top: 25px;">Cordialement,<br><strong>Le Service des Ressources Humaines</strong></p>
+        </div>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 11px; color: #999; text-align: center;">{$this->appName}</p>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Générer un token unique sécurisé
      */
     public static function generateToken(): string

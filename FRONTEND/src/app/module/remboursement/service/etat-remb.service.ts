@@ -47,6 +47,14 @@ export class EtatRembService {
     agentComptable(id: number): Observable<any> {
         return this.http.post(`${this.baseUrl}/${id}/agent-comptable`, {}, { withCredentials: true });
     }
+    
+    validerPaiement(id: number): Observable<any> {
+        return this.http.post(`${this.baseUrl}/${id}/valider-paiement`, {}, { withCredentials: true });
+    }
+
+    retourCorrection(id: number): Observable<any> {
+        return this.http.post(`${this.baseUrl}/${id}/retour-correction`, {}, { withCredentials: true });
+    }
 
     exportExcel(id: number): Observable<Blob> {
         return this.http.get(`${this.baseUrl}/${id}/excel`, { responseType: 'blob', withCredentials: true });

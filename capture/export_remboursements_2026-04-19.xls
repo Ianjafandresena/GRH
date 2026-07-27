@@ -1,0 +1,98 @@
+
+        <table border='1'>
+            <tr style='background-color: #f2f2f2; font-weight: bold;'>
+                <td>CODE</td>
+                <td>IM</td>
+                <td>LIEN</td>
+                <td>N° Bulletin de Prise en charge</td>
+                <td>N° Ordonnance</td>
+                <td>N° Facture</td>
+                <td>Date de l'acte OU Consultation</td>
+                <td>Objet du remboursement</td>
+                <td>Montant/Acte</td>
+                <td>Montant/Acte en lettre</td>
+            </tr>
+            <tr style='background-color: #ffffff; color: #000000;'>
+                <td>Direction du Système d&#039;Information</td>
+                <td>00001</td>
+                <td style='text-align:center;'>A</td>
+                <td>003/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>007/ARMP/DG/DAAF/SRH/AV-26</td>
+                <td>005</td>
+                <td>15/04/2026</td>
+                <td>consultation</td>
+                <td style='text-align:right;'>20 000,00 Ar</td>
+                <td>vingt mille ariary</td>
+            </tr>
+            <tr style='background-color: #ffffff; color: #000000;'>
+                <td>Direction du Système d&#039;Information</td>
+                <td>000000</td>
+                <td style='text-align:center;'>A</td>
+                <td>001/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>006/ARMP/DG/DAAF/SRH/AV-26</td>
+                <td>774</td>
+                <td>13/04/2026</td>
+                <td>consultation</td>
+                <td style='text-align:right;'>20 000,00 Ar</td>
+                <td>vingt mille ariary</td>
+            </tr>
+            <tr style='background-color: #A0522D; color: #ffffff;'>
+                <td>Direction des Affaires Administratives et Financières</td>
+                <td>00033</td>
+                <td style='text-align:center;'>C</td>
+                <td>002/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>005/ARMP/DG/DAAF/COMPTA/AV-26</td>
+                <td>0002</td>
+                <td>10/04/2026</td>
+                <td>consultation</td>
+                <td style='text-align:right;'>20 000,00 Ar</td>
+                <td>vingt mille ariary</td>
+            </tr>
+            <tr style='background-color: #ffffff; color: #000000;'>
+                <td>Direction du Système d&#039;Information</td>
+                <td>000000</td>
+                <td style='text-align:center;'>A</td>
+                <td>001/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>004/ARMP/DG/DAAF/SRH/FE-26</td>
+                <td>0001</td>
+                <td>26/02/2026</td>
+                <td>consultation</td>
+                <td style='text-align:right;'>10 000,00 Ar</td>
+                <td>dix mille ariary</td>
+            </tr>
+            <tr style='background-color: #ffffff; color: #000000;'>
+                <td>Direction du Système d&#039;Information</td>
+                <td>000000</td>
+                <td style='text-align:center;'>A</td>
+                <td>001/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>003/ARMP/DG/DAAF/SRH/FE-26</td>
+                <td>0002</td>
+                <td>26/02/2026</td>
+                <td>consultation</td>
+                <td style='text-align:right;'>250 000,00 Ar</td>
+                <td>deux cent cinquante mille ariary</td>
+            </tr>
+            <tr style='background-color: #ffffff; color: #000000;'>
+                <td>Direction du Système d&#039;Information</td>
+                <td>000000</td>
+                <td style='text-align:center;'>A</td>
+                <td>001/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>002/ARMP/DG/DAAF/SRH/FE-26</td>
+                <td>0001</td>
+                <td>26/02/2026</td>
+                <td>consultation</td>
+                <td style='text-align:right;'>20 000,00 Ar</td>
+                <td>vingt mille ariary</td>
+            </tr>
+            <tr style='background-color: #ffffff; color: #000000;'>
+                <td>Direction du Système d&#039;Information</td>
+                <td>000000</td>
+                <td style='text-align:center;'>A</td>
+                <td>001/ARMP/DG/DAAF/SRH/PC-26</td>
+                <td>001/ARMP/DG/DAAF/SRH/FE-26</td>
+                <td>0001</td>
+                <td>26/02/2026</td>
+                <td>radiographie</td>
+                <td style='text-align:right;'>70 000,00 Ar</td>
+                <td>soixante-dix mille ariary</td>
+            </tr></table>

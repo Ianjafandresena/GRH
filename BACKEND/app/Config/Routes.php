@@ -205,6 +205,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\auth'], function($routes)
         $routes->post('/', 'EtatRembController::create');
         $routes->post('(:num)/mandater', 'EtatRembController::mandater/$1');
         $routes->post('(:num)/agent-comptable', 'EtatRembController::agentComptable/$1');
+        $routes->post('(:num)/valider-paiement', 'EtatRembController::validerPaiement/$1');
+        $routes->post('(:num)/retour-correction', 'EtatRembController::retourCorrection/$1');
         $routes->get('(:num)/pdf', 'EtatPdfController::generateEtatPdf/$1');  // PDF
         $routes->get('(:num)/excel', 'EtatRembController::exportExcel/$1');  // Excel
     });
