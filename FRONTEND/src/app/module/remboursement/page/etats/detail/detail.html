@@ -37,7 +37,9 @@
                     <span [ngClass]="['status-badge', (etat()?.eta_libelle || 'EN_ATTENTE')]">
                         {{ (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle || etat()?.eta_libelle === 'EN_COURS') ? 'En attente' :
                         etat()?.eta_libelle === 'MANDATE' ? 'Mandaté' :
-                        etat()?.eta_libelle === 'AGENT_COMPTABLE' ? 'Agent Comptable' : 'Inconnu' }}
+                        etat()?.eta_libelle === 'AGENT_COMPTABLE' ? 'Chez l\'Agent Comptable' : 
+                        etat()?.eta_libelle === 'TRAITE' ? 'Entièrement Traité' :
+                        etat()?.eta_libelle === 'CORRECTION' ? 'Retour pour Correction' : etat()?.eta_libelle }}
                     </span>
                 </span>
             </div>
@@ -46,41 +48,81 @@
 
     <!-- Workflow Stepper Section -->
     <div class="workflow-section section">
-        <h3>Suivi de l'État</h3>
+        <h3>Suivi du Processus (Workflow)</h3>
 
         <div class="stepper-container">
+            <!-- Étape 1: Mandatement -->
             <div class="step" [ngClass]="getStepStatus(1)">
                 <div class="step-circle">
                     @if (getStepStatus(1) === 'completed') { <i class="fas fa-check"></i> }
                     @else { 1 }
                 </div>
-                <span class="step-label">Mandater</span>
+                <span class="step-label">Mandatement (RH/DAAF)</span>
             </div>
             <div class="step-line" [ngClass]="{'active': getStepStatus(2) !== 'pending'}"></div>
+            
+            <!-- Étape 2: Transmission -->
             <div class="step" [ngClass]="getStepStatus(2)">
                 <div class="step-circle">
                     @if (getStepStatus(2) === 'completed') { <i class="fas fa-check"></i> }
                     @else { 2 }
                 </div>
-                <span class="step-label">Agent Comptable</span>
+                <span class="step-label">Transmission Comptable</span>
+            </div>
+            <div class="step-line" [ngClass]="{'active': getStepStatus(3) !== 'pending'}"></div>
+
+            <!-- Étape 3: Validation Paiement -->
+            <div class="step" [ngClass]="getStepStatus(3)">
+                <div class="step-circle">
+                    @if (getStepStatus(3) === 'completed') { <i class="fas fa-check"></i> }
+                    @else { 3 }
+                </div>
+                <span class="step-label">Validation Paiement</span>
+            </div>
+            <div class="step-line" [ngClass]="{'active': getStepStatus(4) !== 'pending'}"></div>
+
+            <!-- Étape 4: Clôture -->
+            <div class="step" [ngClass]="getStepStatus(4)">
+                <div class="step-circle">
+                    @if (getStepStatus(4) === 'completed') { <i class="fas fa-check"></i> }
+                    @else { 4 }
+                </div>
+                <span class="step-label">Entièrement Traité</span>
             </div>
         </div>
 
         <div class="workflow-actions">
-            @if (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle || etat()?.eta_libelle === 'EN_COURS') {
+            <!-- Phase 1: Mandater -->
+            @if (etat()?.eta_libelle === 'EN_ATTENTE' || !etat()?.eta_libelle || etat()?.eta_libelle === 'EN_COURS' || etat()?.eta_libelle === 'CORRECTION') {
             <button class="btn btn-primary" (click)="openConfirm('mandater')" [disabled]="processing()">
                 <i class="fas fa-file-signature"></i> Mandater l'État
             </button>
             }
+
+            <!-- Phase 2: Envoyer au comptable -->
             @if (etat()?.eta_libelle === 'MANDATE') {
             <button class="btn btn-primary compta-btn" (click)="openConfirm('agentComptable')"
                 [disabled]="processing()">
-                <i class="fas fa-user-check"></i> Envoyer à l'Agent Comptable
+                <i class="fas fa-paper-plane"></i> Transmettre à l'Agent Comptable
             </button>
             }
+
+            <!-- Phase 3: Action Agent Comptable -->
             @if (etat()?.eta_libelle === 'AGENT_COMPTABLE') {
+            <div class="ac-actions">
+                <button class="btn btn-success" (click)="openConfirm('validerPaiement')" [disabled]="processing()">
+                    <i class="fas fa-check-double"></i> Valider le Paiement
+                </button>
+                <button class="btn btn-outline-danger" (click)="openConfirm('retourCorrection')" [disabled]="processing()">
+                    <i class="fas fa-undo"></i> Retour pour Correction
+                </button>
+            </div>
+            }
+
+            <!-- Phase Finale -->
+            @if (etat()?.eta_libelle === 'TRAITE') {
             <div class="final-status">
-                <i class="fas fa-check-circle"></i> État entièrement traité par l'Agent Comptable
+                <i class="fas fa-check-circle"></i> État entièrement traité et payé
             </div>
             }
         </div>

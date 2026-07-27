@@ -3,15 +3,18 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CongeService } from '../../service/conge.service';
 import { InterruptionService, Interruption } from '../../service/interruption.service';
 import { ValidationCongeService, ValidationStatus } from '../../service/validation-conge.service';
 import { LayoutService } from '../../../../shared/layout/service/layout.service';
+import { PdfPreviewDialogComponent } from '../../../document/component/pdf-preview/pdf-preview-dialog.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-detail-conge',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule],
   templateUrl: './detail.html',
   styleUrls: ['./detail.scss']
 })
@@ -22,6 +25,7 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
   private readonly interruptionService = inject(InterruptionService);
   private readonly validationService = inject(ValidationCongeService);
   private readonly layoutService = inject(LayoutService);
+  private readonly dialog = inject(MatDialog);
 
   data: any = null;
   interruptionData: Interruption | null = null;
@@ -137,8 +141,21 @@ export class DetailCongeComponent implements OnInit, OnDestroy {
 
   openPdfViewer() {
     if (!this.congeId || !this.data) return;
-    this.router.navigate(['/conge/viewer', this.congeId], { 
-      queryParams: { type: this.data.absence_type } 
+    
+    const apiUrl = environment.apiUrl;
+    let url = `${apiUrl}/conge/attestation/${this.congeId}`;
+    if (this.absenceType === 'permission') {
+      url = `${apiUrl}/permission/${this.congeId}/pdf`;
+    }
+
+    this.dialog.open(PdfPreviewDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      data: {
+        pdfUrl: url,
+        filename: this.absenceType === 'permission' ? `Permission_${this.congeId}.pdf` : `Conge_${this.congeId}.pdf`,
+        title: this.absenceType === 'permission' ? 'Détail de la Permission' : 'Détail du Congé'
+      }
     });
   }
 

@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ViewChild, AfterViewInit } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { PdfPreviewDialogComponent } from '../../../../document/component/pdf-preview/pdf-preview-dialog.component';
 import { RemboursementService } from '../../../service/remboursement.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
 import { DemandeRemb } from '../../../model/demande-remb.model';
@@ -19,7 +21,8 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
         FormsModule,
         MatTableModule,
         MatPaginatorModule,
-        MatSortModule
+        MatSortModule,
+        MatDialogModule
     ],
     templateUrl: './index.html',
     styleUrls: ['./index.scss']
@@ -30,6 +33,7 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
     private readonly rembService = inject(RemboursementService);
     private readonly employeeService = inject(EmployeeService);
     private readonly layoutService = inject(LayoutService);
+    private readonly dialog = inject(MatDialog);
 
     demandes: DemandeRemb[] = [];
     employees: Employee[] = [];
@@ -187,11 +191,16 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
     downloadPdf(id: number) {
         this.rembService.downloadPdf(id).subscribe(blob => {
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `remboursement_${id}.pdf`;
-            a.click();
-            window.URL.revokeObjectURL(url);
+            
+            this.dialog.open(PdfPreviewDialogComponent, {
+                width: '800px',
+                maxWidth: '95vw',
+                data: {
+                    pdfUrl: url,
+                    filename: `remboursement_${id}.pdf`,
+                    title: 'Détail du Remboursement'
+                }
+            });
         });
     }
 
@@ -203,11 +212,16 @@ export class DemandesIndexComponent implements OnInit, AfterViewInit {
         }
         this.rembService.downloadEtatAgentPdf(emp, this.filter.annee, this.filter.mois).subscribe(blob => {
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `etat_remboursement_agent_${emp}_${this.filter.annee}_${this.filter.mois}.pdf`;
-            a.click();
-            window.URL.revokeObjectURL(url);
+            
+            this.dialog.open(PdfPreviewDialogComponent, {
+                width: '800px',
+                maxWidth: '95vw',
+                data: {
+                    pdfUrl: url,
+                    filename: `etat_remboursement_agent_${emp}_${this.filter.annee}_${this.filter.mois}.pdf`,
+                    title: 'État de Remboursement Agent'
+                }
+            });
         }, () => {
             this.errorMsg = 'Erreur lors du telechargement';
         });

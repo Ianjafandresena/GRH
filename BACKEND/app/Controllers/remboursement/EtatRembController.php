@@ -318,7 +318,63 @@ class EtatRembController extends ResourceController
     /**
      * Exporter un état de remboursement spécifique vers Excel
      */
+    /**
+     * Marquer un état comme entièrement traité (Paiement validé par l'agent comptable)
+     */
+    public function validerPaiement($id)
+    {
+        $model = new EtatRembModel();
+        $etat = $model->find($id);
+        
+        if (!$etat) {
+            return $this->failNotFound('État non trouvé');
+        }
+
+        if ($etat['eta_libelle'] !== 'AGENT_COMPTABLE') {
+            return $this->fail('L\'état doit être chez l\'agent comptable avant d\'être validé pour paiement');
+        }
+
+        $model->update($id, ['eta_libelle' => 'TRAITE']);
+
+        // Notification Email Finale (SAFE)
+        try {
+            $db = \Config\Database::connect();
+            $employee = $db->table('employe')->where('emp_code', $etat['emp_code'])->get()->getRowArray();
+            
+            if ($employee && !empty($employee['emp_mail'])) {
+                $emailService = new EmailService();
+                $emailService->sendPaiementEffectueNotice(
+                    $employee['emp_mail'],
+                    $employee['emp_nom'] . ' ' . $employee['emp_prenom'],
+                    $etat
+                );
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[EtatFinalMail-SafeFault] ' . $e->getMessage());
+        }
+
+        return $this->respond(['message' => 'Paiement validé, état marqué comme entièrement traité', 'status' => 'TRAITE']);
+    }
+
+    /**
+     * Retourner un état pour correction (Action de l'agent comptable)
+     */
+    public function retourCorrection($id)
+    {
+        $model = new EtatRembModel();
+        $etat = $model->find($id);
+        
+        if (!$etat) {
+            return $this->failNotFound('État non trouvé');
+        }
+
+        $model->update($id, ['eta_libelle' => 'CORRECTION']);
+
+        return $this->respond(['message' => 'État retourné pour correction', 'status' => 'CORRECTION']);
+    }
+
     public function exportExcel($id)
+
     {
         $db = \Config\Database::connect();
         

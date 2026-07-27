@@ -2,6 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { PdfPreviewDialogComponent } from '../../../../document/component/pdf-preview/pdf-preview-dialog.component';
 import { EtatRembService } from '../../../service/etat-remb.service';
 import { RemboursementService } from '../../../service/remboursement.service';
 import { LayoutService } from '../../../../../shared/layout/service/layout.service';
@@ -9,7 +11,7 @@ import { LayoutService } from '../../../../../shared/layout/service/layout.servi
 @Component({
     selector: 'app-detail-etat',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, MatDialogModule],
     templateUrl: './detail.html',
     styleUrls: ['./detail.scss']
 })
@@ -19,6 +21,7 @@ export class DetailEtatComponent {
     private readonly etatService = inject(EtatRembService);
     private readonly rembService = inject(RemboursementService);
     private readonly layoutService = inject(LayoutService);
+    private readonly dialog = inject(MatDialog);
 
     etat = signal<any>(null);
     demandes = signal<any[]>([]);
@@ -28,7 +31,7 @@ export class DetailEtatComponent {
     // Workflow state
     processing = signal(false);
     showConfirmModal = signal(false);
-    confirmAction: 'mandater' | 'agentComptable' | null = null;
+    confirmAction: 'mandater' | 'agentComptable' | 'validerPaiement' | 'retourCorrection' | null = null;
     confirmTitle = '';
     confirmMessage = '';
 
@@ -72,14 +75,20 @@ export class DetailEtatComponent {
         });
     }
 
-    openConfirm(action: 'mandater' | 'agentComptable') {
+    openConfirm(action: 'mandater' | 'agentComptable' | 'validerPaiement' | 'retourCorrection') {
         this.confirmAction = action;
         if (action === 'mandater') {
             this.confirmTitle = 'Mandater l\'État';
             this.confirmMessage = 'Confirmez-vous le mandatement de cet état ?';
-        } else {
-            this.confirmTitle = 'Agent Comptable';
-            this.confirmMessage = 'Envoyer cet état à l\'agent comptable ?';
+        } else if (action === 'agentComptable') {
+            this.confirmTitle = 'Transmission Comptable';
+            this.confirmMessage = 'Transmettre cet état à l\'agent comptable ?';
+        } else if (action === 'validerPaiement') {
+            this.confirmTitle = 'Validation du Paiement';
+            this.confirmMessage = 'Confirmer que le paiement a été effectué pour cet état ?';
+        } else if (action === 'retourCorrection') {
+            this.confirmTitle = 'Retour pour Correction';
+            this.confirmMessage = 'Retourner cet état au service RH pour correction ?';
         }
         this.showConfirmModal.set(true);
     }
@@ -97,9 +106,15 @@ export class DetailEtatComponent {
         this.processing.set(true);
         this.closeConfirm();
 
-        const request = action === 'mandater'
-            ? this.etatService.mandater(id)
-            : this.etatService.agentComptable(id);
+        let request;
+        switch (action) {
+            case 'mandater': request = this.etatService.mandater(id); break;
+            case 'agentComptable': request = this.etatService.agentComptable(id); break;
+            case 'validerPaiement': request = this.etatService.validerPaiement(id); break;
+            case 'retourCorrection': request = this.etatService.retourCorrection(id); break;
+        }
+
+        if (!request) return;
 
         request.subscribe({
             next: (res) => {
@@ -119,13 +134,24 @@ export class DetailEtatComponent {
         const status = this.etat()?.eta_libelle;
 
         if (step === 1) { // Mandater
-            if (status === 'MANDATE' || status === 'AGENT_COMPTABLE') return 'completed';
+            if (['MANDATE', 'AGENT_COMPTABLE', 'TRAITE'].includes(status)) return 'completed';
             return 'current';
         }
 
-        if (step === 2) { // Agent Comptable
-            if (status === 'AGENT_COMPTABLE') return 'completed';
+        if (step === 2) { // Transmission Comptable
+            if (['AGENT_COMPTABLE', 'TRAITE'].includes(status)) return 'completed';
             if (status === 'MANDATE') return 'current';
+            return 'pending';
+        }
+
+        if (step === 3) { // Validation Paiement
+            if (status === 'TRAITE') return 'completed';
+            if (status === 'AGENT_COMPTABLE') return 'current';
+            return 'pending';
+        }
+
+        if (step === 4) { // Clôture / Traité
+            if (status === 'TRAITE') return 'completed';
             return 'pending';
         }
 
@@ -135,7 +161,17 @@ export class DetailEtatComponent {
     downloadPdf() {
         const etaCode = this.etat()?.eta_code;
         if (!etaCode) return;
-        window.open(`${this.etatService.baseUrl}/${etaCode}/pdf`, '_blank');
+        const url = `${this.etatService.baseUrl}/${etaCode}/pdf`;
+        
+        this.dialog.open(PdfPreviewDialogComponent, {
+            width: '800px',
+            maxWidth: '95vw',
+            data: {
+                pdfUrl: url,
+                filename: `etat_remboursement_${etaCode}.pdf`,
+                title: 'État de Remboursement'
+            }
+        });
     }
 
     downloadExcel() {

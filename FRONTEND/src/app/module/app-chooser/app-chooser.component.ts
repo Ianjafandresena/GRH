@@ -41,7 +41,7 @@ import { AuthService } from '../auth/service/auth-service';
                 <mat-icon>arrow_forward</mat-icon>
               </div>
             </div>
-            <h2>GRH</h2>
+            <h2>Absences et Frais médicaux</h2>
             <p class="card-desc">Gestion des Ressources Humaines</p>
             <div class="modules-section">
               <span class="modules-label">MODULES INCLUS :</span>
@@ -53,7 +53,7 @@ import { AuthService } from '../auth/service/auth-service';
               </div>
             </div>
             <div class="card-action">
-              <span>Accéder à GRH</span>
+              <span>Accéder à l'application</span>
               <mat-icon>arrow_forward</mat-icon>
             </div>
           </div>
